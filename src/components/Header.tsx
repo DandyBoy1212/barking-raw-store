@@ -1,6 +1,5 @@
 "use client";
 
-import { Paw } from "./Paw";
 import { useCart } from "./CartProvider";
 
 export function Header() {
@@ -9,11 +8,8 @@ export function Header() {
     <header className="header">
       <div className="header__inner">
         <a className="logo" href="#top" aria-label="Barking Raw home">
-          <Paw size={40} color="#fff" className="logo__mark" />
-          <span className="logo__word">
-            <b>BARKING RAW</b>
-            <span>Natural Dog Food</span>
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="logo__img" src="/brand/logo.jpeg" alt="Barking Raw, Natural Dog Food" />
         </a>
         <button className="basket-btn" onClick={() => setOpen(true)} aria-label="Open basket">
           Basket
