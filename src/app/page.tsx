@@ -7,26 +7,38 @@ export default function Home() {
   return (
     <main>
       {/* HERO */}
-      <section className="band band--ink hero">
-        <div className="wrap">
-          <p className="eyebrow">Natural Dog Food</p>
-          <h1 className="display">You've been lied to.</h1>
-          <p className="hero__sub">
-            The "beef" treat in your cupboard is roughly 2% beef. The "dental stick" is basically a
-            cereal biscuit with a few milligrams of flavouring. You didn't know, because the label
-            was written so you wouldn't.
-          </p>
-          <p className="hero__intro">
-            Barking Raw is natural dog food and treats with nothing to hide: one honest ingredient,
-            named in full, posted to your door.
-          </p>
-          <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap" }}>
-            <a className="btn btn--solid-paper" href="#truth">
-              Show me what's really in them
-            </a>
-            <a className="btn" href="#products" style={{ color: "#fff" }}>
-              Shop the treats
-            </a>
+      <section className="band hero" style={{ background: "#000", color: "#fff" }}>
+        <div
+          className="wrap"
+          style={{ display: "flex", gap: "2.5rem", alignItems: "center", flexWrap: "wrap" }}
+        >
+          <div style={{ flex: "1 1 340px" }}>
+            <h1 className="display">You've been lied to.</h1>
+            <p className="hero__sub">
+              The "beef" treat in your cupboard is roughly 2% beef. The "dental stick" is basically a
+              cereal biscuit with a few milligrams of flavouring. You didn't know, because the label
+              was written so you wouldn't.
+            </p>
+            <p className="hero__intro">
+              Barking Raw is natural dog food and treats with nothing to hide: one honest
+              ingredient, named in full, posted to your door.
+            </p>
+            <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap" }}>
+              <a className="btn btn--solid-paper" href="#truth">
+                Show me what's really in them
+              </a>
+              <a className="btn" href="#products" style={{ color: "#fff" }}>
+                Shop the treats
+              </a>
+            </div>
+          </div>
+          <div style={{ flex: "0 1 300px", display: "flex", justifyContent: "center", width: "100%" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/logo.jpeg"
+              alt="Barking Raw, Natural Dog Food"
+              style={{ maxHeight: 400, width: "auto", maxWidth: "100%" }}
+            />
           </div>
         </div>
       </section>

@@ -26,21 +26,23 @@ for the full design, and `docs/research-dossier.md` for the sourced facts behind
 - **Daily digest** (`src/app/api/cron/daily-digest/route.ts`): emails Michaela yesterday's order count.
 - Vercel cron schedule in `vercel.json`.
 
-## What YOU or Michaela must provide before it can take real money (the 5 things)
+## What YOU or Michaela must provide before it can take real money (the 4 things)
 
 1. **Stripe keys** (Michaela's account) → set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`.
    Start with test keys (`sk_test_…`). Until this is set, checkout shows a friendly "not switched
    on yet" message instead of erroring.
-2. **Google Sheet** → create it, name the tab `Orders`, share it as Editor with the service-account
-   email, and set `FULFILMENT_SHEET_ID`. Add your own `Packed` / `Posted` / `Returns` columns; we
-   only ever append new rows and never touch yours.
-3. **Real image files** → drop the actual **logo** into `public/brand/logo.png` and the real
-   **whole sprats** photo into `public/products/whole-sprats.png` (currently a placeholder). Both
-   were pasted into chat, so they're not on disk yet.
-4. **Deploy + domain** → connect the repo to Vercel and point `barkingraw.dog` at it. Set
+2. **Google Sheet** → create a blank Google Sheet (sheets.new), then click **Share** and add
+   `firebase-adminsdk-fbsvc@barking-raw.iam.gserviceaccount.com` as an **Editor**. Copy the sheet
+   ID from its URL (the long code between `/d/` and `/edit`) into `FULFILMENT_SHEET_ID`. That's it,
+   the app auto-creates the header row and only ever appends new rows. Add your own notes in the
+   Packed / Posted / Returns columns; we never touch them.
+3. **Deploy + domain** → connect the repo to Vercel and point `barkingraw.dog` at it. Set
    `NEXT_PUBLIC_SITE_URL=https://barkingraw.dog`.
-5. **Email sender** → a Resend API key (`RESEND_API_KEY`), a verified `EMAIL_FROM`, and your
+4. **Email sender** → a Resend API key (`RESEND_API_KEY`), a verified `EMAIL_FROM`, and your
    `OWNER_EMAIL` for the daily digest.
+
+DONE (was on the list, now wired in): the real **logo** (`public/brand/logo.jpeg`, shown in the
+hero) and the real **whole sprats** photo (`public/products/whole-sprats.png`).
 
 All variables are documented in `.env.example`. Copy it to `.env.local` for local dev.
 
@@ -61,7 +63,8 @@ npm test           # unit tests (shipping etc.)
 
 ## Notes
 
-- Firebase reuses the existing `gen-lang-client` project, in `store_*` collections, so it never
-  tangles with the dog-training app.
+- Firebase reuses the existing **barking-raw** project (the same one the dog-training app uses),
+  in `store_*` collections, so it never tangles with the training app's data. Provide that
+  project's service-account JSON as `FIREBASE_SERVICE_ACCOUNT`.
 - The product photos for pure-meat-tit-bits and rabbit-feet were tidied onto the house white
   background with the Nano Banana image tool from the real product photos (not invented).
