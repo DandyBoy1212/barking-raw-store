@@ -1,0 +1,25 @@
+name: Abandoned cart reminders
+
+# Vercel Hobby only allows once-a-day crons, but the abandoned-cart checker
+# needs to run through the day so the "a few hours later" email is timely.
+# This free GitHub Action pings the endpoint every 30 minutes. The endpoint is
+# idempotent (it tracks what it has already sent), so frequent calls are safe.
+#
+# Requires two repository secrets (Settings -> Secrets and variables -> Actions):
+#   SITE_URL     e.g. https://barkingraw.dog   (or the .vercel.app URL)
+#   CRON_SECRET  the same value set as CRON_SECRET in Vercel env vars
+
+on:
+  schedule:
+    - cron: "*/30 * * * *" # every 30 min (GitHub may delay under load; fine here)
+  workflow_dispatch: {} # lets you run it manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger abandoned-cart reminders
+        run: |
+          curl -fsS -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/cron/abandoned"
