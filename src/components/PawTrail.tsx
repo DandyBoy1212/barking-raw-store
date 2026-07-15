@@ -15,7 +15,7 @@ const TRAIL: Spot[] = Array.from({ length: STEPS }, (_, i) => {
     left: `${6 + t * 66 + gait}%`,
     top: `${90 - t * 82}%`,
     size: 88 + t * 52,
-    opacity: 0.38 - t * 0.33,
+    opacity: 0.26 - t * 0.22,
   };
 });
 

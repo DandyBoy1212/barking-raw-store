@@ -137,8 +137,8 @@ h1, h2, h3 { line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; }
 .footer small { opacity: 0.6; }
 
 /* ---------- Paw trail ---------- */
-.paw-field { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
-.paw-field svg { position: absolute; }
+.paw-field { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+.paw-field svg { display: block; }
 
 /* ---------- Basket drawer ---------- */
 .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease; }

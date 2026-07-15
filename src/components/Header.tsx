@@ -10,6 +10,10 @@ export function Header() {
         <a className="logo" href="#top" aria-label="Barking Raw home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="logo__img" src="/brand/logo.jpeg" alt="Barking Raw, Natural Dog Food" />
+          <span className="logo__word">
+            <b>BARKING RAW</b>
+            <span>Natural Dog Food</span>
+          </span>
         </a>
         <button className="basket-btn" onClick={() => setOpen(true)} aria-label="Open basket">
           Basket

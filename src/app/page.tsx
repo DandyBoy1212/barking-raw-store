@@ -165,7 +165,6 @@ export default function Home() {
 
       {/* PRODUCTS */}
       <section className="band band--paper" id="products">
-        <PawTrail />
         <div className="wrap wrap--tight">
           <div className="products__head">
             <div className="section-head">
