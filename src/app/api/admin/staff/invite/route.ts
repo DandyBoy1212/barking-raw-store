@@ -53,13 +53,22 @@ export async function POST(req: NextRequest) {
     );
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://barkingraw.dog";
+    // sendEmail never throws: it reports failure by resolving false. Capture
+    // that so a failed send takes the same warning path as a thrown link error.
+    let sent = false;
     try {
       const link = await auth.generateSignInWithEmailLink(email, buildActionCodeSettings(siteUrl));
-      await sendEmail(email, "You have been added to Barking Raw admin", signInEmailHtml(link));
+      sent = await sendEmail(email, "You have been added to Barking Raw admin", signInEmailHtml(link));
     } catch (err) {
       console.error(
         `[staff-invite] granted staff claim to "${email}" but link generation or sending failed, an admin must re-send:`,
         err,
+      );
+      return NextResponse.json({ ok: false, error: "invite failed" }, { status: 500 });
+    }
+    if (!sent) {
+      console.error(
+        `[staff-invite] granted staff claim to "${email}" but the invite email did not send, an admin must re-send`,
       );
       return NextResponse.json({ ok: false, error: "invite failed" }, { status: 500 });
     }
