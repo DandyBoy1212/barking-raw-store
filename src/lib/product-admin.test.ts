@@ -40,4 +40,19 @@ describe("validateProductInput", () => {
     expect(res.ok).toBe(true);
     if (res.ok) expect(res.value.price).toBe(7.5);
   });
+
+  it("rejects a non-finite price", () => {
+    const res = validateProductInput({ ...good, price: "Infinity" as unknown as number });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.errors).toContain("Price must be greater than 0.");
+  });
+
+  it("filters out unknown badge strings, keeping valid ones", () => {
+    const res = validateProductInput({
+      ...good,
+      badges: ["Most Popular", "Not A Badge"] as unknown as typeof good.badges,
+    });
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.value.badges).toEqual(["Most Popular"]);
+  });
 });

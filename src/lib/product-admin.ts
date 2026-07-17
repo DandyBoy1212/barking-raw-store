@@ -29,11 +29,13 @@ export function validateProductInput(
   const hook = String(input.hook ?? "").trim();
   const description = String(input.description ?? "").trim();
   const image = String(input.image ?? "").trim();
-  const badges = Array.isArray(input.badges) ? (input.badges as Badge[]) : [];
+  const badges = Array.isArray(input.badges)
+    ? input.badges.filter((b): b is Badge => ALL_BADGES.includes(b as Badge))
+    : [];
   const safetyNote = input.safetyNote ? String(input.safetyNote).trim() : undefined;
 
   if (!name) errors.push("Name is required.");
-  if (!(price > 0)) errors.push("Price must be greater than 0.");
+  if (!(Number.isFinite(price) && price > 0)) errors.push("Price must be greater than 0.");
   if (!hook) errors.push("Hook is required.");
   if (!description) errors.push("Description is required.");
   if (!image) errors.push("An image is required.");
