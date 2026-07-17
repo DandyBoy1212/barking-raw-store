@@ -11,6 +11,17 @@ export type Badge =
   | "Single Ingredient"
   | "Novel Protein";
 
+export const ALL_BADGES: Badge[] = [
+  "Most Popular",
+  "Best for Big Dogs",
+  "Gentle on Dodgy Tummies",
+  "Best for Skin & Coat",
+  "Great for Training",
+  "Natural Joint Support",
+  "Single Ingredient",
+  "Novel Protein",
+];
+
 export interface Product {
   slug: string;
   name: string;
