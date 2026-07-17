@@ -32,9 +32,16 @@ Sheet fulfilment, Vercel + cron) stays exactly as it is. This work sits on top.
 - **Guest checkout stays** (lowest friction to buy); the auto-created account is what ties the
   order to loyalty.
 - **Points = money off**, redeemable value.
-- **Points expire on a rolling basis:** a customer's whole balance expires after N months of no
-  earning or spending; any order resets the clock. Expiry drives a reminder email ("your points
-  expire soon, they are worth GBP X").
+- **Earn rate is per product:** each product carries its own points-per-GBP setting (default 10),
+  so staff can run promotions (double points, bonus items). Redemption is a flat store-wide
+  conversion of 100 points to GBP 1 (so 1 point = 1 penny).
+- **Points expire 30 days after the order that earned them** (per-batch, oldest spent first).
+  Expiry drives a reminder email a few days before ("your points expire soon, they are worth
+  GBP X"). This supersedes the earlier rolling-inactivity idea: a customer who had funds to buy
+  once is likelier to buy again around 30 days later, so the shorter window is deliberate.
+- **Subscribe and Save is a separate, later subsystem** (recurring orders, a standing discount,
+  non-expiring subscriber points). It is not built with loyalty; the loyalty ledger only leaves a
+  `neverExpires` flag so subscriber points slot in later. See Stage 7.
 - **Products move to Firestore** as the single source of truth, mirrored to Stripe Product +
   Price on save. Shop page and checkout read from Firestore.
 - **Admin product manager:** staff can add, edit and archive products. Archiving hides without
@@ -158,31 +165,40 @@ Quantity per product, decrement in the Stripe webhook on each paid order, low-st
 to staff (reusing `src/lib/email.ts`), auto `soldOut` at zero, manual restock in admin. Checkout
 refuses sold-out or insufficient stock. Numbers to set when specced: default low-stock threshold.
 
-### Stage 5 — Loyalty points (roadmap)
+### Stage 5 — Loyalty points (planned)
 
-Earn on paid orders (ledger entry, balance updated, `lastActivityAt` set), balance and history on
-`/account`, redeem as money off at checkout when logged in, rolling expiry via a cron job that
-zeroes stale balances and writes an `expire` ledger entry, and an expiry-reminder email. Numbers
-to set when specced: earn rate, GBP value per point, months of inactivity before expiry, reminder
-lead time.
+Earn on paid orders (append-only `store_points_ledger` batch, denormalised `pointsBalance` on the
+customer), per-product earn rate (default 10 points per GBP), balance and history on `/account`,
+redeem as money off at checkout when signed in (any amount up to the order value; 100 points to
+GBP 1), 30-day per-batch FIFO expiry, and a daily cron that expires due batches and emails
+customers whose points lapse within 5 days. See `docs/plans/2026-07-17-stage-5-loyalty-points.md`.
 
 ### Stage 6 — Admin orders and customers view (roadmap)
 
 Read-only lists of orders and customer accounts with points balances, inside `/admin`. The Google
 Sheet still receives rows as now.
 
-## 6. Deferred, tunable numbers
+### Stage 7 — Subscribe and Save (roadmap, needs its own brainstorm)
 
-These belong to Stages 4 and 5 and will be fixed in those stages' specs, not now: default
-low-stock threshold, points earn rate, GBP-per-point, inactivity window before expiry, and the
-expiry-reminder lead time. They are deliberately out of scope for the spine (Stages 1 to 3),
-which has no placeholders of its own.
+Recurring orders via Stripe subscriptions, a standing subscriber discount, non-expiring loyalty
+points for subscribers, and subscription management in `/account`. This is a distinct subsystem
+(recurring billing, delivery cadence, dunning) and gets its own spec and plan. Numbers and
+mechanics to decide when specced: delivery cadence options, discount percentage, and how
+subscriber points interact with the loyalty ledger's `neverExpires` flag.
+
+## 6. Tunable numbers (now decided)
+
+- Low-stock threshold default: 5 (Stage 4).
+- Earn rate: 10 points per GBP by default, overridable per product (Stage 5).
+- Redemption value: 100 points = GBP 1 (1 point = 1 penny) (Stage 5).
+- Point expiry: 30 days after the earning order, per batch (Stage 5).
+- Expiry-reminder lead time: 5 days before a batch lapses (Stage 5).
 
 ## 7. Non-goals (YAGNI)
 
 - No passwords (magic-link only).
 - No supplier auto-ordering (low-stock is an alert to a human).
-- No per-batch or FIFO point expiry (rolling only).
 - No quantity-tiered or per-customer pricing, no multi-currency.
 - No customer-facing account beyond points, order history and login (no saved cards, no
   wishlists) in this scope.
+- No recurring billing in the loyalty work; Subscribe and Save (Stage 7) is a separate subsystem.
