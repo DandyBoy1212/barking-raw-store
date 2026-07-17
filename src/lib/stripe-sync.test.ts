@@ -4,6 +4,9 @@ import {
   buildStripeProductParams,
   buildCheckoutLineItem,
   syncProductToStripe,
+  priceChanged,
+  applyStripeProductUpdate,
+  archiveStripeProduct,
 } from "./stripe-sync";
 import type { StoredProduct } from "./products-store";
 
@@ -93,5 +96,83 @@ describe("syncProductToStripe", () => {
       currency: "gbp",
       unit_amount: 600,
     });
+  });
+});
+
+describe("priceChanged", () => {
+  it("compares in pence to avoid float noise", () => {
+    expect(priceChanged(6.5, 6.5)).toBe(false);
+    expect(priceChanged(6.5, 7)).toBe(true);
+    expect(priceChanged(6.1, 6.10001)).toBe(false);
+  });
+});
+
+describe("applyStripeProductUpdate", () => {
+  const existing = {
+    slug: "chicken-feet",
+    name: "Chicken Feet",
+    price: 6,
+    hook: "h",
+    description: "d",
+    badges: [],
+    image: "/products/chicken-feet.png",
+    active: true,
+    archived: false,
+    stripeProductId: "prod_1",
+    stripePriceId: "price_old",
+  } as const;
+
+  it("updates the product but keeps the price id when the price is unchanged", async () => {
+    const calls: string[] = [];
+    const fake = {
+      products: {
+        update: async (id: string) => { calls.push(`product.update:${id}`); return { id }; },
+      },
+      prices: {
+        create: async () => { calls.push("price.create"); return { id: "price_new" }; },
+        update: async () => { calls.push("price.update"); return { id: "price_old" }; },
+      },
+    } as unknown as import("stripe").default;
+    const out = await applyStripeProductUpdate(fake, existing, { ...existing }, "https://barkingraw.dog");
+    expect(out).toEqual({ stripeProductId: "prod_1", stripePriceId: "price_old" });
+    expect(calls).toEqual(["product.update:prod_1"]);
+  });
+
+  it("creates a new price, sets it default, and archives the old one on a price change", async () => {
+    const calls: string[] = [];
+    const fake = {
+      products: {
+        update: async (id: string, params: Record<string, unknown>) => {
+          calls.push(`product.update:${id}:${params.default_price ?? "fields"}`);
+          return { id };
+        },
+      },
+      prices: {
+        create: async () => { calls.push("price.create"); return { id: "price_new" }; },
+        update: async (id: string, params: Record<string, unknown>) => {
+          calls.push(`price.update:${id}:active=${params.active}`);
+          return { id };
+        },
+      },
+    } as unknown as import("stripe").default;
+    const out = await applyStripeProductUpdate(fake, existing, { ...existing, price: 7 }, "https://barkingraw.dog");
+    expect(out).toEqual({ stripeProductId: "prod_1", stripePriceId: "price_new" });
+    expect(calls).toEqual([
+      "product.update:prod_1:fields",
+      "price.create",
+      "product.update:prod_1:price_new",
+      "price.update:price_old:active=false",
+    ]);
+  });
+});
+
+describe("archiveStripeProduct", () => {
+  it("sets the Stripe product inactive", async () => {
+    let seen = "";
+    const fake = {
+      products: { update: async (id: string, p: Record<string, unknown>) => { seen = `${id}:${p.active}`; return { id }; } },
+    } as unknown as import("stripe").default;
+    await archiveStripeProduct(fake, "prod_9");
+    expect(seen).toBe("prod_9:false");
   });
 });

@@ -63,3 +63,47 @@ export async function syncProductToStripe(
   });
   return { stripeProductId: product.id, stripePriceId: price.id };
 }
+
+/** True when the two prices differ once rounded to pence. */
+export function priceChanged(prevPrice: number, nextPrice: number): boolean {
+  return priceToPence(prevPrice) !== priceToPence(nextPrice);
+}
+
+/**
+ * Update an existing Stripe product to match `next`. Stripe Prices are immutable,
+ * so when the price changes we create a new Price, make it the default, and archive
+ * the old one. Returns the ids that should be stored on the product.
+ */
+export async function applyStripeProductUpdate(
+  stripe: Stripe,
+  existing: StoredProduct,
+  next: StoredProduct,
+  siteUrl = "https://barkingraw.dog",
+): Promise<{ stripeProductId: string; stripePriceId: string }> {
+  const productId = existing.stripeProductId;
+  const oldPriceId = existing.stripePriceId;
+  if (!productId) {
+    // No Stripe product yet (for example an item created before sync): create fresh.
+    return syncProductToStripe(stripe, { ...next, stripeProductId: undefined, stripePriceId: undefined }, siteUrl);
+  }
+
+  await stripe.products.update(productId, buildStripeProductParams(next, siteUrl));
+
+  if (!oldPriceId || priceChanged(existing.price, next.price)) {
+    const price = await stripe.prices.create({
+      product: productId,
+      currency: "gbp",
+      unit_amount: priceToPence(next.price),
+    });
+    await stripe.products.update(productId, { default_price: price.id });
+    if (oldPriceId) await stripe.prices.update(oldPriceId, { active: false });
+    return { stripeProductId: productId, stripePriceId: price.id };
+  }
+
+  return { stripeProductId: productId, stripePriceId: oldPriceId };
+}
+
+/** Archive a product in Stripe (hides it without deleting). */
+export async function archiveStripeProduct(stripe: Stripe, stripeProductId: string): Promise<void> {
+  await stripe.products.update(stripeProductId, { active: false });
+}
