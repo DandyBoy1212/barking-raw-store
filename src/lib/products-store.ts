@@ -65,6 +65,15 @@ export async function getStoredProducts(): Promise<StoredProduct[]> {
   }
 }
 
+/** Every product including archived/inactive, for the admin list. Falls back to the seed. */
+export async function getAllStoredProducts(): Promise<StoredProduct[]> {
+  const db = getDb();
+  if (!db) return seedAsStoredProducts();
+  const snap = await db.collection(COLLECTIONS.products).get();
+  const all = snap.docs.map((d) => docToStoredProduct(d.id, d.data() as Record<string, unknown>));
+  return all.length ? all : seedAsStoredProducts();
+}
+
 /** A single product by slug (its Firestore doc id). Falls back to the seed. */
 export async function getStoredProductBySlug(slug: string): Promise<StoredProduct | null> {
   const db = getDb();
