@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireStaff } from "@/lib/auth";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
-import { getStoredProductBySlug, type StoredProduct } from "@/lib/products-store";
+import { getStoredProductBySlugStrict, type StoredProduct } from "@/lib/products-store";
 import { slugify, validateProductInput } from "@/lib/product-admin";
 import { syncProductToStripe } from "@/lib/stripe-sync";
 
@@ -28,8 +28,13 @@ export async function POST(req: NextRequest) {
 
   const slug = slugify(parsed.value.name);
   if (!slug) return NextResponse.json({ ok: false, errors: ["Could not derive a slug from the name."] }, { status: 400 });
-  if (await getStoredProductBySlug(slug)) {
-    return NextResponse.json({ ok: false, errors: ["A product with this name already exists."] }, { status: 409 });
+  try {
+    if (await getStoredProductBySlugStrict(slug)) {
+      return NextResponse.json({ ok: false, errors: ["A product with this name already exists."] }, { status: 409 });
+    }
+  } catch (err) {
+    console.error("[admin-products] duplicate-slug pre-check Firestore read failed:", err);
+    return NextResponse.json({ ok: false, errors: ["Save failed."] }, { status: 500 });
   }
 
   const stripe = new Stripe(secret);

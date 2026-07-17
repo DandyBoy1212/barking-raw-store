@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireStaff } from "@/lib/auth";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
-import { getStoredProductBySlug, type StoredProduct } from "@/lib/products-store";
+import { getStoredProductBySlugStrict, type StoredProduct } from "@/lib/products-store";
 import { validateProductInput } from "@/lib/product-admin";
 import { applyStripeProductUpdate } from "@/lib/stripe-sync";
 
@@ -17,7 +17,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
   const db = getDb();
   if (!secret || !db) return NextResponse.json({ ok: false, errors: ["Service not configured."] }, { status: 503 });
 
-  const existing = await getStoredProductBySlug(slug);
+  let existing: StoredProduct | null;
+  try {
+    existing = await getStoredProductBySlugStrict(slug);
+  } catch (err) {
+    console.error("[admin-products] Firestore read failed:", err);
+    return NextResponse.json({ ok: false, errors: ["Save failed."] }, { status: 500 });
+  }
   if (!existing) return NextResponse.json({ ok: false, errors: ["Product not found."] }, { status: 404 });
 
   let body: Record<string, unknown>;

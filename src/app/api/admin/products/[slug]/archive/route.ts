@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireStaff } from "@/lib/auth";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
-import { getStoredProductBySlug } from "@/lib/products-store";
+import { getStoredProductBySlugStrict, type StoredProduct } from "@/lib/products-store";
 import { archiveStripeProduct } from "@/lib/stripe-sync";
 
 export const runtime = "nodejs";
@@ -23,7 +23,13 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ slug: stri
   }
   const archived = Boolean(body.archived);
 
-  const existing = await getStoredProductBySlug(slug);
+  let existing: StoredProduct | null;
+  try {
+    existing = await getStoredProductBySlugStrict(slug);
+  } catch (err) {
+    console.error("[admin-products] Firestore read failed:", err);
+    return NextResponse.json({ ok: false, errors: ["Save failed."] }, { status: 500 });
+  }
   if (!existing) return NextResponse.json({ ok: false, errors: ["Product not found."] }, { status: 404 });
 
   const secret = process.env.STRIPE_SECRET_KEY;

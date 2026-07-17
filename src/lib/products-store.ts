@@ -87,3 +87,17 @@ export async function getStoredProductBySlug(slug: string): Promise<StoredProduc
     return seedAsStoredProducts().find((p) => p.slug === slug) ?? null;
   }
 }
+
+/**
+ * Strict read for admin mutations: no seed fallback.
+ * Returns null only when the doc genuinely does not exist; a Firestore read error propagates
+ * to the caller rather than silently substituting a seed baseline (which would be missing
+ * stripeProductId/stripePriceId and cause mutation routes to bootstrap a duplicate Stripe product).
+ */
+export async function getStoredProductBySlugStrict(slug: string): Promise<StoredProduct | null> {
+  const db = getDb();
+  if (!db) return null;
+  const doc = await db.collection(COLLECTIONS.products).doc(slug).get();
+  if (!doc.exists) return null;
+  return docToStoredProduct(doc.id, doc.data() as Record<string, unknown>);
+}
