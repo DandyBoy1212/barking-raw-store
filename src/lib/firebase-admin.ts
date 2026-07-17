@@ -6,6 +6,7 @@ import {
 } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import { getAuth, type Auth } from "firebase-admin/auth";
+import { getStorage } from "firebase-admin/storage";
 
 // Lazily initialise Firebase Admin. Returns null (rather than throwing) when no
 // credentials are configured, so routes degrade gracefully before handover.
@@ -40,6 +41,14 @@ export function getAuthAdmin(): Auth | null {
   if (cachedAuth) return cachedAuth;
   cachedAuth = getAuth();
   return cachedAuth;
+}
+
+/** The default Storage bucket, or null when Storage is not configured. */
+export function getBucket() {
+  if (!getDb()) return null;
+  const name = process.env.FIREBASE_STORAGE_BUCKET;
+  if (!name) return null;
+  return getStorage().bucket(name);
 }
 
 // Store collections are namespaced so they never tangle with the training app.
