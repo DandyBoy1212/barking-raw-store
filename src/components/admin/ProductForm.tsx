@@ -24,12 +24,19 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
   }
 
   async function uploadImage(file: File) {
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/admin/products/image", { method: "POST", body: fd });
-    const data = await res.json();
-    if (data.ok) setImage(data.url);
-    else setErrors([data.error || "Image upload failed."]);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/products/image", { method: "POST", body: fd });
+      if (res.redirected || !res.headers.get("content-type")?.includes("json")) {
+        throw new Error("Non-JSON response (likely redirected to login).");
+      }
+      const data = await res.json();
+      if (data.ok) setImage(data.url);
+      else setErrors([data.error || "Image upload failed."]);
+    } catch {
+      setErrors(["Image upload failed. You may need to sign in again."]);
+    }
   }
 
   async function submit(e: React.FormEvent) {
@@ -45,9 +52,14 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      if (res.redirected || !res.headers.get("content-type")?.includes("json")) {
+        throw new Error("Non-JSON response (likely redirected to login).");
+      }
       const data = await res.json();
       if (data.ok) router.push("/admin/products");
       else setErrors(data.errors || ["Save failed."]);
+    } catch {
+      setErrors(["Save failed. You may need to sign in again."]);
     } finally {
       setBusy(false);
     }
