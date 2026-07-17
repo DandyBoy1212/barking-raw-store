@@ -31,12 +31,15 @@ export async function POST(req: NextRequest) {
 
   try {
     let uid: string;
+    let existingClaims: Record<string, unknown> | undefined;
     try {
-      uid = (await auth.getUserByEmail(email)).uid;
+      const user = await auth.getUserByEmail(email);
+      uid = user.uid;
+      existingClaims = user.customClaims;
     } catch {
       uid = (await auth.createUser({ email })).uid;
     }
-    await auth.setCustomUserClaims(uid, { staff: true });
+    await auth.setCustomUserClaims(uid, { ...(existingClaims || {}), staff: true });
     await db.collection(COLLECTIONS.staff).doc(uid).set(
       { email, invitedBy: "bootstrap", createdAt: FieldValue.serverTimestamp() },
       { merge: true },

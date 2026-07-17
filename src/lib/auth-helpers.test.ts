@@ -4,6 +4,7 @@ import {
   buildActionCodeSettings,
   signInEmailHtml,
   buildCustomerDoc,
+  isAllowedOrigin,
   SESSION_MAX_AGE_MS,
 } from "./auth-helpers";
 
@@ -34,6 +35,12 @@ describe("signInEmailHtml", () => {
     expect(html).toContain("Hi Michaela,");
     expect(signInEmailHtml("https://x/y")).toContain("Hi,");
   });
+
+  it("escapes an unsafe name so it cannot inject markup", () => {
+    const html = signInEmailHtml("https://x/y", "<img src=x onerror=alert(1)>");
+    expect(html).not.toContain("<img src=x onerror=alert(1)>");
+    expect(html).toContain("&lt;img src=x onerror=alert(1)&gt;");
+  });
 });
 
 describe("buildCustomerDoc", () => {
@@ -48,5 +55,31 @@ describe("buildCustomerDoc", () => {
 describe("constants", () => {
   it("session lasts 14 days", () => {
     expect(SESSION_MAX_AGE_MS).toBe(14 * 24 * 60 * 60 * 1000);
+  });
+});
+
+describe("isAllowedOrigin", () => {
+  const siteUrl = "https://barkingraw.dog";
+
+  it("passes when the origin matches the site origin", () => {
+    expect(isAllowedOrigin("https://barkingraw.dog", null, siteUrl)).toBe(true);
+  });
+
+  it("fails when the origin is an attacker origin", () => {
+    expect(isAllowedOrigin("https://evil.example", null, siteUrl)).toBe(false);
+  });
+
+  it("falls back to the referer when origin is absent", () => {
+    expect(isAllowedOrigin(null, "https://barkingraw.dog/login", siteUrl)).toBe(true);
+    expect(isAllowedOrigin(null, "https://evil.example/x", siteUrl)).toBe(false);
+  });
+
+  it("passes when neither header is present (non-browser clients)", () => {
+    expect(isAllowedOrigin(null, null, siteUrl)).toBe(true);
+  });
+
+  it("passes for the localhost dev origin regardless of siteUrl", () => {
+    expect(isAllowedOrigin("http://localhost:3000", null, siteUrl)).toBe(true);
+    expect(isAllowedOrigin(null, "http://localhost:3000/login", siteUrl)).toBe(true);
   });
 });

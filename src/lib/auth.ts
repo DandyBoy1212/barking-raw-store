@@ -12,15 +12,29 @@ import {
   type SessionUser,
 } from "@/lib/auth-helpers";
 
-/** Mint a Firebase session cookie from a freshly minted ID token. */
-export async function createSession(idToken: string): Promise<boolean> {
+const RECENT_AUTH_WINDOW_SECONDS = 300; // 5 minutes.
+
+export type CreateSessionResult = "ok" | "invalid" | "unavailable";
+
+/**
+ * Mint a Firebase session cookie from a freshly minted ID token.
+ *
+ * Requires the token's auth_time to be recent (within the last 5 minutes) so
+ * a stale or replayed ID token cannot be used to mint a long-lived session
+ * cookie well after the user actually authenticated.
+ */
+export async function createSession(idToken: string): Promise<CreateSessionResult> {
   const auth = getAuthAdmin();
-  if (!auth) return false;
+  if (!auth) return "unavailable";
   let value: string;
   try {
+    const decoded = await auth.verifyIdToken(idToken);
+    if (Date.now() / 1000 - decoded.auth_time >= RECENT_AUTH_WINDOW_SECONDS) {
+      return "invalid";
+    }
     value = await auth.createSessionCookie(idToken, { expiresIn: SESSION_MAX_AGE_MS });
   } catch {
-    return false;
+    return "invalid";
   }
   const store = await cookies();
   store.set(SESSION_COOKIE_NAME, value, {
@@ -30,11 +44,22 @@ export async function createSession(idToken: string): Promise<boolean> {
     path: "/",
     maxAge: Math.floor(SESSION_MAX_AGE_MS / 1000),
   });
-  return true;
+  return "ok";
 }
 
+/** Sign out locally and, best-effort, revoke the user's refresh tokens server-side. */
 export async function clearSession(): Promise<void> {
   const store = await cookies();
+  const cookie = store.get(SESSION_COOKIE_NAME)?.value;
+  const auth = getAuthAdmin();
+  if (auth && cookie) {
+    try {
+      const decoded = await auth.verifySessionCookie(cookie);
+      await auth.revokeRefreshTokens(decoded.uid);
+    } catch {
+      // Sign-out must always succeed locally even if revocation fails.
+    }
+  }
   store.delete(SESSION_COOKIE_NAME);
 }
 

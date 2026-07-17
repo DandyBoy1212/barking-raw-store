@@ -6,18 +6,26 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    setError(false);
     try {
       window.localStorage.setItem("br_signin_email", email.trim().toLowerCase());
-      await fetch("/api/auth/link", {
+      const res = await fetch("/api/auth/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      setSent(true);
+      if (res.ok) {
+        setSent(true);
+      } else {
+        setError(true);
+      }
+    } catch {
+      setError(true);
     } finally {
       setBusy(false);
     }
@@ -41,6 +49,9 @@ export default function LoginPage() {
                 style={{ display: "block", width: "100%", padding: "0.7rem", marginTop: "0.3rem" }}
               />
             </label>
+            {error ? (
+              <p>Something went wrong sending your link. Please try again shortly.</p>
+            ) : null}
             <button className="btn btn--solid-ink" disabled={busy} type="submit">
               {busy ? "Sending..." : "Email me a link"}
             </button>
