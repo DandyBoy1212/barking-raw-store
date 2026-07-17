@@ -1,9 +1,12 @@
 /* eslint-disable react/no-unescaped-entities */
-import { products } from "@/data/products";
+import { getStoredProducts, toCatalogue } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { PawTrail } from "@/components/PawTrail";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const products = (await getStoredProducts()).map(toCatalogue);
   return (
     <main>
       {/* HERO */}
