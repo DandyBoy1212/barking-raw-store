@@ -4,6 +4,7 @@ import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import { appendOrderRow } from "@/lib/sheet";
 import { isLocalPostcode } from "@/lib/shipping";
 import { FieldValue } from "firebase-admin/firestore";
+import { ensureCustomer } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -91,6 +92,11 @@ async function fulfil(stripe: Stripe, session: Stripe.Checkout.Session) {
         .set({ status: "converted", updatedAt: FieldValue.serverTimestamp() }, { merge: true })
         .catch(() => {});
     }
+
+    // Invisible account: create or match a Firebase user + customer doc for this buyer.
+    await ensureCustomer({ email: customerEmail, name: customerName, postcode }).catch((err) => {
+      console.error("[webhook] ensureCustomer failed:", err);
+    });
   }
 
   // Append a row to Michaela's fulfilment sheet (append-only).
