@@ -108,7 +108,7 @@ describe("priceChanged", () => {
 });
 
 describe("applyStripeProductUpdate", () => {
-  const existing = {
+  const existing: StoredProduct = {
     slug: "chicken-feet",
     name: "Chicken Feet",
     price: 6,
@@ -120,7 +120,7 @@ describe("applyStripeProductUpdate", () => {
     archived: false,
     stripeProductId: "prod_1",
     stripePriceId: "price_old",
-  } as const;
+  };
 
   it("updates the product but keeps the price id when the price is unchanged", async () => {
     const calls: string[] = [];
