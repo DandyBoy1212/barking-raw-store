@@ -1,0 +1,21 @@
+import { notFound } from "next/navigation";
+import { requireStaff } from "@/lib/auth";
+import { getStoredProductBySlug, toCatalogue } from "@/lib/products-store";
+import { ProductForm } from "@/components/admin/ProductForm";
+
+export const dynamic = "force-dynamic";
+
+export default async function EditProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  await requireStaff();
+  const { slug } = await params;
+  const product = await getStoredProductBySlug(slug);
+  if (!product) notFound();
+  return (
+    <main className="band band--paper">
+      <div className="wrap">
+        <h1 className="display">Edit: {product.name}</h1>
+        <ProductForm mode={{ kind: "edit", slug }} initial={toCatalogue(product)} />
+      </div>
+    </main>
+  );
+}
