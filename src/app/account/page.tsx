@@ -1,0 +1,16 @@
+import { requireUser } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+
+export default async function AccountPage() {
+  const user = await requireUser();
+  return (
+    <main className="band band--paper">
+      <div className="wrap" style={{ maxWidth: 560 }}>
+        <h1 className="display">Your account</h1>
+        <p>Signed in as {user.email}.</p>
+        <p style={{ opacity: 0.7 }}>Points and order history arrive in a later stage.</p>
+      </div>
+    </main>
+  );
+}

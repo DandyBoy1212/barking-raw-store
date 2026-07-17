@@ -15,6 +15,9 @@ export function Header() {
             <span>Natural Dog Food</span>
           </span>
         </a>
+        <a className="header__account" href="/account" style={{ marginLeft: "auto", marginRight: "1rem" }}>
+          Account
+        </a>
         <button className="basket-btn" onClick={() => setOpen(true)} aria-label="Open basket">
           Basket
           <span className="basket-btn__count">{count}</span>
