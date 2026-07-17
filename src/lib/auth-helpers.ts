@@ -81,7 +81,14 @@ export function isAllowedOrigin(
     return origin === allowedOrigin || origin === LOCALHOST_DEV_ORIGIN;
   }
   if (referer) {
-    return referer.startsWith(allowedOrigin) || referer.startsWith(LOCALHOST_DEV_ORIGIN);
+    // Exact origin or origin followed by "/": a plain prefix match would let
+    // https://barkingraw.dog.evil.example (or localhost:30001) slip through.
+    return (
+      referer === allowedOrigin ||
+      referer.startsWith(allowedOrigin + "/") ||
+      referer === LOCALHOST_DEV_ORIGIN ||
+      referer.startsWith(LOCALHOST_DEV_ORIGIN + "/")
+    );
   }
   return true;
 }

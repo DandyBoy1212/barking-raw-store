@@ -74,6 +74,15 @@ describe("isAllowedOrigin", () => {
     expect(isAllowedOrigin(null, "https://evil.example/x", siteUrl)).toBe(false);
   });
 
+  it("rejects a referer whose host merely starts with the site origin", () => {
+    expect(isAllowedOrigin(null, "https://barkingraw.dog.evil.example/x", siteUrl)).toBe(false);
+    expect(isAllowedOrigin(null, "http://localhost:30001/x", siteUrl)).toBe(false);
+  });
+
+  it("accepts a bare same-origin referer with no path", () => {
+    expect(isAllowedOrigin(null, "https://barkingraw.dog", siteUrl)).toBe(true);
+  });
+
   it("passes when neither header is present (non-browser clients)", () => {
     expect(isAllowedOrigin(null, null, siteUrl)).toBe(true);
   });
