@@ -22,21 +22,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   }
   const email = (body.email || "").trim().toLowerCase();
-  if (!email) return NextResponse.json({ error: "no email" }, { status: 400 });
+  if (!email || !email.includes("@")) {
+    return NextResponse.json({ error: "no email" }, { status: 400 });
+  }
   const auth = getAuthAdmin();
   const db = getDb();
   if (!auth || !db) return NextResponse.json({ error: "unavailable" }, { status: 503 });
 
-  let uid: string;
   try {
-    uid = (await auth.getUserByEmail(email)).uid;
-  } catch {
-    uid = (await auth.createUser({ email })).uid;
+    let uid: string;
+    try {
+      uid = (await auth.getUserByEmail(email)).uid;
+    } catch {
+      uid = (await auth.createUser({ email })).uid;
+    }
+    await auth.setCustomUserClaims(uid, { staff: true });
+    await db.collection(COLLECTIONS.staff).doc(uid).set(
+      { email, invitedBy: "bootstrap", createdAt: FieldValue.serverTimestamp() },
+      { merge: true },
+    );
+    return NextResponse.json({ ok: true, uid });
+  } catch (err) {
+    console.error("[make-staff] failed:", err);
+    return NextResponse.json({ error: "failed" }, { status: 500 });
   }
-  await auth.setCustomUserClaims(uid, { staff: true });
-  await db.collection(COLLECTIONS.staff).doc(uid).set(
-    { email, invitedBy: "bootstrap", createdAt: FieldValue.serverTimestamp() },
-    { merge: true },
-  );
-  return NextResponse.json({ ok: true, uid });
 }
