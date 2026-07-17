@@ -9,9 +9,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Same bearer pattern as the cron routes: no secret set means allow (dev only).
+// In production, an unset secret fails closed rather than opening the route to everyone.
 function isAuthorised(req: NextRequest): boolean {
   const secret = process.env.SEED_SECRET;
-  if (!secret) return true;
+  if (!secret) return process.env.NODE_ENV !== "production";
   return req.headers.get("authorization") === `Bearer ${secret}`;
 }
 

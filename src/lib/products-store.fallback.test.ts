@@ -30,6 +30,31 @@ describe("getStoredProducts (Firestore read throws)", () => {
   });
 });
 
+describe("getStoredProducts (Firestore collection empty vs all-archived)", () => {
+  beforeEach(() => {
+    getMock.mockReset();
+  });
+
+  it("falls back to the seed catalogue when the collection is truly empty", async () => {
+    getMock.mockResolvedValue({ empty: true, docs: [] });
+    const result = await getStoredProducts();
+    expect(result.length).toBeGreaterThan(0);
+    expect(result.every((p) => p.active && !p.archived)).toBe(true);
+  });
+
+  it("returns an empty list (not the seed) when docs exist but all are archived/inactive", async () => {
+    getMock.mockResolvedValue({
+      empty: false,
+      docs: [
+        { id: "a", data: () => ({ name: "A", price: 1, hook: "h", description: "d", image: "/a.png", active: false, archived: false }) },
+        { id: "b", data: () => ({ name: "B", price: 2, hook: "h", description: "d", image: "/b.png", active: true, archived: true }) },
+      ],
+    });
+    const result = await getStoredProducts();
+    expect(result).toEqual([]);
+  });
+});
+
 describe("getStoredProductBySlug (Firestore read throws)", () => {
   beforeEach(() => {
     getMock.mockReset();

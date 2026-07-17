@@ -43,6 +43,18 @@ describe("docToStoredProduct", () => {
     expect(sp.stripePriceId).toBe("price_1");
     expect(sp.safetyNote).toBe("care");
   });
+
+  it("guards a non-finite price to 0 instead of yielding NaN", () => {
+    const sp = docToStoredProduct("bad-price", {
+      name: "Bad Price",
+      price: "not a number",
+      hook: "h",
+      description: "d",
+      image: "/bad-price.png",
+    });
+    expect(sp.price).toBe(0);
+    expect(Number.isFinite(sp.price)).toBe(true);
+  });
 });
 
 describe("seedAsStoredProducts", () => {

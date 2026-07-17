@@ -11,10 +11,11 @@ export type StoredProduct = Product & {
 
 /** Normalise a raw Firestore doc into a StoredProduct, applying defaults. */
 export function docToStoredProduct(id: string, data: Record<string, unknown>): StoredProduct {
+  const rawPrice = Number(data.price ?? 0);
   return {
     slug: id,
     name: String(data.name ?? ""),
-    price: Number(data.price ?? 0),
+    price: Number.isFinite(rawPrice) ? rawPrice : 0,
     hook: String(data.hook ?? ""),
     description: String(data.description ?? ""),
     badges: Array.isArray(data.badges) ? (data.badges as Badge[]) : [],
@@ -52,9 +53,12 @@ export async function getStoredProducts(): Promise<StoredProduct[]> {
   if (!db) return seedAsStoredProducts().filter((p) => p.active && !p.archived);
   try {
     const snap = await db.collection(COLLECTIONS.products).get();
+    if (snap.empty) {
+      console.warn("[products-store] getStoredProducts: collection is empty, falling back to seed (pre-seed state)");
+      return seedAsStoredProducts().filter((p) => p.active && !p.archived);
+    }
     const all = snap.docs.map((d) => docToStoredProduct(d.id, d.data() as Record<string, unknown>));
-    const live = all.filter((p) => p.active && !p.archived);
-    return live.length ? live : seedAsStoredProducts().filter((p) => p.active && !p.archived);
+    return all.filter((p) => p.active && !p.archived);
   } catch (err) {
     console.error("[products-store] getStoredProducts Firestore read failed, falling back to seed:", err);
     return seedAsStoredProducts().filter((p) => p.active && !p.archived);
