@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Stripe from "stripe";
-import { products } from "@/data/products";
 import { computeShipping } from "@/lib/shipping";
+import { getStoredProducts } from "@/lib/products-store";
+import { buildCheckoutLineItem } from "@/lib/stripe-sync";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -35,24 +36,19 @@ export async function POST(req: NextRequest) {
   const origin =
     req.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin;
 
-  // Build line items from SERVER-SIDE prices. Never trust prices from the client.
+  // Build line items from SERVER-SIDE products. Never trust prices from the client.
+  const catalogue = await getStoredProducts();
+  const bySlug = new Map(catalogue.map((p) => [p.slug, p]));
   const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
   let subtotal = 0;
   const summary: string[] = [];
   for (const l of lines) {
-    const p = products.find((pr) => pr.slug === l.slug);
-    if (!p) continue;
+    const p = bySlug.get(l.slug);
+    if (!p || !p.active || p.archived) continue;
     const qty = Math.max(1, Math.min(50, Math.floor(Number(l.qty) || 1)));
     subtotal += p.price * qty;
     summary.push(`${qty} x ${p.name}`);
-    line_items.push({
-      quantity: qty,
-      price_data: {
-        currency: "gbp",
-        unit_amount: Math.round(p.price * 100),
-        product_data: { name: p.name },
-      },
-    });
+    line_items.push(buildCheckoutLineItem(p, qty));
   }
   if (line_items.length === 0) {
     return NextResponse.json({ error: "Your basket is empty." }, { status: 400 });
