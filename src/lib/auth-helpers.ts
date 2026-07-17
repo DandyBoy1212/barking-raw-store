@@ -34,7 +34,7 @@ export function signInEmailHtml(link: string, name?: string): string {
     <p>Tap the button below to sign in. The link works once and expires shortly.</p>
     <p><a href="${link}" style="display:inline-block;background:#0b0b0b;color:#fff;padding:12px 22px;border-radius:999px;font-weight:800;text-decoration:none">Sign in</a></p>
     <p style="color:#6b6b6b;font-size:13px">If you did not ask to sign in, you can ignore this email.</p>
-    <p style="color:#6b6b6b;font-size:13px">Barking Raw - Natural Dog Food - barkingraw.dog</p>
+    <p style="color:#6b6b6b;font-size:13px">Barking Raw · Natural Dog Food · barkingraw.dog</p>
   </div>`;
 }
 

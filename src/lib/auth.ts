@@ -16,7 +16,12 @@ import {
 export async function createSession(idToken: string): Promise<boolean> {
   const auth = getAuthAdmin();
   if (!auth) return false;
-  const value = await auth.createSessionCookie(idToken, { expiresIn: SESSION_MAX_AGE_MS });
+  let value: string;
+  try {
+    value = await auth.createSessionCookie(idToken, { expiresIn: SESSION_MAX_AGE_MS });
+  } catch {
+    return false;
+  }
   const store = await cookies();
   store.set(SESSION_COOKIE_NAME, value, {
     httpOnly: true,
