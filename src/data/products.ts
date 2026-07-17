@@ -20,6 +20,11 @@ export interface Product {
   badges: Badge[];
   image: string; // path under /public
   safetyNote?: string;
+  // Storage/sync fields (populated once a product lives in Firestore):
+  active?: boolean;
+  archived?: boolean;
+  stripeProductId?: string;
+  stripePriceId?: string;
 }
 
 export const products: Product[] = [

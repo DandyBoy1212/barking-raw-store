@@ -36,4 +36,5 @@ export const COLLECTIONS = {
   carts: "store_carts",
   orders: "store_orders",
   discountCodes: "store_discount_codes",
+  products: "store_products",
 } as const;
