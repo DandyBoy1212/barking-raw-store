@@ -21,8 +21,15 @@ export async function POST(req: NextRequest) {
   if (!auth) return NextResponse.json({ error: "auth unavailable" }, { status: 503 });
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://barkingraw.dog";
-  const link = await auth.generateSignInWithEmailLink(email, buildActionCodeSettings(siteUrl));
-  await sendEmail(email, "Your Barking Raw sign-in link", signInEmailHtml(link));
+  try {
+    const link = await auth.generateSignInWithEmailLink(email, buildActionCodeSettings(siteUrl));
+    await sendEmail(email, "Your Barking Raw sign-in link", signInEmailHtml(link));
+  } catch (err) {
+    // Link generation does not depend on whether the address is registered, so
+    // failures here are configuration or transient errors (not a signal to leak).
+    // Log server-side but still return the uniform response below.
+    console.error("[auth/link] failed:", err);
+  }
   // Always report success so we never reveal whether an email is registered.
   return NextResponse.json({ ok: true });
 }
