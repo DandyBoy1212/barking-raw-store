@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { ALL_BADGES } from "@/data/products";
 import { ALL_SENSITIVITIES, SENSITIVITY_BADGE } from "@/data/customers";
-import { deriveLifeStage, dogOwnerLabel } from "./customer-fields";
+import {
+  deriveLifeStage,
+  dogOwnerLabel,
+  normaliseAddress,
+  validateDogInput,
+} from "./customer-fields";
 
 describe("SENSITIVITY_BADGE", () => {
   it("maps every sensitivity onto a badge that exists", () => {
@@ -55,5 +60,67 @@ describe("dogOwnerLabel", () => {
 
   it("falls back to a plain greeting with no dogs, never to an empty possessive", () => {
     expect(dogOwnerLabel([])).toBe("");
+  });
+});
+
+describe("validateDogInput", () => {
+  it("accepts a dog with nothing but a name, because the rest is asked for in conversation", () => {
+    const result = validateDogInput({ name: "  Loki " });
+    expect(result).toEqual({ ok: true, value: { name: "Loki" } });
+  });
+
+  it("refuses a dog with no name, since a nameless dog cannot be shown or greeted", () => {
+    const result = validateDogInput({ name: "   " });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors).toContain("A dog needs a name.");
+  });
+
+  it("keeps the fields it understands", () => {
+    const result = validateDogInput({
+      name: "Bear",
+      breed: " Labrador ",
+      bornAt: "2020-03-04",
+      size: "large",
+      weightKg: 32,
+      activity: "high",
+      sensitivities: ["itchy-skin"],
+      allergies: [" Chicken ", "wheat"],
+    });
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        name: "Bear",
+        breed: "Labrador",
+        bornAt: "2020-03-04",
+        size: "large",
+        weightKg: 32,
+        activity: "high",
+        sensitivities: ["itchy-skin"],
+        allergies: ["chicken", "wheat"],
+      },
+    });
+  });
+
+  it("drops a value it does not understand instead of failing the whole dog", () => {
+    const result = validateDogInput({
+      name: "Gus",
+      size: "enormous" as never,
+      activity: "vigorous" as never,
+      sensitivities: ["itchy-skin", "made-up" as never],
+      bornAt: "the summer",
+      weightKg: -4,
+    });
+    expect(result).toEqual({ ok: true, value: { name: "Gus", sensitivities: ["itchy-skin"] } });
+  });
+});
+
+describe("normaliseAddress", () => {
+  it("trims every line and upper cases the postcode", () => {
+    expect(normaliseAddress({ line1: " 1 High St ", city: " Dundee ", postcode: " dd5 1aa " }))
+      .toEqual({ line1: "1 High St", line2: "", city: "Dundee", postcode: "DD5 1AA" });
+  });
+
+  it("returns a fully blank address for nothing at all, never undefined fields", () => {
+    expect(normaliseAddress(undefined)).toEqual({ line1: "", line2: "", city: "", postcode: "" });
   });
 });
