@@ -76,6 +76,20 @@ npm test           # unit tests (shipping etc.)
 - Optional 60 to 90s "you've been lied to" hero video at the top of the page.
 - Weight-based postage tiers (only if order data ever shows heavy baskets).
 
+## The dev origin allowlist is pinned to port 3000
+
+`LOCALHOST_DEV_ORIGIN` in `src/lib/auth-helpers.ts` is the literal string
+`http://localhost:3000`, and `isAllowedOrigin` accepts only that or the origin of
+`NEXT_PUBLIC_SITE_URL`. A dev server on any other port therefore gets a flat 403 from
+`/api/auth/link` with no logging, which reads as "the email system is broken" when it is
+really a CORS-style origin check. Setting `NEXT_PUBLIC_SITE_URL` to the port the server
+actually runs on is the fix, and it must be set per worktree, since each parallel worktree
+needs its own port. Worth making the dev allowance derive from the port rather than being
+hardcoded, before Wave 2 runs several worktrees at once.
+
+Also note `/api/auth/link` throttles to 3 requests per email per 15 minutes and returns
+`{ok: true}` when throttled, so a fourth attempt looks successful but sends nothing.
+
 ## Two things found while wiring the live Firebase project (2026-07-25)
 
 Neither is caused by the A.1 work. Both are worth a decision before launch.
