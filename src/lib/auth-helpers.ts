@@ -71,7 +71,15 @@ export function buildCustomerDoc(input: { email: string; name?: string; postcode
   };
 }
 
-const LOCALHOST_DEV_ORIGIN = "http://localhost:3000";
+/** True for an http URL on localhost or 127.0.0.1, whatever the port. */
+function isLocalhostUrl(value: string): boolean {
+  try {
+    const u = new URL(value);
+    return u.protocol === "http:" && (u.hostname === "localhost" || u.hostname === "127.0.0.1");
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Same-origin check for CSRF protection on state-changing routes.
@@ -80,6 +88,10 @@ const LOCALHOST_DEV_ORIGIN = "http://localhost:3000";
  * attack this guards against, so a missing Origin (and missing Referer)
  * means a non-browser client such as curl or a server-to-server call, which
  * this helper allows through.
+ *
+ * When the configured site is itself localhost (local dev), any localhost
+ * port is allowed, because parallel worktree dev servers each pick their own
+ * port. When the site is a real domain, no localhost allowance exists at all.
  */
 export function isAllowedOrigin(
   origin: string | null,
@@ -87,17 +99,18 @@ export function isAllowedOrigin(
   siteUrl: string,
 ): boolean {
   const allowedOrigin = new URL(siteUrl).origin;
+  const devSite = isLocalhostUrl(siteUrl);
   if (origin) {
-    return origin === allowedOrigin || origin === LOCALHOST_DEV_ORIGIN;
+    return origin === allowedOrigin || (devSite && isLocalhostUrl(origin));
   }
   if (referer) {
     // Exact origin or origin followed by "/": a plain prefix match would let
-    // https://barkingraw.dog.evil.example (or localhost:30001) slip through.
+    // https://barkingraw.dog.evil.example slip through. The localhost check
+    // parses the URL, so localhost.evil.example does not pass either.
     return (
       referer === allowedOrigin ||
       referer.startsWith(allowedOrigin + "/") ||
-      referer === LOCALHOST_DEV_ORIGIN ||
-      referer.startsWith(LOCALHOST_DEV_ORIGIN + "/")
+      (devSite && isLocalhostUrl(referer))
     );
   }
   return true;

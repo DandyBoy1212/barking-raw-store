@@ -99,9 +99,30 @@ describe("isAllowedOrigin", () => {
     expect(isAllowedOrigin(null, null, siteUrl)).toBe(true);
   });
 
-  it("passes for the localhost dev origin regardless of siteUrl", () => {
+  it("refuses a localhost origin when the site itself is not localhost", () => {
+    // The old behaviour allowed http://localhost:3000 even in production, which
+    // let a page served by any process on the visitor's own machine post to us.
+    expect(isAllowedOrigin("http://localhost:3000", null, siteUrl)).toBe(false);
+    expect(isAllowedOrigin(null, "http://localhost:3000/login", siteUrl)).toBe(false);
+  });
+});
+
+describe("isAllowedOrigin in local dev", () => {
+  const siteUrl = "http://localhost:3000";
+
+  it("passes the configured localhost origin", () => {
     expect(isAllowedOrigin("http://localhost:3000", null, siteUrl)).toBe(true);
-    expect(isAllowedOrigin(null, "http://localhost:3000/login", siteUrl)).toBe(true);
+  });
+
+  it("passes localhost on any other port, for parallel worktree dev servers", () => {
+    expect(isAllowedOrigin("http://localhost:3001", null, siteUrl)).toBe(true);
+    expect(isAllowedOrigin(null, "http://localhost:4172/login", siteUrl)).toBe(true);
+    expect(isAllowedOrigin("http://127.0.0.1:3005", null, siteUrl)).toBe(true);
+  });
+
+  it("still refuses a non-localhost origin", () => {
+    expect(isAllowedOrigin("https://evil.example", null, siteUrl)).toBe(false);
+    expect(isAllowedOrigin(null, "http://localhost.evil.example/x", siteUrl)).toBe(false);
   });
 });
 
