@@ -165,6 +165,33 @@ Early access is the members area's strongest perk and it costs nothing.
   the pillar page, the shop page, or in search.
 - After that date it behaves as any other product, with no manual step.
 
+### 4.4 Two fulfilment paths, and how postage is presented
+
+Some products post from Michaela's own stock. Others come from a supplier and post direct from
+them. The current shipping rule (free to DD1 to DD6, otherwise GBP 3.95, free over GBP 35) assumes
+one parcel from one place and will not survive the second path.
+
+- A product carries a fulfilment path: her own stock, or supplier posted.
+- Her own stock keeps the existing rule and continues to land in the Google Sheet.
+- Supplier posted items carry their own postage and their own dispatch time, taken from the
+  supplier rather than the site's rule.
+- A basket containing both is two parcels, two arrival dates, and potentially two postage charges.
+  The basket and the checkout both show this before payment, itemised, so nobody discovers it after
+  paying.
+
+**Customer facing language.** The word dropship, and the mechanism behind it, never appears in
+anything a customer reads. What the customer is told is the part that affects them: that the item
+posts separately, when it will arrive, and what its postage costs. Wording along the lines of
+"Posts separately, arrives in 3 to 5 days" on the product, and a separate itemised delivery line in
+the basket. That is full disclosure of everything material to the buyer without narrating the
+supply chain.
+
+Internally the field is named for what it is, so nobody maintaining the code is guessing.
+
+Returns need a route per path, since a supplier posted item does not come back to Michaela's house.
+Confirm the supplier's returns process before this ships, because it has to be stated in the
+returns policy in section 12.1.
+
 ## 5. Email capture and segmentation
 
 Two forms, two offers, one list.
@@ -285,7 +312,10 @@ at the point of purchase anyway.
 
 ### 8.2 Dog fields
 
-Each field earns its place by driving something. Anything that drives nothing gets cut.
+Each field earns its place by driving something, so the profile is useful rather than long for the
+sake of it. Completion rate is not the main constraint, because most profiles are filled in by
+conversation at the stall rather than typed in alone. The test is whether Michaela will act on the
+answer.
 
 | Field | What it powers |
 |---|---|
@@ -363,6 +393,40 @@ something to say at the table that cannot be got from the website.
 - Staff gated, behind the existing staff claim. Michaela is vouching for the person in front of
   her, so no email verification round trip is needed at the table. The welcome email with a magic
   link goes out afterwards.
+- **A staff PIN for stall days, not a magic link.** The iPad is borrowed and used on Sundays only.
+  Magic link login would mean opening her email inbox on somebody else's device every market day.
+  A short staff PIN with an explicit end of day logout is the workable version.
+- **Nothing left on the device.** The offline queue clears once it has synced, and logging out
+  wipes the local store, because the iPad goes back to its owner. Customer names, addresses and
+  phone numbers cannot be sitting in a browser on a device Michaela does not own.
+- Built as a web page with nothing to install, since it has to work on a device she does not
+  control.
+
+### 10.1.2 Recording stall sales
+
+In scope for v1. Stall sales must land in the system, or stock levels, revenue and loyalty points
+are all wrong from day one, and the customers Michaela converted face to face end up the worst
+served by the loyalty scheme.
+
+The approach deliberately avoids coupling the data to a payment rail:
+
+- A stall sale form in the staff admin. Michaela picks the member, picks the products and
+  quantities, marks it cash or card, saves.
+- That decrements stock, awards loyalty points at the normal per product rate, and writes an order
+  record so the customer has history and can see it in their account.
+- The payment method is recorded but the money is not taken by the site. She takes it however she
+  likes, cash, her own card machine, or anything else.
+- Same offline requirement as the signup form, for the same reason.
+
+Rationale: the iPad is borrowed and Sunday only, so tying her takings to it is not viable. This
+version works with cash, which she will definitely take, and with any card provider she chooses.
+
+On card providers: SumUp and similar advertise free card payments, which means no monthly
+subscription rather than no cost. They take a percentage per transaction, as Stripe does in person.
+The fee is the small question. The larger one is that a SumUp sale lands in SumUp, so the site never
+sees it and two systems need reconciling forever. The stall sale form makes that irrelevant, because
+the record is created regardless of which rail took the money. If integrated card payment is ever
+wanted, Stripe's in person option is the upgrade path and nothing built here is wasted.
 
 ### 10.2 Dogs of the day
 
@@ -454,20 +518,21 @@ Written in as assumptions so the document is not held up. Each one will change s
    first, with whatever few products exist and a "tell us what you need" capture. If the new stock
    includes lickimats, snuffle mats, beds or calming products, all four pillars are shoppable on
    day one and this assumption falls away.
-2. **Hosting.** Assumed Vercel, on the strength of `vercel.json` and the existing cron schedule.
-   If it is a VPS instead, the environment variable steps and the cron mechanism both change.
+2. ~~**Hosting.**~~ Resolved 2026-07-25: Vercel, with a domain already owned. Michaela's Stripe
+   instructions are written against Vercel's environment variables screen.
 3. **Michaela's weekly commitment.** Assumed one pillar post per week, with eight to ten banked
    before launch. If she cannot sustain weekly, the members area goes stale, and a stale members
    area is worse than none because everybody who joined can see it died. This is the only part of
    the build whose success depends on somebody doing something every week indefinitely.
-4. **Whether the stall iPad also takes the payment.** Assumed not, for v1, on scope grounds.
-   The consequence of that assumption has to be handled rather than ignored: stall sales are
-   invisible to the system, so stock levels do not decrement, revenue reporting is short, and the
-   customers Michaela converted face to face end up as members with no order history and no loyalty
-   points, which makes them the worst served by the loyalty scheme. So if the iPad does not take the
-   money, Michaela needs a way to log a stall sale against a member afterwards, or the data is
-   quietly wrong from day one. If it does take the money, signup and sale become one flow and
-   everything lands correctly, at the cost of real extra scope on an already full launch.
+4. ~~**Whether the stall iPad also takes the payment.**~~ Resolved 2026-07-25: it does not. Stall
+   sales are recorded through a form in the staff admin instead, so the data is right regardless of
+   which payment rail took the money. See section 10.1.2.
+5. **Avasam and the supplier posted range.** Nothing is known yet: which products, what the margins
+   are, who posts them, how long they take, whether postage is charged separately, or how a return
+   works. Assumption: a supplier posted path exists and is designed as set out in section 4.4.
+   Everything else waits on Michaela. This is a genuine fork rather than a detail, because it breaks
+   the site's single shipping rule and its single fulfilment route, so it should not be discovered
+   by the first customer who orders one item of each.
 
 ## 15. Build order
 
