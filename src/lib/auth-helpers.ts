@@ -102,3 +102,21 @@ export function isAllowedOrigin(
   }
   return true;
 }
+
+/**
+ * Stricter same-origin check, for routes with no non-browser caller.
+ *
+ * isAllowedOrigin above lets a request through when it states neither an Origin nor
+ * a Referer, so that curl and server-to-server callers keep working. The account
+ * routes have no such caller: they are only ever fetched by our own page script, and
+ * a browser always states its origin on a cross-site POST. So a request that will not
+ * say where it came from is refused here rather than trusted.
+ */
+export function isBrowserSameOrigin(
+  origin: string | null,
+  referer: string | null,
+  siteUrl: string,
+): boolean {
+  if (!origin && !referer) return false;
+  return isAllowedOrigin(origin, referer, siteUrl);
+}

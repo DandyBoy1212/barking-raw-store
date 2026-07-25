@@ -5,6 +5,7 @@ import {
   signInEmailHtml,
   buildCustomerDoc,
   isAllowedOrigin,
+  isBrowserSameOrigin,
   SESSION_MAX_AGE_MS,
 } from "./auth-helpers";
 
@@ -101,5 +102,29 @@ describe("isAllowedOrigin", () => {
   it("passes for the localhost dev origin regardless of siteUrl", () => {
     expect(isAllowedOrigin("http://localhost:3000", null, siteUrl)).toBe(true);
     expect(isAllowedOrigin(null, "http://localhost:3000/login", siteUrl)).toBe(true);
+  });
+});
+
+describe("isBrowserSameOrigin", () => {
+  const siteUrl = "https://barkingraw.dog";
+
+  it("passes a matching origin", () => {
+    expect(isBrowserSameOrigin("https://barkingraw.dog", null, siteUrl)).toBe(true);
+  });
+
+  it("passes a matching referer when the origin header is absent", () => {
+    expect(isBrowserSameOrigin(null, "https://barkingraw.dog/account", siteUrl)).toBe(true);
+  });
+
+  it("refuses a request that states no origin at all", () => {
+    // This is the difference from isAllowedOrigin, which allows it through for
+    // non-browser callers. The account routes are only ever called by our own
+    // page script, so a request that will not say where it came from is refused.
+    expect(isBrowserSameOrigin(null, null, siteUrl)).toBe(false);
+  });
+
+  it("refuses another origin", () => {
+    expect(isBrowserSameOrigin("https://evil.example", null, siteUrl)).toBe(false);
+    expect(isBrowserSameOrigin(null, "https://barkingraw.dog.evil.example/x", siteUrl)).toBe(false);
   });
 });
