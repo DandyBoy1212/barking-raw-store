@@ -96,7 +96,7 @@ Reference ad copy, subject to the claim check in section 12.3:
 | About Us | Origin story, the mission, and the TTouch and nutrition credentials |
 | Members | Gated. See section 7 |
 | Dogs of the Day | Public. See section 10.2 |
-| Account | Existing. Profile, dogs, points balance and expiry |
+| Account | Existing. Profile, dogs, points balance |
 | Contact | Required |
 | Terms, Privacy, Delivery and Returns | Required. See section 12 |
 
@@ -210,7 +210,7 @@ Two forms, two offers, one list.
   segments worth mailing differently: subscribers who have never bought, members who joined at the
   stall but have not ordered, and members who have ordered.
 - Marketing email requires an unticked consent box at the point of capture. Transactional email
-  (order confirmations, points expiry) does not.
+  (order confirmations, dispatch notices) does not.
 
 ### 5.1 The welcome sequence
 
@@ -236,6 +236,36 @@ The permanent 10% is reserved for subscribe and save, because that is the only o
 customer gives something back for it. A permanent discount granted for an email address taxes the
 best customers forever.
 
+### 6.1 The discount has to be priced in, not given away
+
+Current prices are Michaela's bottom price, the least she is willing to take. The 10% is then taken
+off that, so every discount comes straight out of her profit. A discount funded that way is not a
+marketing tool, it is a loss she has agreed to in advance.
+
+The fix is to set the list price so that the discounted price is the price she actually wanted. Then
+the 10% costs nothing and can be used freely, at the stall, in ads, and in the welcome email.
+
+**The arithmetic matters, and the obvious version is wrong.** Adding 10% and then taking 10% off does
+not return you to where you started, because the two percentages are of different numbers.
+
+- Bottom price GBP 10.00. Add 10% gives GBP 11.00. Take 10% off gives GBP 9.90. Ten pence short on
+  every single sale.
+- Bottom price GBP 10.00, divided by 0.9, gives a list price of GBP 11.11. Take 10% off gives exactly
+  GBP 10.00.
+
+So the rule is **divide the bottom price by 0.9**, which is roughly 11% on rather than 10%. Applied
+across a full basket and a year of orders, the difference between the two methods is not trivial.
+
+Two things to check before repricing, because this is a real price rise on the shelf:
+
+- Compare the new list prices against Pets at Home, Fife Animal Feeds and Paws HQ. Funding the
+  discount is worthless if it prices her out of the comparison a customer actually makes.
+- Anyone already buying at the current price sees an increase. Existing customers should be
+  grandfathered or told, not silently repriced.
+
+The same logic applies to subscribe and save. If the ongoing 10% is not priced in, every recurring
+customer, which is to say the best customers, is the least profitable.
+
 ## 7. The members area
 
 A members area is content, one way. It is not a discussion forum, and the distinction is the whole
@@ -255,7 +285,7 @@ broken promise, and worse than never making it.
 - A dogs of the day strip.
 - Early access: products inside their members only window, buyable here first.
 - Courses as they land. Nutrition first, then TTouch, in step with Michaela's qualifications.
-- Their points balance and expiry date.
+- Their points balance, and what it is worth in pounds.
 
 ### 7.2 How Michaela posts
 
@@ -267,7 +297,8 @@ for her to learn.
 
 - **One weekly digest.** The week's post and a dog photo, batched. Same cron and Resend pattern as
   the abandoned cart engine.
-- **Instant email only when it is about them.** Points expiring, order dispatched.
+- **Instant email only when it is about them.** Order dispatched, or a members only drop they can
+  buy before anyone else.
 
 Explicitly rejected: an email per post. It is the fastest way to lose a list, and losing the
 marketing list tends to take the transactional relationship with it, because most people do not
@@ -336,14 +367,25 @@ filtering and the email personalisation together.
 
 ## 9. Loyalty
 
-Confirmed: the 30 day, money off model, as already specced in
-`docs/specs/2026-07-17-accounts-loyalty-admin-design.md`. Points expire 30 days after the order
-that earned them, redemption is a flat 100 points to GBP 1, and the earn rate is per product so
-promotions are possible.
+Points are money off and they **do not expire**. Redemption is a flat 100 points to GBP 1, and the
+earn rate is per product so promotions are possible.
 
-This overrides the brainstorm document, which described no expiry and a free item. The expiry is
-load bearing, because it is what makes the "your points are worth GBP 3 and they go on Friday"
-email work.
+This supersedes `docs/specs/2026-07-17-accounts-loyalty-admin-design.md`, which specified a 30 day
+per batch expiry. Decision reversed by Liam on 2026-07-25. Any expiry logic already planned against
+that spec, including the oldest batch first spend order and the pre expiry reminder email, comes out.
+
+Two consequences of removing expiry, recorded so they are handled rather than met later:
+
+- **The reminder email loses its hook.** "Your points are worth GBP 3 and they go on Friday" was the
+  reason that email got opened. Without a deadline the replacement is a plain balance nudge, which
+  works far less hard. Worth pairing it with something else, for example new stock landing, rather
+  than sending it on its own.
+- **Unredeemed points accumulate indefinitely.** Every point issued is money off owed at some future
+  date, with no point at which it lapses. Two things keep that from becoming a surprise: report the
+  outstanding balance somewhere Michaela can see it, and consider a cap on how much of a single
+  order can be paid with points, so a long dormant balance cannot be cashed in all at once against
+  one order. Neither is required for launch, but the reporting is cheap and worth having from day
+  one.
 
 Watch out for two points systems. If a Skool style leaderboard is ever added, it must not be
 called points and must never appear on the same screen as loyalty points, or customers will try to
