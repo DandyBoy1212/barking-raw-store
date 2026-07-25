@@ -75,6 +75,18 @@ npm test           # unit tests (shipping etc.)
 - Optional 60 to 90s "you've been lied to" hero video at the top of the page.
 - Weight-based postage tiers (only if order data ever shows heavy baskets).
 
+## Known lint debt (pre-dates A.1, deliberately not fixed here)
+
+`npm run lint` reports 4 errors. All 4 pre-date the A.1 product-data work, confirmed by
+stashing that work and re-running. None are worth bundling into an already large diff, but
+they should be cleared before launch:
+
+- `src/components/CartProvider.tsx` - `react-hooks/set-state-in-effect` on the localStorage
+  cart hydration. The genuine one. Fixing it changes how the basket restores on first paint,
+  so it wants its own change and its own test, not a drive-by.
+- `src/app/admin/products/page.tsx` - 1 error.
+- `src/app/thank-you/page.tsx` - 1 error.
+
 ## Notes
 
 - Firebase reuses the existing **barking-raw** project (the same one the dog-training app uses),
