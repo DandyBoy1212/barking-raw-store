@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { products } from "@/data/products";
 import { gbp } from "@/lib/format";
-import { computeShipping, amountToFreePostage } from "@/lib/shipping";
+import { leadTimeNote, supplierArrivalNote } from "@/lib/product-fields";
 import { useCart } from "./CartProvider";
 
 export function BasketDrawer() {
-  const { lines, open, setOpen, subtotal, setQty, remove, count } = useCart();
+  const { lines, open, setOpen, subtotal, setQty, remove, count, catalogue, delivery } = useCart();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [postcode, setPostcode] = useState("");
@@ -15,12 +14,13 @@ export function BasketDrawer() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const shipping = computeShipping(postcode, subtotal);
-  const toFree = amountToFreePostage(postcode, subtotal);
-  const total = subtotal + shipping.cost;
+  const deliveryPlan = delivery(postcode);
+  const total = subtotal + deliveryPlan.total;
   const validEmail = /.+@.+\..+/.test(email);
 
-  const detail = (slug: string) => products.find((p) => p.slug === slug)!;
+  // A line whose product has vanished from the catalogue (archived, or now inside a
+  // members only window) is skipped rather than crashing the drawer.
+  const detail = (slug: string) => catalogue.find((p) => p.slug === slug);
 
   async function checkout() {
     setError(null);
@@ -65,6 +65,7 @@ export function BasketDrawer() {
             <div className="drawer__body">
               {lines.map((l) => {
                 const p = detail(l.slug);
+                if (!p) return null;
                 return (
                   <div className="line-item" key={l.slug}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -80,6 +81,11 @@ export function BasketDrawer() {
                           remove
                         </button>
                       </div>
+                      {(leadTimeNote(p) || supplierArrivalNote(p)) && (
+                        <div className="line-item__meta" style={{ fontStyle: "italic" }}>
+                          {supplierArrivalNote(p) ?? leadTimeNote(p)}
+                        </div>
+                      )}
                     </div>
                     <div className="qty">
                       <button onClick={() => setQty(l.slug, l.qty - 1)} aria-label="Decrease">−</button>
@@ -94,8 +100,11 @@ export function BasketDrawer() {
                 <label htmlFor="pc">Delivery postcode</label>
                 <input id="pc" value={postcode} onChange={(e) => setPostcode(e.target.value)} placeholder="e.g. DD5 1AB" />
               </div>
-              {toFree > 0 && <div className="nudge">Add {gbp(toFree)} more for free postage.</div>}
-              {shipping.reason === "local" && <div className="nudge">Local delivery (DD1 to DD6): free.</div>}
+              {deliveryPlan.amountToFreePostage > 0 && (
+                <div className="nudge">
+                  Add {gbp(deliveryPlan.amountToFreePostage)} more for free postage.
+                </div>
+              )}
 
               <div className="field">
                 <label htmlFor="nm">Name</label>
@@ -116,10 +125,23 @@ export function BasketDrawer() {
                 <span>Subtotal</span>
                 <span>{gbp(subtotal)}</span>
               </div>
-              <div className="summary-row">
-                <span>Postage</span>
-                <span>{shipping.free ? "Free" : gbp(shipping.cost)}</span>
-              </div>
+              {deliveryPlan.parcels.map((parcel) => (
+                <div className="summary-row" key={parcel.key}>
+                  <span>
+                    Delivery: {parcel.label}
+                    {parcel.note && (
+                      <em style={{ display: "block", fontSize: "0.8em" }}>{parcel.note}</em>
+                    )}
+                  </span>
+                  <span>{parcel.cost === 0 ? "Free" : gbp(parcel.cost)}</span>
+                </div>
+              ))}
+              {deliveryPlan.parcels.length > 1 && (
+                <p className="notice">
+                  This order arrives in {deliveryPlan.parcels.length} separate parcels, so they may
+                  not turn up on the same day.
+                </p>
+              )}
               <div className="summary-row summary-row--total">
                 <span>Total</span>
                 <span>{gbp(total)}</span>
