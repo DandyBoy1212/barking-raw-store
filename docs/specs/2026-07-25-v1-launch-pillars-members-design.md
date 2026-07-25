@@ -189,8 +189,82 @@ supply chain.
 Internally the field is named for what it is, so nobody maintaining the code is guessing.
 
 Returns need a route per path, since a supplier posted item does not come back to Michaela's house.
-Confirm the supplier's returns process before this ships, because it has to be stated in the
-returns policy in section 12.1.
+Researched on 2026-07-25 against Avasam's own documentation. See section 4.5.
+
+### 4.5 Avasam: how it connects, what it exposes, and how returns actually work
+
+Researched 2026-07-25 from Avasam's knowledge base and pricing pages. This resolves most of open
+assumption 5, and it is good news: the shape designed in 4.4 survives contact with the real thing.
+
+**What Avasam gives us for free, that 4.4 needed.** Suppliers must pick one of three standardised
+shipping services, and each carries a stated window: expedited tracked 1 to 2 days, standard tracked
+2 to 4 days, standard 3 to 5 days. That maps directly onto the arrival range the product carries, and
+the example wording in 4.4, "arrives in 3 to 5 days", turns out to be Avasam's standard service word
+for word. Each product's shipping cost is shown on its listing page in Avasam, so the postage figure
+is real data Michaela can copy in rather than a guess.
+
+**One thing 4.4 got slightly wrong.** Supplier shipping is not always a fixed amount per item. A
+supplier can price a service as a fixed amount, or by order weight, or by order value, and can
+combine fixed with one of the other two. A single postage number per product is therefore correct
+for fixed price services and an approximation for the others. For v1 the site holds a fixed figure
+per product, entered by Michaela from the Avasam listing, and she picks a figure that does not
+under-recover. If the range she ends up stocking is weight priced, this needs revisiting before it
+quietly eats margin on heavy items.
+
+**Connecting.** Avasam's channel integrations are TikTok Shop, Shopify, eBay, ShopWired,
+BigCommerce, Amazon, WooCommerce, EKM, OnBuy, Wix, Linnworks and Wish. A bespoke Next.js site is not
+on that list, so there is no plug and play route. Two real options:
+
+1. **Manual order entry, and this is the v1 choice.** Avasam supports creating an order by hand:
+   Orders, Add order, enter the recipient's details and the items. It also supports importing orders
+   from a file. No build, no API keys, nothing to break, and it works from day one. The cost is
+   Michaela's time and the risk of mistyping an address, which is real but small at launch volumes.
+2. **The Seller API, once volume justifies it.** Base URL `https://app.avasam.com/api/` with a
+   second path at `/apiseeker/`. A consumer key and secret are generated in Settings, User
+   management, API keys, and exchanged at a request token endpoint for an `access_token` with an
+   `expires_at` to refresh against. The endpoints that matter are `SellerStockList` and
+   `GetInventoryListWithFilter` for stock, `CreateSellerOrder` or `AddNewOrder` to place an order,
+   and `GetProcessOrderList` for status and tracking. There are no returns endpoints, though order
+   statuses include `RETURN_REQUEST` and `RETURN`. Nothing built for the manual route is wasted,
+   because the product fields and the two parcel model are identical either way.
+
+Linnworks as middleware is a third option and is rejected: it is a second subscription to solve a
+problem the manual route already solves at this volume.
+
+**Money.** Michaela pays Avasam per order, automatically, on a stored card, and an order is not
+dispatched until it is paid. That is a separate rail from the Stripe money coming in, so a supplier
+posted sale means money out on her card before the Stripe payout lands. Cashflow, not code, but she
+should know it before the first order.
+
+**Returns, and the gap that matters.** Avasam's returns process governs Michaela and the supplier.
+It does not govern what Michaela owes her customer, and the two run on different clocks.
+
+Michaela to supplier, per Avasam:
+
+- She has 30 days from the date of shipping to request a return.
+- The supplier has 48 hours, or 2 working days, to inspect and accept or reject it.
+- A refund takes up to 5 working days and lands in her Avasam account balance, not her bank.
+- Change of mind: the customer, or Michaela, pays the return postage. Faulty, wrong or not received:
+  the supplier covers reasonable return postage, sometimes as a downloadable label.
+- The return must go back on a tracked service. If tracking does not show delivery within 30 days
+  she is liable for the value of the item.
+- Some categories are excluded on sanitary grounds.
+- Avasam will mediate if a supplier will not play.
+
+Customer to Michaela, per UK law, and this is the part the returns policy page must state:
+
+- **Barking Raw is the trader.** The customer's rights are against Michaela, not against Avasam and
+  not against the supplier. She cannot point a customer at a supplier's policy.
+- The Consumer Contracts Regulations 2013 give 14 days from delivery to cancel, 14 further days to
+  send the goods back, and require her to refund within 14 days of receiving them or of proof of
+  return. The refund includes the original basic delivery cost.
+- **Her clock is shorter than her supply chain's.** Supplier inspection plus refund processing can
+  run past the point where she legally owes her customer the money, and when it does arrive it
+  arrives as Avasam balance rather than cash. She will sometimes refund out of her own pocket first.
+  Budget for it rather than discover it.
+- **The return address differs per item**, because supplier posted goods go back to the supplier and
+  her own stock comes back to her. So the returns page says "contact us and we will send you the
+  return address" rather than printing one address, which would misroute half the returns.
 
 ## 5. Email capture and segmentation
 
@@ -569,26 +643,196 @@ Written in as assumptions so the document is not held up. Each one will change s
 4. ~~**Whether the stall iPad also takes the payment.**~~ Resolved 2026-07-25: it does not. Stall
    sales are recorded through a form in the staff admin instead, so the data is right regardless of
    which payment rail took the money. See section 10.1.2.
-5. **Avasam and the supplier posted range.** Nothing is known yet: which products, what the margins
-   are, who posts them, how long they take, whether postage is charged separately, or how a return
-   works. Assumption: a supplier posted path exists and is designed as set out in section 4.4.
-   Everything else waits on Michaela. This is a genuine fork rather than a detail, because it breaks
-   the site's single shipping rule and its single fulfilment route, so it should not be discovered
-   by the first customer who orders one item of each.
+5. **Avasam and the supplier posted range.** Mostly resolved 2026-07-25 by research into Avasam
+   itself, recorded in section 4.5: how a bespoke site connects (manual order entry for v1, the
+   Seller API later), what dispatch windows and postage figures are available per product, and how
+   returns work on both sides. What is still outstanding is Michaela's, not Avasam's: **which
+   products she is actually sourcing, and at what margin**. The Avasam dropship list is still to
+   come from Mikki. Nothing in the build waits on it, because the fields are the same whatever the
+   list contains, but the pillar pages cannot be populated beyond Good Food until it arrives.
 
 ## 15. Build order
 
+Rewritten 2026-07-25. The first version of this section summarised the conversation rather than
+checking itself against this document and against the original brainstorm document, so it missed
+work that this spec's own body requires. Every item below is either given a step or recorded as cut
+with a reason in section 16. Nothing is left implied.
+
 Proving what exists comes before building what does not.
 
-1. Get the newer work safe on GitHub. Done, `feat/accounts-loyalty-admin` pushed 2026-07-25.
-2. Test accounts and the staff product flow end to end in Stripe test mode, as Michaela would use
-   it, and fix what breaks. Nothing in the 25 commits has been exercised by a human.
-3. Michaela's real Stripe keys in, and one live pound taken through the whole path.
-4. Product data changes: category, lead time, members only window, and the admin pickers for each.
-5. The ring, the four pillar pages, and the flat shop page.
-6. Email capture, segmentation, and the four email welcome sequence.
-7. The members area, and the posts section in the admin.
-8. Legal pages and contact. She cannot trade without them.
-9. Stall assets: the QR flow, the account creating form, dogs of the day.
+### Phase 0: prove what exists
 
-Steps 1 to 3 prove what exists. Everything from 4 is new build.
+| # | Step | Notes |
+|---|---|---|
+| 0.1 | Get the newer work safe on GitHub | Done, `feat/accounts-loyalty-admin` pushed 2026-07-25 |
+| 0.2 | Test accounts and the staff product flow end to end in Stripe test mode, as Michaela would use it, and fix what breaks | Nothing in the 25 commits has been exercised by a human. Needs Liam at a keyboard, not a build |
+| 0.3 | Michaela's real Stripe keys in, and one live pound taken through the whole path | Needs Michaela. See section 11 |
+
+### Phase A: data foundations
+
+Both of these are cheap now and expensive later, which is the only reason they come first.
+
+| # | Step | Why here |
+|---|---|---|
+| A.1 | Product data: pillar, lead time, members only window, fulfilment path, and the admin pickers for each | Nothing in Phase B can be built without `pillar`. Planned in `docs/plans/2026-07-25-stage-7-product-data-pillars.md` |
+| A.2 | The customer and dog data model: one account, many dogs, and the fields in section 8.2 | Section 8.3 is explicit that retrofitting this means rewriting the account page, the badge filtering and the email personalisation together. It also blocks the stall form in Phase D, which collects the whole record at the table |
+
+### Phase B: the public site
+
+Everything a stranger can reach, and everything Google can index.
+
+| # | Step | Notes |
+|---|---|---|
+| B.1 | The ring, the four pillar pages, and the flat shop page | Section 3.2. Desktop wedges and the mobile two by two are built once, together |
+| B.2 | About Us | Section 3. Carries the origin story, the mission, and the TTouch and nutrition credentials. Section 2.1 makes this page load bearing: it is where touch and handling lives, having been deliberately kept out of the ring |
+| B.3 | Dog profile driven merchandising: allergy and sensitivity badges surfaced as ribbons over product cards, and the "Loki's Mum" naming convention | Section 8.2 says the dog fields power this. Without it the fields are collected and never used, which is the worst of both worlds. Depends on A.2 |
+| B.4 | Legal pages: terms, privacy, delivery, returns and cancellations, plus contact with a real business address | Section 12. She cannot trade without them, and the returns content is now researched in section 4.5 |
+
+### Phase C: capture and retention
+
+| # | Step | Notes |
+|---|---|---|
+| C.1 | Email capture on the home page and the shop page, with source tagging, deduplication and the unticked consent box | Section 5 |
+| C.2 | The four email welcome sequence, one per pillar | Section 5.1. Extends the existing abandoned cart cron and Resend setup |
+| C.3 | The members area, and the posts section in the staff admin | Section 7. Depends on A.1 for the members only window |
+| C.4 | The weekly digest email | Section 7.3. Same cron and Resend pattern |
+| C.5 | Loyalty: outstanding points balance reporting for Michaela | Section 9 calls this cheap and worth having from day one, now that points never expire and accumulate as money owed |
+
+### Phase D: the stall
+
+The primary acquisition channel, and the phase with the hardest technical requirement in the
+document.
+
+| # | Step | Notes |
+|---|---|---|
+| D.1 | The stall signup form: one question per screen, every field skippable, dog photo on the last screen, consent screen the customer taps themselves | Section 10.1.1. Depends on A.2 |
+| D.2 | Offline first: writes locally, syncs when signal returns, queue clears after sync, logout wipes the local store | Section 10.1.1 names this as the requirement most likely to sink the whole thing in practice. It is its own step because it is the hard part, not a detail of D.1 |
+| D.3 | Staff PIN login for stall days, with an explicit end of day logout | Section 10.1.1. The iPad is borrowed and Sunday only, so magic link is unworkable at the table |
+| D.4 | The QR code self serve fallback route, writing the same record as D.1 | Section 10.1 |
+| D.5 | The stall sale recording form in the staff admin: pick member, pick products and quantities, mark cash or card, save. Decrements stock, awards points, writes an order record | Section 10.1.2 puts this in scope for v1 explicitly. Same offline requirement as D.1 |
+| D.6 | Dogs of the day: the public page, and the strip in the members area | Section 10.2 |
+
+### Phase E: commerce features
+
+Both come from the original brainstorm document. Both were unbuilt and uncalled until 2026-07-25,
+when Liam confirmed both are in.
+
+| # | Step | Notes |
+|---|---|---|
+| E.1 | Subscribe and save: recurring orders at 10% off | **In**, confirmed 2026-07-25. Section 6 reserves the permanent 10% for this, and section 6.1 warns that if the ongoing 10% is not priced in, the best customers are the least profitable. Stripe recurring, and it depends on A.1 for pricing |
+| E.2 | Pick and mix bundles, 5, 10 and 20 item, randomised selection, on the Good Food page | **In, and last**, confirmed 2026-07-25. The most distinctive product idea in the original document. Built after the site and the stall are done, so it never competes with them for attention |
+
+### What each phase depends on
+
+- Phase 0 is Liam's time at a keyboard rather than build time, so it runs alongside Phase A rather
+  than blocking it. It should still finish early, because everything sits on machinery nobody has
+  proven and a fault found now is cheaper than a fault found under four phases of new work.
+- A.1 blocks B.1, B.3, C.3 and E.1. A.2 blocks B.3, D.1 and D.5.
+- B.4 blocks trading at all, so it cannot be the last thing done.
+- E.2 depends on A.1 and on the Good Food page from B.1, and nothing depends on it.
+
+Everything from Phase A is new build, and each step gets its own plan. Trying to plan a phase as one
+document produces something nobody can follow.
+
+### 15.1 Parallel execution: the waves
+
+Agreed 2026-07-25. The work runs in git worktrees, one branch per track, several sessions at once.
+The limit on parallelism is not the number of sessions, it is shared files and Liam's review time.
+Step A.1 touches nearly every shared file in the codebase, so it lands alone before anything fans
+out. Three to four concurrent tracks is the ceiling, because past that the reviewer becomes the
+bottleneck and the parallelism stops paying.
+
+**Wave 1**
+
+| Track | Work | Why it is safe to run alongside the others |
+|---|---|---|
+| 1 | A.1 product data | Alone in the shared files. Everything else waits on it |
+| 2 | B.2 About Us, B.4 legal and contact | All new files, touches nothing A.1 touches |
+| 3 | 0.2, Liam testing accounts and the staff product flow | Not a build |
+
+**Wave 2**, once A.1 merges
+
+| Track | Work |
+|---|---|
+| 1 | A.2 the dog and customer data model |
+| 2 | B.1 the ring, the four pillar pages, the flat shop page |
+| 3 | C.1 and C.2 email capture, segmentation and the welcome sequence |
+| 4 | D.1, D.2 and D.3 the stall signup form, offline sync and the staff PIN, pulled forward from Wave 3 because the stall is a launch priority and it only depends on A.2 |
+
+E.1 subscribe and save joins Wave 2 if a track frees up, otherwise Wave 3.
+
+**Wave 3**
+
+| Track | Work |
+|---|---|
+| 1 | C.3, C.4 and C.5 members area, posts admin, weekly digest, points reporting |
+| 2 | D.4, D.5 and D.6 QR fallback, stall sale recorder, dogs of the day |
+| 3 | B.3 badge ribbons driven by the dog profile |
+
+**Wave 4**
+
+E.2 pick and mix, last by decision.
+
+## 16. Register: the original brainstorm document, item by item
+
+The brainstorm document Liam uploaded on 2026-07-25 is not in this repository, so this section
+records what it asked for and what happened to each item. Written 2026-07-25 after an audit found
+that several items had been dropped in conversation without ever being recorded as decisions.
+
+| Item in the original document | Outcome |
+|---|---|
+| Staff login creating and updating products | Built, unproven. Step 0.2 |
+| "Michaela needs her own Stripe API key connected" through the admin | **Corrected.** Section 11. Building to it would produce a form asking a user for a secret |
+| Customer login and loyalty | Built in part. Section 9 |
+| No expiry spend tracking | **Adopted.** Section 9, reversing the earlier 30 day expiry |
+| "Spend X get a free item" | **Cut.** Superseded by points as money off at 100 points to GBP 1, which is easier to run and easier to explain. Recorded here because it was never explicitly rejected in conversation |
+| Deep dive on Avasam: pricing model, product range, margins | **Partly done.** Section 4.5 covers how it connects, dispatch windows, postage and returns. Product range and margins wait on Michaela and Mikki |
+| Competitors to study: Fife Animal Feeds, Pets at Home, Paws HQ | **Outstanding.** Survives only as a price comparison instruction inside section 6.1. The research itself has not been run, and it gates the repricing decision |
+| Open source or no code tooling scan, marked mandatory | **Done 2026-07-25.** See section 16.1 |
+| Home page leading with philosophy, circular photo tiles | Adopted and expanded. Sections 2 and 3.2 |
+| About Us: origin story and mission | Adopted. Step B.2 |
+| Treats page broken down by protein type | **Folded into Good Food.** Protein type is not currently a filter anywhere. If it should be, it belongs with the badge filters in section 4.1 and needs adding there |
+| Pick and mix, 5, 10 and 20 item randomised bundles | **In, and last.** Step E.2, confirmed 2026-07-25 |
+| Animation of items popping into the bag | **Cut.** A polish item on a feature that is not yet decided |
+| Product photos from the WhatsApp thread | Operational, not a build item |
+| Customer account: profile picture of the human | **Cut.** The dog is the identity in this brand, per the "Loki's Mum" convention |
+| Dog profile, fields to be Michaela's call | Adopted. Section 8.2, step A.2 |
+| Dietary requirements pushed forward as badges and ribbons over cards | Adopted. Step B.3. This was the point of collecting the data and it had no step until now |
+| "Loki's Mum" naming convention | Adopted. Step B.3 |
+| Mini game, walk the dog | **Cut.** Section 13 |
+| Community page, read only until purchase, Reddit style threads | **Replaced** by the members area, section 7. Threads are section 7.5, not v1 |
+| Account created automatically on first purchase | Built. Section 10.1 notes the hole this leaves at the stall, fixed by D.1 |
+| Blog as a separate page with an automated content pipeline | **Cut.** Section 13. The four pillar pages carry the teaching and do the search work |
+| Avasam product list from Mikki | Outstanding. Section 14.5 |
+| Additional SKUs beyond the original nine | Outstanding. Section 14.1 |
+| Subscribe and save, 10% | **In.** Step E.1, confirmed 2026-07-25 |
+| Market stall days with standalone dog games at the stall | **Cut** as a software item. It is a stall activity, not a build |
+| Market days linked to the website through dog photos | Adopted. Section 10.2, step D.6 |
+
+### 16.1 The tooling scan, and the answer
+
+The original document asked, and marked mandatory, whether existing open source or no code tooling
+already covers the loyalty system, the community, or the pick and mix builder, before committing
+development time. Scanned 2026-07-25. The answer is to finish the bespoke build, and the reasoning
+matters more than the conclusion.
+
+**If this were a blank page, Shopify would probably win.** It is not a blank page. Checkout, the
+Stripe webhook, Firestore order records, the fulfilment sheet, magic link login and the staff
+product admin are all built and working. Migrating throws those away.
+
+- **Whole platform** (Shopify, or headless Medusa, Vendure, Saleor). All would require rebuilding
+  the bespoke parts anyway, because the ring, the four teaching pages, the members area, the
+  offline stall form and the stall sale recorder are custom work on any platform. Shopify would not
+  do the offline iPad form at all, and that is the piece the stall depends on.
+- **Membership and gated content** (Memberstack, Outseta). Both duplicate the Firebase auth already
+  built, and both charge a percentage of revenue on top of a monthly fee, roughly 2 to 4 percent at
+  entry level. The members area in section 7 is one gated page reading content Michaela posts
+  through the admin she already has. Buying a platform for that is the expensive option.
+- **Loyalty.** Open Loyalty, despite the name, is SaaS rather than open source. Nothing self hosted
+  maps cleanly onto a Next.js and Firestore stack, and the rule in section 9 is a flat 100 points to
+  GBP 1 with no expiry, which is a small amount of code rather than a system.
+- **Pick and mix.** Every option found is a Shopify app, which requires being on Shopify. On this
+  stack it is cart logic.
+
+The one thing worth revisiting: if the shop ever needs multi channel selling, stock across
+locations, or a team, the calculation changes. It does not today.
