@@ -41,6 +41,29 @@ describe("buildStripeProductParams", () => {
     expect(params.images).toEqual(["https://barkingraw.dog/products/chicken-feet.png"]);
     expect(params.metadata).toEqual({ slug: "chicken-feet" });
   });
+
+  it("sends the primary photo to Stripe, whichever position it holds", () => {
+    const params = buildStripeProductParams(
+      {
+        ...base,
+        image: "/products/chicken-feet.png",
+        images: [
+          { url: "/products/other.png", primary: false },
+          { url: "/products/primary.png", primary: true },
+        ],
+      },
+      "https://example.com",
+    );
+    expect(params.images).toEqual(["https://example.com/products/primary.png"]);
+  });
+
+  it("falls back to the legacy single image when the list is empty", () => {
+    const params = buildStripeProductParams(
+      { ...base, images: [], image: "/products/chicken-feet.png" },
+      "https://example.com",
+    );
+    expect(params.images).toEqual(["https://example.com/products/chicken-feet.png"]);
+  });
 });
 
 describe("buildCheckoutLineItem", () => {
