@@ -221,3 +221,9 @@ h1, h2, h3 { line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; }
 .photo-pick__empty { width: 84px; height: 84px; border-radius: 12px; border: 1px dashed var(--line); display: inline-flex; align-items: center; justify-content: center; color: var(--ink); opacity: 0.18; flex-shrink: 0; }
 
 .dog__photo { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; border: 1px solid var(--line); flex-shrink: 0; }
+
+.dog__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; margin-top: 0.8rem; font-size: 0.85rem; }
+.linkbtn { background: none; border: 0; padding: 0; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.linkbtn:hover { color: var(--ink); }
+.linkbtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.linkbtn--warn { color: var(--ink); }
