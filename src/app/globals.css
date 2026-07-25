@@ -115,6 +115,10 @@ h1, h2, h3 { line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; }
 .card__hook { color: var(--muted); font-size: 0.94rem; margin: 0.35rem 0 0.8rem; }
 .card__desc { font-size: 0.92rem; color: #333; line-height: 1.5; }
 .card__safety { font-size: 0.8rem; color: var(--muted); margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px dashed var(--line); }
+/* Dispatch timing. Same quiet weight as the safety note, but it is information rather
+   than a caution, so it carries no dividing rule above it. */
+.card__lead { font-size: 0.8rem; color: var(--muted); font-style: italic; margin-top: 0.5rem; }
+.card__pack { font-size: 0.75rem; font-weight: 400; color: var(--muted); }
 .card__foot { margin-top: auto; padding-top: 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
 .card__price { font-size: 1.35rem; font-weight: 900; }
 

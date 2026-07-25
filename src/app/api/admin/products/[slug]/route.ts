@@ -57,6 +57,27 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
         badges: next.badges,
         image: next.image,
         ...(next.safetyNote ? { safetyNote: next.safetyNote } : { safetyNote: FieldValue.delete() }),
+        pillar: next.pillar,
+        leadTimeDays: next.leadTimeDays,
+        ...(next.membersOnlyUntil
+          ? { membersOnlyUntil: next.membersOnlyUntil }
+          : { membersOnlyUntil: FieldValue.delete() }),
+        fulfilment: next.fulfilment,
+        ...(next.supplierPostage !== undefined
+          ? { supplierPostage: next.supplierPostage }
+          : { supplierPostage: FieldValue.delete() }),
+        ...(next.supplierArrivalMinDays !== undefined
+          ? { supplierArrivalMinDays: next.supplierArrivalMinDays }
+          : { supplierArrivalMinDays: FieldValue.delete() }),
+        ...(next.supplierArrivalMaxDays !== undefined
+          ? { supplierArrivalMaxDays: next.supplierArrivalMaxDays }
+          : { supplierArrivalMaxDays: FieldValue.delete() }),
+        ...(next.packWeightGrams !== undefined
+          ? { packWeightGrams: next.packWeightGrams }
+          : { packWeightGrams: FieldValue.delete() }),
+        ...(next.packPieceCount !== undefined
+          ? { packPieceCount: next.packPieceCount }
+          : { packPieceCount: FieldValue.delete() }),
         stripeProductId: ids.stripeProductId,
         stripePriceId: ids.stripePriceId,
         updatedAt: FieldValue.serverTimestamp(),

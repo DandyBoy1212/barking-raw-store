@@ -17,6 +17,21 @@ for the full design, and `docs/research-dossier.md` for the sourced facts behind
   and localStorage persistence. Verified: add-to-cart, totals, and the shipping rule all work.
 - **Shipping rule** (`src/lib/shipping.ts`, unit-tested): free DD1 to DD6, otherwise £3.95,
   free over £35.
+- **Four product fields** (`src/data/products.ts`, `src/lib/product-fields.ts`, unit-tested):
+  every product carries a pillar (Good Food, Comfy Walks, Fun & Games, Cosy Sleep), a lead time
+  in days, an optional members-only window, and a fulfilment path. Michaela sets all four in
+  the admin form. A pillar is required, because a product without one appears on no page.
+- **Two delivery paths** (`computeBasketDelivery` in `src/lib/shipping.ts`, unit-tested): her own
+  stock is one parcel under the site rule above; each supplier-posted line is its own parcel with
+  its own postage and arrival range. The free-postage threshold counts the own-stock subtotal only,
+  and supplier postage is charged once per line rather than per unit. The basket itemises every
+  parcel before payment, and checkout recomputes the whole thing server side.
+- **Members-only windows** are enforced on the server: filtered out of the catalogue at read time
+  (`getPublicProducts`) and refused with a 403 at checkout, never merely hidden in the client.
+- `scripts/backfill-product-fields.mjs` fills pillar, lead time and fulfilment onto products
+  already in Firestore. **Run against barking-raw on 2026-07-25**: 9 products patched, and a
+  re-run reported 0 to patch, which is the idempotency check. Dry run it first (no flag), then
+  `node scripts/backfill-product-fields.mjs --apply`.
 - **Stripe Checkout** (`src/app/api/checkout/route.ts`): server-priced line items (never trusts
   the client), shipping option, optional recovery discount, records the cart for recovery.
 - **Webhook** (`src/app/api/webhooks/stripe/route.ts`): on payment, writes the order to Firestore,
@@ -60,6 +75,50 @@ npm test           # unit tests (shipping etc.)
   Sheet already exist, so this is a small job.
 - Optional 60 to 90s "you've been lied to" hero video at the top of the page.
 - Weight-based postage tiers (only if order data ever shows heavy baskets).
+
+## The dev origin allowlist is pinned to port 3000
+
+`LOCALHOST_DEV_ORIGIN` in `src/lib/auth-helpers.ts` is the literal string
+`http://localhost:3000`, and `isAllowedOrigin` accepts only that or the origin of
+`NEXT_PUBLIC_SITE_URL`. A dev server on any other port therefore gets a flat 403 from
+`/api/auth/link` with no logging, which reads as "the email system is broken" when it is
+really a CORS-style origin check. Setting `NEXT_PUBLIC_SITE_URL` to the port the server
+actually runs on is the fix, and it must be set per worktree, since each parallel worktree
+needs its own port. Worth making the dev allowance derive from the port rather than being
+hardcoded, before Wave 2 runs several worktrees at once.
+
+Also note `/api/auth/link` throttles to 3 requests per email per 15 minutes and returns
+`{ok: true}` when throttled, so a fourth attempt looks successful but sends nothing.
+
+## Two things found while wiring the live Firebase project (2026-07-25)
+
+Neither is caused by the A.1 work. Both are worth a decision before launch.
+
+- **The dev seed route does not write the A.1 fields.** `src/app/api/dev/seed-products/route.ts`
+  writes name, price, copy, badges, image and the Stripe ids, but not `pillar`, `leadTimeDays`
+  or `fulfilment`. So a freshly seeded catalogue always needs the backfill script run after it.
+  `docToStoredProduct` defaults them safely, so nothing breaks, but the route should really
+  write them itself.
+- **Product display order is now alphabetical by slug.** The nine seed entries in
+  `src/data/products.ts` are in a deliberate order (Beef Trachea Rings first, Pure Meat
+  Tit-bits last). Reading from Firestore returns them in document-id order instead, so the
+  shop now leads with Beef Trachea Rings and Chicken Feet by accident rather than by choice.
+  Michaela has no way to set the order. Wants a `sortOrder` field, or an explicit order by
+  something meaningful.
+
+## Known lint debt (pre-dates A.1, deliberately not fixed here)
+
+`npm run lint` reports 3 errors. All pre-date the A.1 product-data work, confirmed by stashing
+that work and re-running. None are worth bundling into an already large diff, but they should
+be cleared before launch:
+
+- `src/components/CartProvider.tsx` - `react-hooks/set-state-in-effect` on the localStorage
+  cart hydration. The genuine one. Fixing it changes how the basket restores on first paint,
+  so it wants its own change and its own test, not a drive-by.
+- `src/app/thank-you/page.tsx` - 1 error.
+
+Was 4. The `admin/products/page.tsx` one was cleared in 49975a2, which converted that `<a>`
+to `next/link` while rewriting the line anyway.
 
 ## Notes
 

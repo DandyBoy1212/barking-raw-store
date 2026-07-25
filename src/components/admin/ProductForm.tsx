@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ALL_BADGES } from "@/lib/product-admin";
-import type { Badge, Product } from "@/data/products";
+import { ALL_BADGES, ALL_PILLARS } from "@/lib/product-admin";
+import { PILLAR_LABELS, ALL_FULFILMENT_PATHS } from "@/data/products";
+import type { Badge, Product, Pillar, FulfilmentPath } from "@/data/products";
 
 type Mode = { kind: "create" } | { kind: "edit"; slug: string };
 
@@ -16,6 +17,25 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
   const [safetyNote, setSafetyNote] = useState(initial?.safetyNote ?? "");
   const [image, setImage] = useState(initial?.image ?? "");
   const [badges, setBadges] = useState<Badge[]>(initial?.badges ?? []);
+  const [pillar, setPillar] = useState<Pillar | "">(initial?.pillar ?? "");
+  const [leadTimeDays, setLeadTimeDays] = useState(String(initial?.leadTimeDays ?? 0));
+  const [membersOnlyUntil, setMembersOnlyUntil] = useState(initial?.membersOnlyUntil ?? "");
+  const [fulfilment, setFulfilment] = useState<FulfilmentPath>(initial?.fulfilment ?? "own-stock");
+  const [supplierPostage, setSupplierPostage] = useState(
+    initial?.supplierPostage === undefined ? "" : String(initial.supplierPostage),
+  );
+  const [supplierArrivalMinDays, setSupplierArrivalMinDays] = useState(
+    initial?.supplierArrivalMinDays === undefined ? "" : String(initial.supplierArrivalMinDays),
+  );
+  const [supplierArrivalMaxDays, setSupplierArrivalMaxDays] = useState(
+    initial?.supplierArrivalMaxDays === undefined ? "" : String(initial.supplierArrivalMaxDays),
+  );
+  const [packWeightGrams, setPackWeightGrams] = useState(
+    initial?.packWeightGrams === undefined ? "" : String(initial.packWeightGrams),
+  );
+  const [packPieceCount, setPackPieceCount] = useState(
+    initial?.packPieceCount === undefined ? "" : String(initial.packPieceCount),
+  );
   const [errors, setErrors] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
 
@@ -43,7 +63,26 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
     e.preventDefault();
     setBusy(true);
     setErrors([]);
-    const payload = { name, price: Number(price), hook, description, safetyNote, image, badges };
+    const payload = {
+      name,
+      price: Number(price),
+      hook,
+      description,
+      safetyNote,
+      image,
+      badges,
+      pillar,
+      leadTimeDays: Number(leadTimeDays || 0),
+      membersOnlyUntil,
+      fulfilment,
+      supplierPostage: supplierPostage === "" ? undefined : Number(supplierPostage),
+      supplierArrivalMinDays:
+        supplierArrivalMinDays === "" ? undefined : Number(supplierArrivalMinDays),
+      supplierArrivalMaxDays:
+        supplierArrivalMaxDays === "" ? undefined : Number(supplierArrivalMaxDays),
+      packWeightGrams: packWeightGrams === "" ? undefined : Number(packWeightGrams),
+      packPieceCount: packPieceCount === "" ? undefined : Number(packPieceCount),
+    };
     const url = mode.kind === "create" ? "/api/admin/products" : `/api/admin/products/${mode.slug}`;
     const method = mode.kind === "create" ? "POST" : "PATCH";
     try {
@@ -94,6 +133,22 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
         Safety note (optional)
         <input value={safetyNote} onChange={(e) => setSafetyNote(e.target.value)} style={{ display: "block", width: "100%" }} />
       </label>
+      <label>
+        Pillar (which of the four pages this appears on)
+        <select
+          value={pillar}
+          onChange={(e) => setPillar(e.target.value as Pillar)}
+          required
+          style={{ display: "block", width: "100%" }}
+        >
+          <option value="">Choose a pillar...</option>
+          {ALL_PILLARS.map((p) => (
+            <option key={p} value={p}>
+              {PILLAR_LABELS[p]}
+            </option>
+          ))}
+        </select>
+      </label>
       <fieldset>
         <legend>Badges</legend>
         {ALL_BADGES.map((b) => (
@@ -103,6 +158,112 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
           </label>
         ))}
       </fieldset>
+      <fieldset>
+        <legend>Pack size</legend>
+        <p style={{ fontSize: "0.85rem", color: "#555" }}>
+          Fill in whichever fits. Without this a customer cannot compare the price against
+          anyone else&apos;s, and neither can we. Leave blank if you genuinely do not know.
+        </p>
+        <label>
+          Weight in grams (for example 100 for a 100g bag)
+          <input
+            type="number"
+            step="1"
+            min="1"
+            value={packWeightGrams}
+            onChange={(e) => setPackWeightGrams(e.target.value)}
+            style={{ display: "block", width: "100%" }}
+          />
+        </label>
+        <label>
+          Number of pieces (for example 3 for a pack of 3 chicken feet)
+          <input
+            type="number"
+            step="1"
+            min="1"
+            value={packPieceCount}
+            onChange={(e) => setPackPieceCount(e.target.value)}
+            style={{ display: "block", width: "100%" }}
+          />
+        </label>
+      </fieldset>
+      <label>
+        Lead time in days (0 if it is on the shelf and posts straight away)
+        <input
+          type="number"
+          step="1"
+          min="0"
+          value={leadTimeDays}
+          onChange={(e) => setLeadTimeDays(e.target.value)}
+          style={{ display: "block", width: "100%" }}
+        />
+      </label>
+      <label>
+        Members only until (optional). Before this date only members can see and buy it
+        <input
+          type="date"
+          value={membersOnlyUntil}
+          onChange={(e) => setMembersOnlyUntil(e.target.value)}
+          style={{ display: "block", width: "100%" }}
+        />
+      </label>
+      <fieldset>
+        <legend>Who posts it</legend>
+        {ALL_FULFILMENT_PATHS.map((f) => (
+          <label key={f} style={{ display: "inline-flex", gap: "0.3rem", marginRight: "1rem" }}>
+            <input
+              type="radio"
+              name="fulfilment"
+              value={f}
+              checked={fulfilment === f}
+              onChange={() => setFulfilment(f)}
+            />
+            {f === "own-stock" ? "From my own stock" : "Posted by the supplier"}
+          </label>
+        ))}
+      </fieldset>
+      {fulfilment === "supplier-posted" && (
+        <fieldset>
+          <legend>Supplier postage and timing</legend>
+          <p style={{ fontSize: "0.85rem", color: "#555" }}>
+            The customer is shown this as a separate delivery line, for example &quot;Posts
+            separately, arrives in 3 to 5 days&quot;.
+          </p>
+          <label>
+            Postage charged for this item (GBP)
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={supplierPostage}
+              onChange={(e) => setSupplierPostage(e.target.value)}
+              style={{ display: "block", width: "100%" }}
+            />
+          </label>
+          <label>
+            Arrives in, from (days)
+            <input
+              type="number"
+              step="1"
+              min="1"
+              value={supplierArrivalMinDays}
+              onChange={(e) => setSupplierArrivalMinDays(e.target.value)}
+              style={{ display: "block", width: "100%" }}
+            />
+          </label>
+          <label>
+            Arrives in, to (days)
+            <input
+              type="number"
+              step="1"
+              min="1"
+              value={supplierArrivalMaxDays}
+              onChange={(e) => setSupplierArrivalMaxDays(e.target.value)}
+              style={{ display: "block", width: "100%" }}
+            />
+          </label>
+        </fieldset>
+      )}
       <label>
         Image
         <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => e.target.files && uploadImage(e.target.files[0])} style={{ display: "block" }} />
