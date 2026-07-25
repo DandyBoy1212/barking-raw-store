@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except the template, which holds only blank placeholders and is the only
+# record of which variables the app actually needs. Keeping it untracked meant
+# every fresh setup rediscovered the missing ones the hard way.
+!.env.example
 
 # secrets / credentials (never commit)
 service-account.json
