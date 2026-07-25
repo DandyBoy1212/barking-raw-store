@@ -108,15 +108,17 @@ Neither is caused by the A.1 work. Both are worth a decision before launch.
 
 ## Known lint debt (pre-dates A.1, deliberately not fixed here)
 
-`npm run lint` reports 4 errors. All 4 pre-date the A.1 product-data work, confirmed by
-stashing that work and re-running. None are worth bundling into an already large diff, but
-they should be cleared before launch:
+`npm run lint` reports 3 errors. All pre-date the A.1 product-data work, confirmed by stashing
+that work and re-running. None are worth bundling into an already large diff, but they should
+be cleared before launch:
 
 - `src/components/CartProvider.tsx` - `react-hooks/set-state-in-effect` on the localStorage
   cart hydration. The genuine one. Fixing it changes how the basket restores on first paint,
   so it wants its own change and its own test, not a drive-by.
-- `src/app/admin/products/page.tsx` - 1 error.
 - `src/app/thank-you/page.tsx` - 1 error.
+
+Was 4. The `admin/products/page.tsx` one was cleared in 49975a2, which converted that `<a>`
+to `next/link` while rewriting the line anyway.
 
 ## Notes
 
