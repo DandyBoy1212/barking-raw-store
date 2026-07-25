@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import { ALL_BADGES, ALL_PILLARS } from "@/lib/product-admin";
 import { PILLAR_LABELS, ALL_FULFILMENT_PATHS } from "@/data/products";
 import type { Badge, Product, Pillar, FulfilmentPath } from "@/data/products";
+import {
+  normaliseImages,
+  setPrimary,
+  moveImage,
+  removeImage,
+  type ProductImage,
+} from "@/lib/product-images";
 import { Paw } from "@/components/Paw";
 
 type Mode = { kind: "create" } | { kind: "edit"; slug: string };
@@ -23,7 +30,9 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
   const [hook, setHook] = useState(initial?.hook ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [safetyNote, setSafetyNote] = useState(initial?.safetyNote ?? "");
-  const [image, setImage] = useState(initial?.image ?? "");
+  const [images, setImages] = useState<ProductImage[]>(
+    normaliseImages(initial?.images, initial?.image),
+  );
   const [uploading, setUploading] = useState(false);
   const [badges, setBadges] = useState<Badge[]>(initial?.badges ?? []);
   const [pillar, setPillar] = useState<Pillar | "">(initial?.pillar ?? "");
@@ -52,20 +61,27 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
     setBadges((cur) => (cur.includes(b) ? cur.filter((x) => x !== b) : [...cur, b]));
   }
 
-  async function uploadImage(file: File) {
+  // Each file goes through the same single-file endpoint in turn; the first
+  // photo a product ever gets becomes its primary via normalisation.
+  async function uploadImages(files: FileList) {
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/admin/products/image", { method: "POST", body: fd });
-      if (res.redirected || !res.headers.get("content-type")?.includes("json")) {
-        throw new Error("Non-JSON response (likely redirected to login).");
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/admin/products/image", { method: "POST", body: fd });
+        if (res.redirected || !res.headers.get("content-type")?.includes("json")) {
+          throw new Error("Non-JSON response (likely redirected to login).");
+        }
+        const data = await res.json();
+        if (!data.ok) {
+          setErrors([data.error || "Photo upload failed."]);
+          return;
+        }
+        setImages((cur) => normaliseImages([...cur, { url: data.url as string }]));
       }
-      const data = await res.json();
-      if (data.ok) setImage(data.url);
-      else setErrors([data.error || "Image upload failed."]);
     } catch {
-      setErrors(["Image upload failed. You may need to sign in again."]);
+      setErrors(["Photo upload failed. You may need to sign in again."]);
     } finally {
       setUploading(false);
     }
@@ -81,7 +97,7 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
       hook,
       description,
       safetyNote,
-      image,
+      images,
       badges,
       pillar,
       leadTimeDays: Number(leadTimeDays || 0),
@@ -318,37 +334,85 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
       </div>
 
       <div className="panel">
-        <p className="panel__title">Photo</p>
-        <div className="photo-pick">
-          {image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img className="photo-pick__preview" src={image} alt="Product preview" />
-          ) : (
+        <p className="panel__title">Photos</p>
+        {images.length === 0 ? (
+          <div className="photo-pick">
             <span className="photo-pick__empty" aria-hidden="true">
               <Paw size={34} />
             </span>
-          )}
-          <div>
-            <label className="btn btn--solid-ink" style={{ cursor: "pointer" }}>
-              {uploading ? "Uploading..." : image ? "Choose a different one" : "Choose a photo"}
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => e.target.files && uploadImage(e.target.files[0])}
-                disabled={uploading}
-                style={{ display: "none" }}
-              />
-            </label>
-            <span className="field__hint">
-              Required. A product cannot be saved without one, so the button below stays off until
-              this is done.
-            </span>
           </div>
+        ) : (
+          <ul className="photo-list">
+            {images.map((img, n) => (
+              <li key={img.url} className="photo-list__row">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img className="photo-pick__preview" src={img.url} alt={`Photo ${n + 1}`} />
+                <div className="photo-list__ctl">
+                  {img.primary ? (
+                    <span className="badge badge--star">Primary</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="chip"
+                      onClick={() => setImages(setPrimary(images, n))}
+                    >
+                      Make primary
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="chip"
+                    aria-label={`Move photo ${n + 1} earlier`}
+                    disabled={n === 0}
+                    onClick={() => setImages(moveImage(images, n, n - 1))}
+                  >
+                    Up
+                  </button>
+                  <button
+                    type="button"
+                    className="chip"
+                    aria-label={`Move photo ${n + 1} later`}
+                    disabled={n === images.length - 1}
+                    onClick={() => setImages(moveImage(images, n, n + 1))}
+                  >
+                    Down
+                  </button>
+                  <button
+                    type="button"
+                    className="chip"
+                    onClick={() => setImages(removeImage(images, n))}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div style={{ marginTop: "0.9rem" }}>
+          <label className="btn btn--solid-ink" style={{ cursor: "pointer" }}>
+            {uploading ? "Uploading..." : images.length ? "Add more photos" : "Choose photos"}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              onChange={(e) => e.target.files && uploadImages(e.target.files)}
+              disabled={uploading}
+              style={{ display: "none" }}
+            />
+          </label>
+          <span className="field__hint">
+            At least one is required. The primary photo is the one Stripe and the basket show.
+          </span>
         </div>
       </div>
 
       <p style={{ marginTop: "1.4rem" }}>
-        <button className="btn btn--solid-ink btn--block" disabled={busy || !image} type="submit">
+        <button
+          className="btn btn--solid-ink btn--block"
+          disabled={busy || images.length === 0}
+          type="submit"
+        >
           {busy ? "Saving..." : mode.kind === "create" ? "Create product" : "Save changes"}
         </button>
       </p>

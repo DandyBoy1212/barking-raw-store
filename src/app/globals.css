@@ -231,3 +231,9 @@ h1, h2, h3 { line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; }
 .card__dots { position: absolute; bottom: 0.55rem; left: 0; right: 0; display: flex; justify-content: center; gap: 0.35rem; z-index: 2; }
 .card__dot { width: 7px; height: 7px; border-radius: 999px; background: var(--ink); opacity: 0.22; }
 .card__dot--on { opacity: 0.9; }
+
+/* ---------- Admin photo list (B.5) ---------- */
+.photo-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.8rem; }
+.photo-list__row { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; }
+.photo-list__ctl { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+.photo-list__ctl .chip:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
