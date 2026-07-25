@@ -29,8 +29,9 @@ for the full design, and `docs/research-dossier.md` for the sourced facts behind
 - **Members-only windows** are enforced on the server: filtered out of the catalogue at read time
   (`getPublicProducts`) and refused with a 403 at checkout, never merely hidden in the client.
 - `scripts/backfill-product-fields.mjs` fills pillar, lead time and fulfilment onto products
-  already in Firestore. **Not yet run** — it needs `FIREBASE_SERVICE_ACCOUNT`. Dry run it first
-  (no flag), then `node scripts/backfill-product-fields.mjs --apply`. It is idempotent.
+  already in Firestore. **Run against barking-raw on 2026-07-25**: 9 products patched, and a
+  re-run reported 0 to patch, which is the idempotency check. Dry run it first (no flag), then
+  `node scripts/backfill-product-fields.mjs --apply`.
 - **Stripe Checkout** (`src/app/api/checkout/route.ts`): server-priced line items (never trusts
   the client), shipping option, optional recovery discount, records the cart for recovery.
 - **Webhook** (`src/app/api/webhooks/stripe/route.ts`): on payment, writes the order to Firestore,
@@ -74,6 +75,22 @@ npm test           # unit tests (shipping etc.)
   Sheet already exist, so this is a small job.
 - Optional 60 to 90s "you've been lied to" hero video at the top of the page.
 - Weight-based postage tiers (only if order data ever shows heavy baskets).
+
+## Two things found while wiring the live Firebase project (2026-07-25)
+
+Neither is caused by the A.1 work. Both are worth a decision before launch.
+
+- **The dev seed route does not write the A.1 fields.** `src/app/api/dev/seed-products/route.ts`
+  writes name, price, copy, badges, image and the Stripe ids, but not `pillar`, `leadTimeDays`
+  or `fulfilment`. So a freshly seeded catalogue always needs the backfill script run after it.
+  `docToStoredProduct` defaults them safely, so nothing breaks, but the route should really
+  write them itself.
+- **Product display order is now alphabetical by slug.** The nine seed entries in
+  `src/data/products.ts` are in a deliberate order (Beef Trachea Rings first, Pure Meat
+  Tit-bits last). Reading from Firestore returns them in document-id order instead, so the
+  shop now leads with Beef Trachea Rings and Chicken Feet by accident rather than by choice.
+  Michaela has no way to set the order. Wants a `sortOrder` field, or an explicit order by
+  something meaningful.
 
 ## Known lint debt (pre-dates A.1, deliberately not fixed here)
 
