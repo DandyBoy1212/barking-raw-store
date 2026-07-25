@@ -17,6 +17,20 @@ for the full design, and `docs/research-dossier.md` for the sourced facts behind
   and localStorage persistence. Verified: add-to-cart, totals, and the shipping rule all work.
 - **Shipping rule** (`src/lib/shipping.ts`, unit-tested): free DD1 to DD6, otherwise £3.95,
   free over £35.
+- **Four product fields** (`src/data/products.ts`, `src/lib/product-fields.ts`, unit-tested):
+  every product carries a pillar (Good Food, Comfy Walks, Fun & Games, Cosy Sleep), a lead time
+  in days, an optional members-only window, and a fulfilment path. Michaela sets all four in
+  the admin form. A pillar is required, because a product without one appears on no page.
+- **Two delivery paths** (`computeBasketDelivery` in `src/lib/shipping.ts`, unit-tested): her own
+  stock is one parcel under the site rule above; each supplier-posted line is its own parcel with
+  its own postage and arrival range. The free-postage threshold counts the own-stock subtotal only,
+  and supplier postage is charged once per line rather than per unit. The basket itemises every
+  parcel before payment, and checkout recomputes the whole thing server side.
+- **Members-only windows** are enforced on the server: filtered out of the catalogue at read time
+  (`getPublicProducts`) and refused with a 403 at checkout, never merely hidden in the client.
+- `scripts/backfill-product-fields.mjs` fills pillar, lead time and fulfilment onto products
+  already in Firestore. **Not yet run** — it needs `FIREBASE_SERVICE_ACCOUNT`. Dry run it first
+  (no flag), then `node scripts/backfill-product-fields.mjs --apply`. It is idempotent.
 - **Stripe Checkout** (`src/app/api/checkout/route.ts`): server-priced line items (never trusts
   the client), shipping option, optional recovery discount, records the cart for recovery.
 - **Webhook** (`src/app/api/webhooks/stripe/route.ts`): on payment, writes the order to Firestore,
