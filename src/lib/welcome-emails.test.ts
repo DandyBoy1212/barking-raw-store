@@ -43,13 +43,14 @@ describe("pillarEmail", () => {
     }
   });
   it("keeps the house style: no em dashes anywhere", () => {
+    const emDash = String.fromCharCode(0x2014);
     for (const i of [0, 1, 2, 3] as const) {
       const e = pillarEmail(i, args);
-      expect(e.subject.includes("—")).toBe(false);
-      expect(e.html.includes("—")).toBe(false);
+      expect(e.subject.includes(emDash)).toBe(false);
+      expect(e.html.includes(emDash)).toBe(false);
     }
     const code = codeWaitingEmail({ code: "BR10ABCDE", ...args });
-    expect(code.html.includes("—")).toBe(false);
+    expect(code.html.includes(emDash)).toBe(false);
   });
   it("stays inside the dossier: no wolf claims, no dewormer myth, no scare words", () => {
     for (const i of [0, 1, 2, 3] as const) {
