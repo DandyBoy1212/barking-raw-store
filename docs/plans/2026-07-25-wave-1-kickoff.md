@@ -51,15 +51,33 @@ Two things that track needs from a human and should ask for rather than invent:
 Nothing in the 25 commits on this branch has been exercised by a human. This is half a day and it
 de-risks everything stacked on top of it.
 
+> **Updated late on 2026-07-25, after A.1 merged and Liam ran part of this by hand.** The checklist
+> below is annotated rather than rewritten, so the original stays readable. Three things changed
+> what is worth your time:
+>
+> 1. **Two blockers make whole sections untestable.** No Stripe key, so anything that reaches
+>    Stripe returns 503. And no verified Resend domain, so the only address on earth that can
+>    receive email from this site is `liam.dand@scoop-patrol.co.uk`. Both are Michaela's to fix.
+>    Sections marked BLOCKED below cannot pass until they are.
+> 2. **The "known fault" at the bottom is fixed.** Do not go looking for it.
+> 3. **New surfaces exist that this list predates**: the legal pages, the account page with dog
+>    profiles, and the restyled admin product form. Added at the end.
+
 ### Setup
 
 Copy `.env.example` to `.env.local` and fill in at minimum:
 
 - `FIREBASE_SERVICE_ACCOUNT`, the barking-raw service account JSON
 - `FIREBASE_STORAGE_BUCKET`, needed for product image upload
-- `STRIPE_SECRET_KEY`, a `sk_test_...` key
-- `RESEND_API_KEY` and `EMAIL_FROM`, needed for the magic link email to arrive
-- `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
+- `STRIPE_SECRET_KEY`, a `sk_test_...` key. **Still absent as of 2026-07-25**
+- `RESEND_API_KEY` and `EMAIL_FROM`, needed for the magic link email to arrive. **A key alone is
+  not enough.** `EMAIL_FROM` is currently `onboarding@resend.dev`, Resend's shared test sender, and
+  with no verified domain Resend delivers to the account owner's address and nobody else. Verify
+  `barkingraw.dog` at resend.com/domains and move `EMAIL_FROM` onto it
+- `NEXT_PUBLIC_SITE_URL`, and it must match the port you actually run on, or `/api/auth/link`
+  returns a bare 403. `http://localhost:3000` for the shared checkout
+- The four `NEXT_PUBLIC_FIREBASE_*` client variables, or the login pages throw
+  `auth/invalid-api-key` before anything renders
 
 Then:
 
@@ -82,15 +100,22 @@ curl -X POST http://localhost:3000/api/dev/seed-products
 
 Work as Michaela would, not as a developer. Anything that needs you to explain it is a fault.
 
-**Login**
+**Login** — partly BLOCKED on the Resend domain
 
-- [ ] Request a magic link at `/login`. The email arrives, and in reasonable time
+- [x] Request a magic link at `/login`. The email arrives, and in reasonable time.
+      **Done 2026-07-25, and it exposed the email blocker.** It arrives only at
+      `liam.dand@scoop-patrol.co.uk`. Every other address is refused by Resend with a 403 and no
+      email is sent. Use that address for the rest of this list
 - [ ] The link signs you in and lands somewhere sensible
 - [ ] The link works only once, and an old link is refused
 - [ ] Signing out actually signs you out, and the admin area is not reachable afterwards
-- [ ] A non-staff account cannot reach `/admin`
+- [ ] A non-staff account cannot reach `/admin`. **Note:** creating a second account needs an
+      email that Resend will deliver to, so this one waits on the domain
 
-**Products, the part Michaela owns**
+**Products, the part Michaela owns** — BLOCKED on `STRIPE_SECRET_KEY`
+
+Creating and editing both call `syncProductToStripe`, so without a key they return a 503 reading
+"Service not configured." That is the missing key, not a bug. The list and archive still work.
 
 - [ ] `/admin/products` lists the nine seeded products
 - [ ] Create a product with a photo. It saves, the photo uploads, and it appears on the home page
@@ -101,24 +126,47 @@ Work as Michaela would, not as a developer. Anything that needs you to explain i
 - [ ] Try to save a product with no photo, and with a silly price. The error is readable
 - [ ] Leave the page open long enough for the session to lapse, then save. It should say so, not fail silently
 
-**Buying**
+Two known gaps to expect rather than report, both logged in `HANDOVER.md`: the dev seed route does
+not write the A.1 fields, so a fresh seed needs `scripts/backfill-product-fields.mjs` after it, and
+product order is alphabetical by slug rather than the curated order. Both are deliberately being
+left until B.1 and B.5 land, because those rewrite the same files.
+
+**Buying** — BLOCKED on `STRIPE_SECRET_KEY` from the checkout step down
 
 - [ ] Add to basket, change quantities, remove a line
 - [ ] Postcode DD5 gives free delivery. An EH postcode gives GBP 3.95. Over GBP 35 is free
+- [ ] An order mixing own stock with a supplier posted item itemises as two parcels, with the free
+      postage threshold counting the own stock subtotal only. **New since this list was written**
 - [ ] Checkout with Stripe test card `4242 4242 4242 4242`
 - [ ] The order appears in Firestore `store_orders`
 - [ ] A row is appended to the fulfilment Google Sheet
 - [ ] The customer record is created, which is what grants membership
 
-**Known fault, do not spend time diagnosing it**
+**The account, new since this list was written**
 
-A product you create in the admin will show as GBP 0.00 in the basket, and the basket drawer may
-crash on it. `CartProvider` and `BasketDrawer` both read the static nine-product seed in
-`src/data/products.ts` instead of the live catalogue. Track 1 fixes this in its Task 7. Note
-anything else you find, but not this.
+- [ ] `/account` greets you as your dog's owner once you have added one, not by email address
+- [ ] Add a dog with a photo. It appears with its life stage worked out from the date of birth
+- [ ] Edit that dog, and remove it. Removing asks twice
+- [ ] A dog with no date of birth shows no life stage rather than guessing one
+
+**The legal pages, new since this list was written**
+
+- [ ] `/terms`, `/privacy`, `/delivery`, `/returns` and `/contact` all load, and the footer reaches
+      them from every page
+- [ ] Each shows the red "not ready to publish" notice listing what Michaela still owes.
+      **This is correct until `src/data/business.ts` is filled in.** If it is missing, that is the
+      fault, not the other way round
+- [ ] Read the returns page as Michaela. She is agreeing to it, so she has to recognise it
+
+**Fixed since this list was written, do not go looking for it**
+
+The original note here said a product created in the admin would price at GBP 0.00 in the basket
+and might crash the basket drawer, because `CartProvider` and `BasketDrawer` read the static seed.
+**A.1 Task 7 fixed it**, and `CartProvider` now takes a `catalogue` prop fed from the root layout.
 
 ### What to do with what you find
 
-Anything broken that is not the known fault above: write it down with what you did and what
-happened. It either becomes a fix in Track 1's branch if it is in the shared files, or its own small
-branch if it is not.
+Anything broken that is not listed above as blocked or expected: write it down with what you did and
+what happened. Wave 2 tracks are in flight in worktrees, so a fix in a shared file is likely to
+collide. Report it rather than fixing it in the shared checkout, unless it is small and in a file
+nobody is holding.
