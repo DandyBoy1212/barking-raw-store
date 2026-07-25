@@ -58,5 +58,6 @@ export const COLLECTIONS = {
   discountCodes: "store_discount_codes",
   products: "store_products",
   customers: "store_customers",
+  subscribers: "store_subscribers",
   staff: "store_staff",
 } as const;
