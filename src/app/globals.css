@@ -278,3 +278,7 @@ h1, h2, h3 { line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; }
 @media (min-width: 720px) { .pillar-lines { grid-template-columns: repeat(4, 1fr); } }
 .pillar-lines__item b { display: block; font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85rem; margin-bottom: 0.3rem; }
 .pillar-lines__item p { color: rgba(255,255,255,0.72); font-size: 0.92rem; }
+
+/* ---------- Pillar pages (B.1) ---------- */
+.shelf-empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; padding: 1.8rem 1.4rem; text-align: center; }
+.shelf-empty a { text-decoration: underline; font-weight: 700; }
