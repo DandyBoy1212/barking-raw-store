@@ -44,3 +44,7 @@ credentials.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# git worktrees. Each one is its own checkout, so committing this directory would
+# write a gitlink and leave a broken submodule reference on the branch.
+.claude/worktrees/
