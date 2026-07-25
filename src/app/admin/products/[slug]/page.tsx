@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getStoredProductBySlug, toCatalogue } from "@/lib/products-store";
@@ -13,6 +14,9 @@ export default async function EditProductPage({ params }: { params: Promise<{ sl
   return (
     <main className="band band--paper">
       <div className="wrap">
+        <Link href="/admin/products" style={{ textDecoration: "underline" }}>
+          &larr; Back to products
+        </Link>
         <h1 className="display">Edit: {product.name}</h1>
         <ProductForm mode={{ kind: "edit", slug }} initial={toCatalogue(product)} />
       </div>
