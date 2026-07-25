@@ -30,6 +30,12 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
   const [supplierArrivalMaxDays, setSupplierArrivalMaxDays] = useState(
     initial?.supplierArrivalMaxDays === undefined ? "" : String(initial.supplierArrivalMaxDays),
   );
+  const [packWeightGrams, setPackWeightGrams] = useState(
+    initial?.packWeightGrams === undefined ? "" : String(initial.packWeightGrams),
+  );
+  const [packPieceCount, setPackPieceCount] = useState(
+    initial?.packPieceCount === undefined ? "" : String(initial.packPieceCount),
+  );
   const [errors, setErrors] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
 
@@ -74,6 +80,8 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
         supplierArrivalMinDays === "" ? undefined : Number(supplierArrivalMinDays),
       supplierArrivalMaxDays:
         supplierArrivalMaxDays === "" ? undefined : Number(supplierArrivalMaxDays),
+      packWeightGrams: packWeightGrams === "" ? undefined : Number(packWeightGrams),
+      packPieceCount: packPieceCount === "" ? undefined : Number(packPieceCount),
     };
     const url = mode.kind === "create" ? "/api/admin/products" : `/api/admin/products/${mode.slug}`;
     const method = mode.kind === "create" ? "POST" : "PATCH";
@@ -149,6 +157,35 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
             {b}
           </label>
         ))}
+      </fieldset>
+      <fieldset>
+        <legend>Pack size</legend>
+        <p style={{ fontSize: "0.85rem", color: "#555" }}>
+          Fill in whichever fits. Without this a customer cannot compare the price against
+          anyone else&apos;s, and neither can we. Leave blank if you genuinely do not know.
+        </p>
+        <label>
+          Weight in grams (for example 100 for a 100g bag)
+          <input
+            type="number"
+            step="1"
+            min="1"
+            value={packWeightGrams}
+            onChange={(e) => setPackWeightGrams(e.target.value)}
+            style={{ display: "block", width: "100%" }}
+          />
+        </label>
+        <label>
+          Number of pieces (for example 3 for a pack of 3 chicken feet)
+          <input
+            type="number"
+            step="1"
+            min="1"
+            value={packPieceCount}
+            onChange={(e) => setPackPieceCount(e.target.value)}
+            style={{ display: "block", width: "100%" }}
+          />
+        </label>
       </fieldset>
       <label>
         Lead time in days (0 if it is on the shelf and posts straight away)

@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
       ...(draft.supplierArrivalMaxDays !== undefined
         ? { supplierArrivalMaxDays: draft.supplierArrivalMaxDays }
         : {}),
+      ...(draft.packWeightGrams !== undefined ? { packWeightGrams: draft.packWeightGrams } : {}),
+      ...(draft.packPieceCount !== undefined ? { packPieceCount: draft.packPieceCount } : {}),
       active: true,
       archived: false,
       stripeProductId: ids.stripeProductId,

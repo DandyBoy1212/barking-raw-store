@@ -25,9 +25,29 @@ export type ProductInput = {
   supplierPostage?: number;
   supplierArrivalMinDays?: number;
   supplierArrivalMaxDays?: number;
+  packWeightGrams?: number;
+  packPieceCount?: number;
 };
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Optional whole number above zero, or undefined. Used for the pack size fields,
+ * where a blank box means "not known" rather than zero.
+ */
+function optionalPositiveInteger(
+  raw: unknown,
+  label: string,
+  errors: string[],
+): number | undefined {
+  if (raw === undefined || raw === null || String(raw).trim() === "") return undefined;
+  const n = Number(raw);
+  if (!(Number.isFinite(n) && n > 0 && Number.isInteger(n))) {
+    errors.push(`${label} must be a whole number above 0, or left blank.`);
+    return undefined;
+  }
+  return n;
+}
 
 export function validateProductInput(
   input: Partial<ProductInput>,
@@ -106,6 +126,11 @@ export function validateProductInput(
     }
   }
 
+  // Pack size. Optional, because the nine originals shipped without one, but a
+  // price cannot be compared against a competitor's without it.
+  const packWeightGrams = optionalPositiveInteger(input.packWeightGrams, "Pack weight", errors);
+  const packPieceCount = optionalPositiveInteger(input.packPieceCount, "Piece count", errors);
+
   if (errors.length) return { ok: false, errors };
   return {
     ok: true,
@@ -124,6 +149,8 @@ export function validateProductInput(
       supplierPostage,
       supplierArrivalMinDays,
       supplierArrivalMaxDays,
+      packWeightGrams,
+      packPieceCount,
     },
   };
 }

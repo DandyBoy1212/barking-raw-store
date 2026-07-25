@@ -56,6 +56,8 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     supplierPostage: supplier ? num(data.supplierPostage) : undefined,
     supplierArrivalMinDays: supplier ? num(data.supplierArrivalMinDays) : undefined,
     supplierArrivalMaxDays: supplier ? num(data.supplierArrivalMaxDays) : undefined,
+    packWeightGrams: num(data.packWeightGrams),
+    packPieceCount: num(data.packPieceCount),
     active: data.active === undefined ? true : Boolean(data.active),
     archived: Boolean(data.archived ?? false),
     stripeProductId: data.stripeProductId ? String(data.stripeProductId) : undefined,
@@ -86,6 +88,8 @@ export function toCatalogue(sp: StoredProduct): Product {
     supplierPostage: sp.supplierPostage,
     supplierArrivalMinDays: sp.supplierArrivalMinDays,
     supplierArrivalMaxDays: sp.supplierArrivalMaxDays,
+    packWeightGrams: sp.packWeightGrams,
+    packPieceCount: sp.packPieceCount,
   };
 }
 

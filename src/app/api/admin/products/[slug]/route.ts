@@ -72,6 +72,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
         ...(next.supplierArrivalMaxDays !== undefined
           ? { supplierArrivalMaxDays: next.supplierArrivalMaxDays }
           : { supplierArrivalMaxDays: FieldValue.delete() }),
+        ...(next.packWeightGrams !== undefined
+          ? { packWeightGrams: next.packWeightGrams }
+          : { packWeightGrams: FieldValue.delete() }),
+        ...(next.packPieceCount !== undefined
+          ? { packPieceCount: next.packPieceCount }
+          : { packPieceCount: FieldValue.delete() }),
         stripeProductId: ids.stripeProductId,
         stripePriceId: ids.stripePriceId,
         updatedAt: FieldValue.serverTimestamp(),

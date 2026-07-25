@@ -174,3 +174,46 @@ describe("validateProductInput fulfilment", () => {
     expect(r.ok && r.value.supplierPostage).toBeUndefined();
   });
 });
+
+describe("validateProductInput pack size", () => {
+  it("leaves both undefined when neither is given, since the nine originals have none", () => {
+    const r = validateProductInput({ ...base, pillar: "good-food" });
+    expect(r.ok && r.value.packWeightGrams).toBeUndefined();
+    expect(r.ok && r.value.packPieceCount).toBeUndefined();
+  });
+
+  it("accepts a weight and a piece count", () => {
+    const r = validateProductInput({
+      ...base,
+      pillar: "good-food",
+      packWeightGrams: 150,
+      packPieceCount: 3,
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.packWeightGrams).toBe(150);
+      expect(r.value.packPieceCount).toBe(3);
+    }
+  });
+
+  it("treats an empty string as not known rather than as zero", () => {
+    const r = validateProductInput({
+      ...base,
+      pillar: "good-food",
+      packWeightGrams: "" as unknown as number,
+    });
+    expect(r.ok && r.value.packWeightGrams).toBeUndefined();
+  });
+
+  it("rejects a zero or negative weight rather than storing a nonsense pack", () => {
+    const r = validateProductInput({ ...base, pillar: "good-food", packWeightGrams: 0 });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors).toContain("Pack weight must be a whole number above 0, or left blank.");
+  });
+
+  it("rejects a fractional piece count", () => {
+    const r = validateProductInput({ ...base, pillar: "good-food", packPieceCount: 2.5 });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors).toContain("Piece count must be a whole number above 0, or left blank.");
+  });
+});

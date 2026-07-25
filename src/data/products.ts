@@ -73,6 +73,12 @@ export interface Product {
   supplierPostage?: number;
   supplierArrivalMinDays?: number;
   supplierArrivalMaxDays?: number;
+  /**
+   * Pack size. Optional, because the nine originals were sold without one, but
+   * a price cannot be compared against a competitor without it. See packSizeLabel.
+   */
+  packWeightGrams?: number;
+  packPieceCount?: number;
   // Storage/sync fields (populated once a product lives in Firestore):
   active?: boolean;
   archived?: boolean;
