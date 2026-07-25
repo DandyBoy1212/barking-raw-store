@@ -18,6 +18,26 @@
 - Commit messages in the repo's existing lower-case style, body ending with the Co-Authored-By line.
 - Definition of done: 143 tests plus the new ones pass, `npx tsc --noEmit` clean, lint still exactly 3 pre-existing errors.
 
+## Amendment, 2026-07-26, mid-build
+
+A voice note from Liam, relayed by the coordinator, supplied the origin story after this plan
+was committed. The build follows the amended shape below rather than the original tasks
+word for word:
+
+- The story is now written into the page as prose: dogs all her life, a hard period she came
+  back from, the two older dogs she lost and the two pups, and the long-term dream of kennels
+  and doggy day care that Barking Raw is the first step towards. No dog is named, the hard
+  period is one line framed around the comeback, and nothing medical or specific is said.
+- The facts are supplied by Liam and are NOT signed off by Michaela. The draft notice stays,
+  keyed on an explicit `storySignedOff` flag in `src/data/founder.ts` plus the still-unknown
+  course names. `originStory` and `yearsWithDogs` fields are dropped; the story covers them.
+- Correction: the TTouch and nutrition credentials are courses IN PROGRESS, not completed
+  qualifications. The page says "training in" or "working through", never "qualified" or
+  "certified". Fields are renamed `ttouchCourse` and `nutritionCourse`.
+- `docs/about-details-for-michaela.md` carries TWO versions of the personal paragraph, the one
+  on the page and a shallower one, so the depth of disclosure is her single-swap decision, and
+  states plainly that nothing personal publishes until she signs it off.
+
 ## What the repo can and cannot source
 
 Sourced from the repo, safe to state:
