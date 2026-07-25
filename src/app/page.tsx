@@ -2,6 +2,7 @@
 import { getPublicProducts, toCatalogue } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { PawTrail } from "@/components/PawTrail";
+import { EmailCapture } from "@/components/EmailCapture";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,8 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <EmailCapture source="home" heading="Free hints and tips, one pillar at a time" sub="Four short emails over a fortnight: good food, comfy walks, fun and games, cosy sleep. No spam, no selling your address." />
 
       {/* WHAT'S REALLY IN THEM */}
       <section className="band band--paper" id="truth">
