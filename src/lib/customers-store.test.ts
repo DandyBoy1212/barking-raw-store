@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { docToStoredCustomer } from "./customers-store";
+import { docToStoredCustomer, nextDogId } from "./customers-store";
 
 describe("docToStoredCustomer", () => {
   it("reads a full record", () => {
@@ -55,5 +55,20 @@ describe("docToStoredCustomer", () => {
 
   it("ignores a dogs field that is not an array", () => {
     expect(docToStoredCustomer("u5", { dogs: "Loki" }).dogs).toEqual([]);
+  });
+});
+
+describe("nextDogId", () => {
+  it("starts at dog-1", () => {
+    expect(nextDogId([])).toBe("dog-1");
+  });
+
+  it("never reuses an id, so an edit cannot land on a deleted dog's row", () => {
+    // dog-2 was deleted. Reusing it would point an in-flight edit at the wrong dog.
+    expect(nextDogId([{ id: "dog-1" }, { id: "dog-3" }])).toBe("dog-4");
+  });
+
+  it("ignores an id it did not generate", () => {
+    expect(nextDogId([{ id: "imported-abc" }])).toBe("dog-1");
   });
 });

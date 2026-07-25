@@ -44,11 +44,22 @@ describe("signInEmailHtml", () => {
 });
 
 describe("buildCustomerDoc", () => {
-  it("normalises fields with sensible blanks", () => {
+  it("normalises the fields it is given", () => {
     expect(buildCustomerDoc({ email: "a@b.com", name: "Sam", postcode: "DD1 1AA" }))
       .toEqual({ email: "a@b.com", name: "Sam", lastPostcode: "DD1 1AA" });
-    expect(buildCustomerDoc({ email: "a@b.com" }))
-      .toEqual({ email: "a@b.com", name: "", lastPostcode: "" });
+  });
+
+  it("omits a blank field rather than writing an empty string over a real one", () => {
+    // This doc is merged in by the Stripe webhook on every order. Writing "" would
+    // wipe a name or a postcode the customer had already given on the account page.
+    expect(buildCustomerDoc({ email: "a@b.com" })).toEqual({ email: "a@b.com" });
+    expect(buildCustomerDoc({ email: "a@b.com", name: "  " })).toEqual({ email: "a@b.com" });
+  });
+
+  it("never writes dogs or address, which only the customer and the stall form own", () => {
+    const doc = buildCustomerDoc({ email: "a@b.com", name: "Sam", postcode: "DD1 1AA" });
+    expect(doc).not.toHaveProperty("dogs");
+    expect(doc).not.toHaveProperty("address");
   });
 });
 

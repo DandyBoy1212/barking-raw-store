@@ -48,16 +48,26 @@ export function signInEmailHtml(link: string, name?: string): string {
   </div>`;
 }
 
-/** Plain, serialisable customer fields (caller adds server timestamps). */
+/**
+ * Plain, serialisable customer fields (caller adds server timestamps).
+ *
+ * A blank field is omitted rather than written as "". This doc is merged into
+ * store_customers by the Stripe webhook on every order, so writing an empty string
+ * would blank a name or postcode the customer had already given on the account page.
+ * It deliberately never carries dogs or address: those belong to the customer and to
+ * the stall form, and Stripe knows nothing about either.
+ */
 export function buildCustomerDoc(input: { email: string; name?: string; postcode?: string }): {
   email: string;
-  name: string;
-  lastPostcode: string;
+  name?: string;
+  lastPostcode?: string;
 } {
+  const name = String(input.name ?? "").trim();
+  const postcode = String(input.postcode ?? "").trim();
   return {
     email: input.email,
-    name: input.name ?? "",
-    lastPostcode: input.postcode ?? "",
+    ...(name ? { name } : {}),
+    ...(postcode ? { lastPostcode: postcode } : {}),
   };
 }
 
