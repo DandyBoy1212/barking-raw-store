@@ -173,7 +173,7 @@ Two forms, two offers, one list.
 |---|---|---|
 | Home page, under the ring | Free hints and tips from each pillar | No |
 | Shop page | 10% off your first order | No |
-| Stall QR code | 10% off now, and 10% off the first online order | Yes, see section 10.1 |
+| Stall iPad, with QR as fallback | 10% off now, and 10% off the first online order | Yes, see section 10.1 |
 
 - Every contact carries the source it came from, so the follow up differs. Learn more subscribers
   go straight into the pillar sequence. Ten percent subscribers get "your code is waiting" first,
@@ -269,15 +269,19 @@ and is already on the email list, so the day it switches on the room is full.
 
 A complete member record holds name, address, contact number, email, and one or more dogs.
 
-Collected progressively, not all at once:
+Collected in full at the stall, in one conversation, on an iPad that Michaela holds.
 
-- The stall QR asks for name, email, phone and the dog's name. Short enough to complete on a phone
-  at a market stall.
-- The address fills in automatically on the first online order, because Stripe Checkout collects
-  the shipping address anyway.
+This supersedes an earlier progressive collection decision in this document's own drafting. That
+decision assumed the customer typing into their own phone, where a long form loses people. With
+Michaela holding the iPad the friction is not typing, it is conversation, and conversation about
+somebody's dog is not friction. It is the reason they stopped at the stall.
 
-Rationale: a long form at the table loses the people Michaela has just convinced in person, which
-is the most expensive place to lose anybody.
+The same conversation is the qualification. How old is he, how is he on the lead, does he get an
+upset tummy. Those answers tell Michaela what to hand them off the table, so the form earns its
+keep twice.
+
+Online sign ups still fill progressively, since Stripe Checkout collects name and shipping address
+at the point of purchase anyway.
 
 ### 8.2 Dog fields
 
@@ -329,12 +333,36 @@ Membership is currently granted by the Stripe webhook when an online order compl
 card sale at a market stall never touches the website, so the people most likely to say yes are
 the only ones the system cannot let in.
 
-The QR form fixes it and does three jobs at once: the 10%, the email address, and the account.
-Scanning at the table creates the account there and then.
+An iPad on the table fixes it, and does four jobs at once: the yes is captured while they are
+still standing there, the 10% is applied, the account is created, and the dog profile is filled in
+by conversation rather than by form filling.
 
-Membership is granted by an online purchase, or by scanning at the stall. It is not granted by the
-home page email form. This keeps "members see the new stuff first" true, and gives Michaela
+A QR code stays as the self serve fallback, on the stall banner and for anyone who does not want to
+stop and chat. Both routes write the same record.
+
+Membership is granted by an online purchase, or by signing up at the stall. It is not granted by
+the home page email form. This keeps "members see the new stuff first" true, and gives Michaela
 something to say at the table that cannot be got from the website.
+
+### 10.1.1 iPad form requirements
+
+- **Built for her hand, not theirs.** One question per screen, large touch targets, every field
+  skippable so a chatty customer does not strand her on a required box, and partial records saved
+  rather than lost.
+- **Works with no signal.** This is the requirement most likely to sink it in practice. Market
+  stalls have poor connectivity, and a failed submit does not lose a field, it loses a customer who
+  has already said yes and is standing in front of her. The form writes locally first and syncs
+  when signal returns. No spinner, no lost record. Same pattern and same reasoning as the resilient
+  intake safety net on the Scoop Patrol side.
+- **Photo of the dog on the last screen.** Dogs of the day content captured at the moment of
+  maximum goodwill, with the owner watching, at no extra effort. It also turns a form into a
+  moment.
+- **Consent stays theirs.** Michaela cannot tick the marketing box on somebody's behalf, and photo
+  permission must be given rather than assumed. One screen carries both, the customer taps it, and
+  they see it happen.
+- Staff gated, behind the existing staff claim. Michaela is vouching for the person in front of
+  her, so no email verification round trip is needed at the table. The welcome email with a magic
+  link goes out afterwards.
 
 ### 10.2 Dogs of the day
 
@@ -432,6 +460,14 @@ Written in as assumptions so the document is not held up. Each one will change s
    before launch. If she cannot sustain weekly, the members area goes stale, and a stale members
    area is worse than none because everybody who joined can see it died. This is the only part of
    the build whose success depends on somebody doing something every week indefinitely.
+4. **Whether the stall iPad also takes the payment.** Assumed not, for v1, on scope grounds.
+   The consequence of that assumption has to be handled rather than ignored: stall sales are
+   invisible to the system, so stock levels do not decrement, revenue reporting is short, and the
+   customers Michaela converted face to face end up as members with no order history and no loyalty
+   points, which makes them the worst served by the loyalty scheme. So if the iPad does not take the
+   money, Michaela needs a way to log a stall sale against a member afterwards, or the data is
+   quietly wrong from day one. If it does take the money, signup and sale become one flow and
+   everything lands correctly, at the cost of real extra scope on an already full launch.
 
 ## 15. Build order
 
