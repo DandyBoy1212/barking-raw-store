@@ -41,6 +41,38 @@ for the full design, and `docs/research-dossier.md` for the sourced facts behind
 - **Daily digest** (`src/app/api/cron/daily-digest/route.ts`): emails Michaela yesterday's order count.
 - Vercel cron schedule in `vercel.json`.
 
+## Added on the evening of 2026-07-25: A.1 merged, then B.4 and A.2
+
+- **A.1 is merged** into `feat/accounts-loyalty-admin`. Gated on 107 tests, a clean
+  `tsc --noEmit`, and lint at the 3 pre-existing errors below.
+- **The legal pages** (`/terms`, `/privacy`, `/delivery`, `/returns`, `/contact`), step B.4, plus a
+  footer in the root layout that reaches them. Michaela's real business details are **not invented**:
+  they sit as `PENDING` in `src/data/business.ts`, and every page renders a red "not ready to
+  publish" notice listing what is still missing. Filling that one file in clears the notices
+  everywhere. What she has to supply is in `docs/legal-details-for-michaela.md`.
+- **A.2, the customer and dog data model**, built to `docs/plans/2026-07-25-stage-8-customer-dog-model.md`.
+  Dogs are an ordered array on `store_customers/{uid}`, each with a stable id. `/account` lists them
+  and can add one. Age is stored as an approximate date of birth rather than a number of years, so
+  the puppy, adult and senior filtering cannot go stale.
+- `scripts/backfill-customer-fields.mjs`, same shape as the product backfill. **Verified against a
+  deliberately legacy-shaped doc**, not just against already-migrated data.
+
+Three things worth knowing before touching this:
+
+- **`buildCustomerDoc` no longer writes blank fields.** The Stripe webhook merges it into the
+  customer doc on every order, and it used to write `name: ""`, which would have silently wiped a
+  name the customer set on the account page the next time they ordered.
+- **`isBrowserSameOrigin` is new, and `isAllowedOrigin` is unchanged.** The old helper deliberately
+  allows a request that states neither Origin nor Referer, for curl and server-to-server callers,
+  and the login routes rely on that. The account routes have no such caller, so they use the
+  stricter one. Do not "tidy" these into one.
+- **There are two test dogs, Loki and Bear, on Liam's own customer record** in the live project,
+  left there deliberately so the feature can be seen working. Delete them whenever.
+
+Still open from this work: the account page can add a dog but not yet edit or delete one from the
+UI, though the routes for both exist and were verified by hand. The stall form (D.1) is the real
+collection surface.
+
 ## What YOU or Michaela must provide before it can take real money (the 4 things)
 
 1. **Stripe keys** (Michaela's account) → set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`.
