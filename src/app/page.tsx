@@ -262,15 +262,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="footer">
-        <div className="footer__inner">
-          <span className="logo">
-            <b style={{ fontWeight: 900, letterSpacing: "0.02em" }}>BARKING RAW</b>
-          </span>
-          <small>© {new Date().getFullYear()} Barking Raw · Natural Dog Food · barkingraw.dog</small>
-        </div>
-      </footer>
+      {/* The footer now lives in the root layout, so it carries the legal links on
+          every page rather than only on this one. */}
     </main>
   );
 }

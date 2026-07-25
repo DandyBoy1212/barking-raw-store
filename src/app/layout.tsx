@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/components/CartProvider";
 import { Header } from "@/components/Header";
+import { SiteFooter } from "@/components/SiteFooter";
 import { BasketDrawer } from "@/components/BasketDrawer";
 import { getPublicProducts, getMemberProducts, toCatalogue } from "@/lib/products-store";
 import { currentUserIsMember } from "@/lib/membership";
@@ -36,6 +37,9 @@ export default async function RootLayout({
         <CartProvider catalogue={catalogue}>
           <Header />
           {children}
+          {/* In the layout rather than per page, so the legal pages are reachable from
+              anywhere. Stripe expects a visible refund policy and business contact. */}
+          <SiteFooter />
           <BasketDrawer />
         </CartProvider>
       </body>
