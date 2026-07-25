@@ -44,6 +44,46 @@ export type Subscriber = {
   unsubscribed: boolean;
 };
 
+/**
+ * What one form submit changes on the record. Pure: the route adds timestamps.
+ *
+ * The rules a repeat submit must obey (spec section 5, and C.1):
+ * - first-touch source wins, so the follow up matches the offer they saw first;
+ * - a later ticked box turns consent on, recording the wording that won it;
+ * - an unticked repeat is the absence of consent, not a revocation, so it
+ *   changes nothing (revocation is the unsubscribe link);
+ * - sequence position and any issued code are never reset, so a repeat submit
+ *   cannot restart the emails or claim the 10% twice.
+ */
+export function applySubscription(
+  existing: Subscriber | null,
+  input: { source: CaptureSource; consent: boolean },
+): {
+  create: boolean;
+  consentTurnedOn: boolean;
+  fields: { source?: SubscriberSource; consent?: boolean; consentText?: string };
+} {
+  if (!existing) {
+    return {
+      create: true,
+      consentTurnedOn: input.consent,
+      fields: {
+        source: input.source,
+        consent: input.consent,
+        consentText: input.consent ? CONSENT_TEXT[input.source] : "",
+      },
+    };
+  }
+  if (input.consent && !existing.consent) {
+    return {
+      create: false,
+      consentTurnedOn: true,
+      fields: { consent: true, consentText: CONSENT_TEXT[input.source] },
+    };
+  }
+  return { create: false, consentTurnedOn: false, fields: {} };
+}
+
 function toMillis(value: unknown): number | null {
   if (value && typeof (value as { toMillis?: unknown }).toMillis === "function") {
     return (value as { toMillis: () => number }).toMillis();

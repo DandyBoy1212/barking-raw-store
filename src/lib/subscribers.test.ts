@@ -2,10 +2,14 @@ import { describe, it, expect } from "vitest";
 import {
   normaliseSubscriberEmail,
   docToSubscriber,
+  applySubscription,
   SUBSCRIBER_SOURCES,
   CAPTURE_SOURCES,
   CONSENT_TEXT,
 } from "./subscribers";
+
+const existing = (over: Record<string, unknown> = {}) =>
+  docToSubscriber("sam@example.com", { email: "sam@example.com", ...over });
 
 describe("normaliseSubscriberEmail", () => {
   it("trims and lower-cases, so both forms land on one doc", () => {
@@ -77,5 +81,67 @@ describe("docToSubscriber", () => {
   it("clamps a nonsense sequence position", () => {
     expect(docToSubscriber("x@y.co", { sequencePosition: "9" }).sequencePosition).toBe(4);
     expect(docToSubscriber("x@y.co", { sequencePosition: -3 }).sequencePosition).toBe(0);
+  });
+});
+
+describe("applySubscription", () => {
+  it("creates a new contact carrying source and consent wording", () => {
+    const r = applySubscription(null, { source: "shop", consent: true });
+    expect(r.create).toBe(true);
+    expect(r.consentTurnedOn).toBe(true);
+    expect(r.fields).toEqual({ source: "shop", consent: true, consentText: CONSENT_TEXT.shop });
+  });
+  it("creates without consent when the box was left unticked", () => {
+    const r = applySubscription(null, { source: "home", consent: false });
+    expect(r.consentTurnedOn).toBe(false);
+    expect(r.fields).toEqual({ source: "home", consent: false, consentText: "" });
+  });
+  it("keeps the first-touch source on a repeat submit", () => {
+    const r = applySubscription(
+      existing({ source: "home", consent: true, consentAt: { toMillis: () => 1 } }),
+      { source: "shop", consent: true },
+    );
+    expect(r.create).toBe(false);
+    expect(r.fields.source).toBeUndefined();
+  });
+  it("turns consent on later, with the wording of the form that won it", () => {
+    const r = applySubscription(existing({ source: "home", consent: false }), {
+      source: "shop",
+      consent: true,
+    });
+    expect(r.consentTurnedOn).toBe(true);
+    expect(r.fields.consent).toBe(true);
+    expect(r.fields.consentText).toBe(CONSENT_TEXT.shop);
+  });
+  it("never revokes consent from an unticked repeat", () => {
+    const r = applySubscription(
+      existing({ source: "home", consent: true, consentText: "kept", consentAt: { toMillis: () => 1 } }),
+      { source: "home", consent: false },
+    );
+    expect(r.consentTurnedOn).toBe(false);
+    expect(r.fields.consent).toBeUndefined();
+    expect(r.fields.consentText).toBeUndefined();
+  });
+  it("lets an unsubscribed contact re-consent by ticking the box again", () => {
+    const r = applySubscription(
+      existing({ consent: false, unsubscribedAt: { toMillis: () => 5 } }),
+      { source: "home", consent: true },
+    );
+    expect(r.consentTurnedOn).toBe(true);
+  });
+  it("never touches the sequence position or the code", () => {
+    // Re-ticking an already consented box is also a no-op, keeping the
+    // recorded consent moment the original one.
+    const r = applySubscription(
+      existing({
+        source: "shop",
+        consent: true,
+        consentAt: { toMillis: () => 1 },
+        sequencePosition: 3,
+        discountCode: "BR10AAAAA",
+      }),
+      { source: "shop", consent: true },
+    );
+    expect(Object.keys(r.fields)).toEqual([]);
   });
 });
