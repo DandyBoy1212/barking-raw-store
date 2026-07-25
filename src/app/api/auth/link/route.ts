@@ -53,13 +53,26 @@ export async function POST(req: NextRequest) {
 
   try {
     const link = await auth.generateSignInWithEmailLink(email, buildActionCodeSettings(siteUrl));
-    await sendEmail(email, "Your Barking Raw sign-in link", signInEmailHtml(link));
+    const sent = await sendEmail(email, "Your Barking Raw sign-in link", signInEmailHtml(link));
+    if (!sent) {
+      // Say so. Neither link generation nor the send depends on whether this address
+      // is registered, so a failure here is a fault in our configuration and reveals
+      // nothing about the caller. Reporting success regardless is what let an unverified
+      // Resend domain look exactly like a delivered email for a whole evening.
+      return NextResponse.json(
+        { error: "We could not send the email. This is our end, not yours." },
+        { status: 503 },
+      );
+    }
   } catch (err) {
     // Link generation does not depend on whether the address is registered, so
     // failures here are configuration or transient errors (not a signal to leak).
-    // Log server-side but still return the uniform response below.
     console.error("[auth/link] failed:", err);
+    return NextResponse.json(
+      { error: "We could not send the email. This is our end, not yours." },
+      { status: 503 },
+    );
   }
-  // Always report success so we never reveal whether an email is registered.
+  // Report success without revealing whether the address was already registered.
   return NextResponse.json({ ok: true });
 }

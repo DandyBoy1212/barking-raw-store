@@ -73,6 +73,30 @@ Still open from this work: the account page can add a dog but not yet edit or de
 UI, though the routes for both exist and were verified by hand. The stall form (D.1) is the real
 collection surface.
 
+## No email reaches anybody except one address, and this is a launch blocker
+
+Found 2026-07-25 when the sign-in link never arrived. Not a code fault. The Resend account
+has **no verified domain**, and `EMAIL_FROM` is `Barking Raw <onboarding@resend.dev>`, Resend's
+shared test sender. In that state Resend refuses every recipient except the account owner's own
+address with a 403:
+
+> You can only send testing emails to your own email address (liam.dand@scoop-patrol.co.uk). To
+> send emails to other recipients, please verify a domain at resend.com/domains, and change the
+> `from` address to an email using this domain.
+
+So today the only address that can receive anything is **liam.dand@scoop-patrol.co.uk**. Everything
+else fails silently. That takes out the sign-in link, the staff invite, both abandoned cart emails,
+and the daily digest, whose `OWNER_EMAIL` is currently an address Resend will not deliver to.
+
+**The fix is Michaela's DNS, not code:** verify `barkingraw.dog` at resend.com/domains, then set
+`EMAIL_FROM` to something on that domain, for example `Barking Raw <hello@barkingraw.dog>`.
+
+`/api/auth/link` used to return `{ok: true}` whether or not the send worked, on the reasoning that a
+uniform response avoids revealing whether an address is registered. That reasoning holds for the
+registration question but hid a total configuration failure for an evening. It now returns 503 with
+a readable message when the send fails, which leaks nothing: neither link generation nor delivery
+depends on whether the address is registered. The three cron and invite senders still only log.
+
 ## What YOU or Michaela must provide before it can take real money (the 4 things)
 
 1. **Stripe keys** (Michaela's account) → set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`.
