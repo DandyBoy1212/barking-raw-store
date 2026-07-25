@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
         hook: seedSp.hook,
         description: seedSp.description,
         badges: seedSp.badges,
+        images: seedSp.images,
         image: seedSp.image,
         ...(seedSp.safetyNote ? { safetyNote: seedSp.safetyNote } : {}),
         active: true,
