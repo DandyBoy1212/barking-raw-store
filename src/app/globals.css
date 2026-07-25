@@ -221,3 +221,13 @@ h1, h2, h3 { line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; }
 .photo-pick__empty { width: 84px; height: 84px; border-radius: 12px; border: 1px dashed var(--line); display: inline-flex; align-items: center; justify-content: center; color: var(--ink); opacity: 0.18; flex-shrink: 0; }
 
 .dog__photo { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; border: 1px solid var(--line); flex-shrink: 0; }
+
+/* ---------- Product card gallery (B.5) ---------- */
+.card__navbtn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 30px; height: 30px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.92); color: var(--ink); font-size: 1.1rem; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.14s ease; }
+.card__navbtn--prev { left: 0.6rem; }
+.card__navbtn--next { right: 0.6rem; }
+.card__media:hover .card__navbtn, .card__navbtn:focus-visible { opacity: 1; }
+@media (hover: none) { .card__navbtn { opacity: 0.85; } }
+.card__dots { position: absolute; bottom: 0.55rem; left: 0; right: 0; display: flex; justify-content: center; gap: 0.35rem; z-index: 2; }
+.card__dot { width: 7px; height: 7px; border-radius: 999px; background: var(--ink); opacity: 0.22; }
+.card__dot--on { opacity: 0.9; }
