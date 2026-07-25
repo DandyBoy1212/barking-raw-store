@@ -129,6 +129,43 @@ No extra work for her, nothing new in the nav, but it exists for search engines 
 Primary call to action on the home page: the pillar wedges. The email capture sits below the ring.
 The shop is in the nav for anyone who arrived ready to buy.
 
+### 3.3 Several photos per product
+
+Requested by Liam on 2026-07-25, after using the admin for the first time. Not in v1 as
+originally scoped, and recorded here rather than built immediately because it is larger than it
+looks.
+
+`Product.image` is a single string. It is read by the product card, the basket drawer, the admin
+form, the admin list, the Stripe sync and the fulfilment sheet row. Supporting several means:
+
+- an ordered list of images rather than one, with one of them marked primary;
+- a gallery on the card or the pillar page, and a decision about whether the basket and the
+  fulfilment sheet follow the primary image or the first;
+- upload, reorder and delete in the admin, which is more UI than the current single file input;
+- a migration for the products already in Firestore, which carry the single field.
+
+The primary image stays the one Stripe receives, because a Stripe product takes one image and
+that is what shows on the payment page.
+
+Worth doing with B.1, since that is when the catalogue gets its proper presentation, rather than
+as a separate pass over the same files.
+
+### 3.4 Michaela adds her own badges
+
+Requested by Liam on 2026-07-25. Today the eight badges are a TypeScript union in
+`src/data/products.ts`, compiled into the app, and `validateProductInput` rejects anything
+outside that list. So a new badge is a code change and a deploy, which is exactly the kind of
+thing she should not have to ask for.
+
+The change is to move badges into Firestore as their own small collection, with an admin screen
+to add, rename and retire one, and to relax validation from a fixed union to "exists in the
+badge collection". Retire rather than delete, so a badge coming off the list does not silently
+vanish from the products already carrying it.
+
+Note the overlap with section 8.2: the allergy and sensitivity ribbons in step B.3 are also badge
+shaped but are derived from dog profiles rather than set by hand. These stay separate. One is
+Michaela describing the product, the other is the site reacting to the dog looking at it.
+
 ## 4. Product data changes
 
 Products currently carry `slug, name, price, hook, description, badges, image, safetyNote`, plus
@@ -687,6 +724,8 @@ Everything a stranger can reach, and everything Google can index.
 | B.2 | About Us | Section 3. Carries the origin story, the mission, and the TTouch and nutrition credentials. Section 2.1 makes this page load bearing: it is where touch and handling lives, having been deliberately kept out of the ring |
 | B.3 | Dog profile driven merchandising: allergy and sensitivity badges surfaced as ribbons over product cards, and the "Loki's Mum" naming convention | Section 8.2 says the dog fields power this. Without it the fields are collected and never used, which is the worst of both worlds. Depends on A.2 |
 | B.4 | Legal pages: terms, privacy, delivery, returns and cancellations, plus contact with a real business address | Section 12. She cannot trade without them, and the returns content is now researched in section 4.5 |
+| B.5 | Several photos per product, with a primary image and a gallery | Section 3.3. Added 2026-07-25. Build it with B.1 rather than after: both rewrite the product card, and doing them separately means touching the same shared files twice. Needs a migration for the single `image` field |
+| B.6 | Badges Michaela can add herself, moved from a compiled union into Firestore | Section 3.4. Added 2026-07-25. Independent of everything else in this phase, so it can slot in wherever there is room. Retire rather than delete, or badges disappear from products still carrying them |
 
 ### Phase C: capture and retention
 
@@ -728,6 +767,9 @@ when Liam confirmed both are in.
   than blocking it. It should still finish early, because everything sits on machinery nobody has
   proven and a fault found now is cheaper than a fault found under four phases of new work.
 - A.1 blocks B.1, B.3, C.3 and E.1. A.2 blocks B.3, D.1 and D.5.
+- B.5 should be built with B.1, not after it. Both rewrite the product card, and splitting them
+  means editing the same shared files twice for one outcome. B.6 depends on nothing and can slot
+  in anywhere.
 - B.4 blocks trading at all, so it cannot be the last thing done.
 - E.2 depends on A.1 and on the Good Food page from B.1, and nothing depends on it.
 

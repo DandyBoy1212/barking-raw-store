@@ -1858,6 +1858,8 @@ below use the new phase lettering.
 | The ring, the four pillar pages, the flat shop page | Step B.1. This plan gives them the `pillar` field they need to exist |
 | About Us | Step B.2 |
 | Dog-profile-driven badge ribbons over product cards, and "Loki's Mum" | Step B.3 |
+| Several photos per product, with a primary image and a gallery | Step B.5, spec §3.3. Raised 2026-07-25 after Liam used the admin. `Product.image` stays a single string in this plan |
+| Badges Michaela can add herself, rather than a compiled union | Step B.6, spec §3.4. Raised the same day. `ALL_BADGES` stays a fixed list here |
 | Legal pages and contact | Step B.4. The returns policy content is now researched in spec §4.5 |
 | Email capture, segmentation, the four email welcome sequence | Steps C.1 and C.2 |
 | The members area page, and the posts section in the admin | Step C.3. This plan gives it `currentUserIsMember()` and the members only product split |
