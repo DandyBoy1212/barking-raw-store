@@ -7,7 +7,9 @@ export function Header() {
   return (
     <header className="header">
       <div className="header__inner">
-        <a className="logo" href="#top" aria-label="Barking Raw home">
+        {/* Was href="#top", which on any page other than the home page scrolled to the
+            top of that page instead of going home, leaving the site with no way back. */}
+        <a className="logo" href="/" aria-label="Barking Raw home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="logo__img" src="/brand/logo.jpeg" alt="Barking Raw, Natural Dog Food" />
           <span className="logo__word">

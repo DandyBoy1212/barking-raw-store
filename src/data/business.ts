@@ -33,8 +33,11 @@ export const BUSINESS = {
    * A real geographic address. UK consumer law requires it, and Stripe asks for it
    * before it will let an account trade properly. It does not have to be a shop, a
    * home address is lawful, but it cannot be absent and it cannot be a PO box alone.
+   *
+   * Given by Liam on 2026-07-25. Still missing its postcode, which is why the
+   * "not ready to publish" notice has not cleared: see hasPostcode below.
    */
-  address: PENDING as string | Pending,
+  address: "12 Brown Constable Pend, Dundee" as string | Pending,
 
   /** The address customers write to. Often the same as above. */
   contactEmail: PENDING as string | Pending,
@@ -54,6 +57,14 @@ export const BUSINESS = {
   site: "barkingraw.dog",
 } as const;
 
+/**
+ * A UK postcode anywhere in the string. Deliberately loose: it is checking that
+ * somebody remembered the postcode at all, not validating the address.
+ */
+function hasPostcode(value: string): boolean {
+  return /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i.test(value);
+}
+
 /** Every field Michaela still has to supply, in the order the pages need them. */
 export function pendingBusinessFields(): string[] {
   const labels: Record<string, string> = {
@@ -64,9 +75,17 @@ export function pendingBusinessFields(): string[] {
     contactPhone: "a contact phone number",
     vatNumber: "a VAT number, if she is registered",
   };
-  return Object.entries(labels)
+  const missing = Object.entries(labels)
     .filter(([key]) => BUSINESS[key as keyof typeof BUSINESS] === PENDING)
     .map(([, label]) => label);
+
+  // An address without a postcode is not an address a customer can write to, and
+  // it is not what Stripe is asking for either. Keep flagging it until it has one.
+  if (BUSINESS.address !== PENDING && !hasPostcode(String(BUSINESS.address))) {
+    missing.push("the postcode for the business address");
+  }
+
+  return missing;
 }
 
 export function businessDetailsPending(): boolean {
