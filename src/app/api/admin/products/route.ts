@@ -59,6 +59,17 @@ export async function POST(req: NextRequest) {
       badges: draft.badges,
       image: draft.image,
       ...(draft.safetyNote ? { safetyNote: draft.safetyNote } : {}),
+      pillar: draft.pillar,
+      leadTimeDays: draft.leadTimeDays,
+      ...(draft.membersOnlyUntil ? { membersOnlyUntil: draft.membersOnlyUntil } : {}),
+      fulfilment: draft.fulfilment,
+      ...(draft.supplierPostage !== undefined ? { supplierPostage: draft.supplierPostage } : {}),
+      ...(draft.supplierArrivalMinDays !== undefined
+        ? { supplierArrivalMinDays: draft.supplierArrivalMinDays }
+        : {}),
+      ...(draft.supplierArrivalMaxDays !== undefined
+        ? { supplierArrivalMaxDays: draft.supplierArrivalMaxDays }
+        : {}),
       active: true,
       archived: false,
       stripeProductId: ids.stripeProductId,
