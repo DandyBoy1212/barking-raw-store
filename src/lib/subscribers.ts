@@ -84,6 +84,33 @@ export function applySubscription(
   return { create: false, consentTurnedOn: false, fields: {} };
 }
 
+/** Day offsets from consent for the four pillar emails: the first fortnight. */
+export const WELCOME_OFFSETS_DAYS = [0, 4, 9, 14] as const;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export type WelcomeAction = { type: "code" } | { type: "pillar"; index: 0 | 1 | 2 | 3 } | null;
+
+/**
+ * The one email this contact is due right now, or null.
+ *
+ * No consent, no marketing sequence, and the code email counts as marketing
+ * (the shop form says the ticked box is how the code arrives). Shop contacts
+ * get "your code is waiting" before pillar one. The cron sends at most one
+ * email per contact per run, so the code email lands a run ahead of pillar one
+ * rather than in the same inbox minute.
+ */
+export function nextWelcomeAction(s: Subscriber, nowMs: number): WelcomeAction {
+  if (!s.consent || s.unsubscribed || s.consentAtMs === null) return null;
+  if (s.source === "shop" && s.codeEmailSentAtMs === null) return { type: "code" };
+  const index = s.sequencePosition;
+  if (index >= WELCOME_SEQUENCE_LENGTH) return null;
+  if (nowMs >= s.consentAtMs + WELCOME_OFFSETS_DAYS[index] * DAY_MS) {
+    return { type: "pillar", index: index as 0 | 1 | 2 | 3 };
+  }
+  return null;
+}
+
 function toMillis(value: unknown): number | null {
   if (value && typeof (value as { toMillis?: unknown }).toMillis === "function") {
     return (value as { toMillis: () => number }).toMillis();

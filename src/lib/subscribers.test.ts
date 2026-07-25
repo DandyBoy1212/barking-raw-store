@@ -3,6 +3,8 @@ import {
   normaliseSubscriberEmail,
   docToSubscriber,
   applySubscription,
+  nextWelcomeAction,
+  WELCOME_OFFSETS_DAYS,
   SUBSCRIBER_SOURCES,
   CAPTURE_SOURCES,
   CONSENT_TEXT,
@@ -143,5 +145,52 @@ describe("applySubscription", () => {
       { source: "shop", consent: true },
     );
     expect(Object.keys(r.fields)).toEqual([]);
+  });
+});
+
+const DAY = 24 * 60 * 60 * 1000;
+
+describe("nextWelcomeAction", () => {
+  const base = { consent: true, consentAt: { toMillis: () => 0 } };
+  it("sends nothing without consent, ever", () => {
+    expect(nextWelcomeAction(existing({ consent: false }), 99 * DAY)).toBeNull();
+  });
+  it("sends nothing after an unsubscribe, even with consent still true in the doc", () => {
+    expect(
+      nextWelcomeAction(existing({ ...base, unsubscribedAt: { toMillis: () => 1 } }), 99 * DAY),
+    ).toBeNull();
+  });
+  it("gives a consented shop contact the code email first", () => {
+    expect(nextWelcomeAction(existing({ ...base, source: "shop" }), 0)).toEqual({ type: "code" });
+  });
+  it("home contacts go straight into the pillar sequence on day 0", () => {
+    expect(nextWelcomeAction(existing({ ...base, source: "home" }), 0)).toEqual({
+      type: "pillar",
+      index: 0,
+    });
+  });
+  it("a shop contact whose code email went out moves on to the pillars", () => {
+    expect(
+      nextWelcomeAction(
+        existing({ ...base, source: "shop", codeEmailSentAt: { toMillis: () => 0 } }),
+        1,
+      ),
+    ).toEqual({ type: "pillar", index: 0 });
+  });
+  it("holds each pillar email until its day", () => {
+    const s = existing({ ...base, sequencePosition: 1 });
+    expect(nextWelcomeAction(s, 3 * DAY)).toBeNull();
+    expect(nextWelcomeAction(s, 4 * DAY)).toEqual({ type: "pillar", index: 1 });
+  });
+  it("finishes after the fourth email", () => {
+    expect(nextWelcomeAction(existing({ ...base, sequencePosition: 4 }), 99 * DAY)).toBeNull();
+  });
+  it("anchors the fortnight on the consent moment", () => {
+    const s = existing({ ...base, consentAt: { toMillis: () => 10 * DAY }, sequencePosition: 3 });
+    expect(nextWelcomeAction(s, 23 * DAY)).toBeNull();
+    expect(nextWelcomeAction(s, 24 * DAY)).toEqual({ type: "pillar", index: 3 });
+  });
+  it("spreads over the first fortnight", () => {
+    expect(WELCOME_OFFSETS_DAYS).toEqual([0, 4, 9, 14]);
   });
 });
