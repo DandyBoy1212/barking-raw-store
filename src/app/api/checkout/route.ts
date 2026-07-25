@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Stripe from "stripe";
-import { products } from "@/data/products";
-import { computeShipping } from "@/lib/shipping";
+import { computeBasketDelivery } from "@/lib/shipping";
+import { isMembersOnly } from "@/lib/product-fields";
+import { currentUserIsMember } from "@/lib/membership";
+import { getStoredProducts, type StoredProduct } from "@/lib/products-store";
+import { buildCheckoutLineItem } from "@/lib/stripe-sync";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -35,30 +38,37 @@ export async function POST(req: NextRequest) {
   const origin =
     req.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin;
 
-  // Build line items from SERVER-SIDE prices. Never trust prices from the client.
+  // Build line items from SERVER-SIDE products. Never trust prices from the client.
+  const catalogue = await getStoredProducts();
+  const bySlug = new Map(catalogue.map((p) => [p.slug, p]));
   const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
   let subtotal = 0;
   const summary: string[] = [];
+  const deliveryItems: { product: StoredProduct; qty: number }[] = [];
+  const isMember = await currentUserIsMember();
+  const now = new Date();
   for (const l of lines) {
-    const p = products.find((pr) => pr.slug === l.slug);
-    if (!p) continue;
+    const p = bySlug.get(l.slug);
+    if (!p || !p.active || p.archived) continue;
+    // Early access is the members area's strongest perk, so it is enforced here and
+    // not only by hiding the product. A hand-built request must not get through.
+    if (!isMember && isMembersOnly(p, now)) {
+      return NextResponse.json(
+        { error: `${p.name} is available to members only just now.` },
+        { status: 403 },
+      );
+    }
     const qty = Math.max(1, Math.min(50, Math.floor(Number(l.qty) || 1)));
     subtotal += p.price * qty;
     summary.push(`${qty} x ${p.name}`);
-    line_items.push({
-      quantity: qty,
-      price_data: {
-        currency: "gbp",
-        unit_amount: Math.round(p.price * 100),
-        product_data: { name: p.name },
-      },
-    });
+    line_items.push(buildCheckoutLineItem(p, qty));
+    deliveryItems.push({ product: p, qty });
   }
   if (line_items.length === 0) {
     return NextResponse.json({ error: "Your basket is empty." }, { status: 400 });
   }
 
-  const shipping = computeShipping(postcode, subtotal);
+  const delivery = computeBasketDelivery(deliveryItems, postcode);
 
   // Optional recovery discount code (validated server-side against Firestore).
   const db = getDb();
@@ -103,17 +113,29 @@ export async function POST(req: NextRequest) {
       {
         shipping_rate_data: {
           type: "fixed_amount",
-          display_name: shipping.free
-            ? shipping.reason === "local"
-              ? "Free local delivery (DD1 to DD6)"
-              : "Free postage (over GBP 35)"
-            : "UK postage",
-          fixed_amount: { amount: Math.round(shipping.cost * 100), currency: "gbp" },
+          display_name:
+            delivery.total === 0
+              ? "Free delivery"
+              : delivery.parcels.length > 1
+                ? `Delivery (${delivery.parcels.length} parcels)`
+                : "UK postage",
+          fixed_amount: { amount: Math.round(delivery.total * 100), currency: "gbp" },
         },
       },
     ],
     ...(discounts.length ? { discounts } : { allow_promotion_codes: true }),
-    metadata: { cartId, postcode, itemSummary: summary.join(", ") },
+    metadata: {
+      cartId,
+      postcode,
+      itemSummary: summary.join(", "),
+      // Stripe metadata values are strings and capped at 500 characters, so this is a
+      // short breakdown for reconciliation, not a full record.
+      deliveryBreakdown: delivery.parcels
+        .map((p) => `${p.label}: ${p.cost.toFixed(2)}`)
+        .join("; ")
+        .slice(0, 480),
+      parcelCount: String(delivery.parcels.length),
+    },
     success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/#products`,
   });

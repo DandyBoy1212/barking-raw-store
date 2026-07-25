@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Git worktrees live here, each with its own .next build output. These patterns
+    // are root-relative, so ".next/**" does not match a worktree's copy, and eslint
+    // walked into the bundled build output and died with a heap limit error rather
+    // than a lint failure. Ignore the whole directory: a worktree lints itself.
+    ".claude/**",
   ]),
 ]);
 

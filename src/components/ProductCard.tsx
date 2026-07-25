@@ -2,6 +2,7 @@
 
 import type { Product } from "@/data/products";
 import { gbp } from "@/lib/format";
+import { leadTimeNote, packSizeLabel, supplierArrivalNote } from "@/lib/product-fields";
 import { Badge } from "./Badge";
 import { useCart } from "./CartProvider";
 
@@ -29,8 +30,16 @@ export function ProductCard({ product }: { product: Product }) {
         <p className="card__hook">{product.hook}</p>
         <p className="card__desc">{product.description}</p>
         {product.safetyNote && <p className="card__safety">{product.safetyNote}</p>}
+        {(supplierArrivalNote(product) ?? leadTimeNote(product)) && (
+          <p className="card__lead">{supplierArrivalNote(product) ?? leadTimeNote(product)}</p>
+        )}
         <div className="card__foot">
-          <span className="card__price">{gbp(product.price)}</span>
+          <span className="card__price">
+            {gbp(product.price)}
+            {packSizeLabel(product) && (
+              <span className="card__pack"> / {packSizeLabel(product)}</span>
+            )}
+          </span>
           <button className="btn btn--solid-ink" onClick={onAdd}>
             Add
           </button>

@@ -1,9 +1,12 @@
 /* eslint-disable react/no-unescaped-entities */
-import { products } from "@/data/products";
+import { getPublicProducts, toCatalogue } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { PawTrail } from "@/components/PawTrail";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const products = (await getPublicProducts()).map(toCatalogue);
   return (
     <main>
       {/* HERO */}
@@ -259,15 +262,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="footer">
-        <div className="footer__inner">
-          <span className="logo">
-            <b style={{ fontWeight: 900, letterSpacing: "0.02em" }}>BARKING RAW</b>
-          </span>
-          <small>© {new Date().getFullYear()} Barking Raw · Natural Dog Food · barkingraw.dog</small>
-        </div>
-      </footer>
+      {/* The footer now lives in the root layout, so it carries the legal links on
+          every page rather than only on this one. */}
     </main>
   );
 }
