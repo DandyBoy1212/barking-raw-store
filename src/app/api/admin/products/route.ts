@@ -6,6 +6,7 @@ import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import { getStoredProductBySlugStrict, type StoredProduct } from "@/lib/products-store";
 import { slugify, validateProductInput } from "@/lib/product-admin";
 import { syncProductToStripe } from "@/lib/stripe-sync";
+import { normaliseImages } from "@/lib/product-images";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +40,15 @@ export async function POST(req: NextRequest) {
 
   const stripe = new Stripe(secret);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://barkingraw.dog";
-  const draft: StoredProduct = { slug, ...parsed.value, active: true, archived: false };
+  // Bridge until validateProductInput returns the photo list itself: fold the
+  // validated single image into a one-entry list so the draft satisfies the type.
+  const draft: StoredProduct = {
+    slug,
+    ...parsed.value,
+    images: normaliseImages(undefined, parsed.value.image),
+    active: true,
+    archived: false,
+  };
 
   let ids: { stripeProductId: string; stripePriceId: string };
   try {

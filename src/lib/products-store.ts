@@ -9,6 +9,7 @@ import {
   type FulfilmentPath,
 } from "@/data/products";
 import { isMembersOnly } from "@/lib/product-fields";
+import { normaliseImages, primaryImageUrl } from "@/lib/product-images";
 
 export type StoredProduct = Product & {
   active: boolean;
@@ -40,6 +41,10 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     return Number.isFinite(n) && n >= 0 ? n : undefined;
   };
 
+  // A legacy doc predates the images list and carries only the single image
+  // string; fold it in rather than dropping the photo.
+  const images = normaliseImages(data.images, data.image);
+
   return {
     slug: id,
     name: String(data.name ?? ""),
@@ -47,7 +52,8 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     hook: String(data.hook ?? ""),
     description: String(data.description ?? ""),
     badges: Array.isArray(data.badges) ? (data.badges as Badge[]) : [],
-    image: String(data.image ?? ""),
+    images,
+    image: primaryImageUrl(images),
     safetyNote: data.safetyNote ? String(data.safetyNote) : undefined,
     pillar,
     leadTimeDays,
@@ -79,6 +85,7 @@ export function toCatalogue(sp: StoredProduct): Product {
     hook: sp.hook,
     description: sp.description,
     badges: sp.badges,
+    images: sp.images,
     image: sp.image,
     safetyNote: sp.safetyNote,
     pillar: sp.pillar,

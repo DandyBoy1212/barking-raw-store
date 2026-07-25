@@ -155,6 +155,55 @@ describe("toCatalogue new fields", () => {
   });
 });
 
+describe("docToStoredProduct images", () => {
+  it("folds a legacy doc's single image into the images list", () => {
+    const sp = docToStoredProduct("x", {
+      name: "X",
+      price: 1,
+      hook: "h",
+      description: "d",
+      image: "/x.png",
+    });
+    expect(sp.images).toEqual([{ url: "/x.png", primary: true }]);
+    expect(sp.image).toBe("/x.png");
+  });
+
+  it("respects a stored images list and derives image from its primary", () => {
+    const sp = docToStoredProduct("x", {
+      name: "X",
+      price: 1,
+      hook: "h",
+      description: "d",
+      image: "/stale.png",
+      images: [{ url: "/a.png" }, { url: "/b.png", primary: true }],
+    });
+    expect(sp.images).toEqual([
+      { url: "/a.png", primary: false },
+      { url: "/b.png", primary: true },
+    ]);
+    expect(sp.image).toBe("/b.png");
+  });
+
+  it("passes images through toCatalogue", () => {
+    const sp = docToStoredProduct("x", {
+      name: "X",
+      price: 1,
+      hook: "h",
+      description: "d",
+      image: "/x.png",
+    });
+    expect(toCatalogue(sp).images).toEqual([{ url: "/x.png", primary: true }]);
+  });
+});
+
+describe("seed images", () => {
+  it("gives every seed product a one-entry primary list matching its image", () => {
+    for (const sp of seedAsStoredProducts()) {
+      expect(sp.images).toEqual([{ url: sp.image, primary: true }]);
+    }
+  });
+});
+
 describe("splitByMembersOnly", () => {
   const now = new Date("2026-08-01T12:00:00Z");
 
