@@ -64,6 +64,12 @@ export type Dog = {
   sensitivities?: Sensitivity[];
   /** Free text ingredients, lower cased, for example "chicken", "wheat". */
   allergies?: string[];
+  /**
+   * A signed read URL on our own Firebase Storage bucket, never anywhere else.
+   * Section 10.2 puts these on a public Dogs of the Day page, so an arbitrary URL
+   * here would be arbitrary content there.
+   */
+  photo?: string;
 };
 
 export type CustomerAddress = {

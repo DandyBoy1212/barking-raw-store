@@ -49,6 +49,26 @@ export function dogOwnerLabel(dogs: { id: string; name: string }[]): string {
   return joined.endsWith("s") ? `${joined}' Mum` : `${joined}'s Mum`;
 }
 
+/**
+ * True only for a URL on our own Firebase Storage bucket.
+ *
+ * A dog photo URL is handed back by the browser after upload, so it is caller
+ * supplied and cannot be trusted. Section 10.2 puts dog photos on a public page,
+ * which turns "any URL the client sends" into "any image on a public page of ours".
+ * Signed Storage reads are served from *.googleapis.com over https, and nothing else
+ * is accepted.
+ */
+function isOwnStorageUrl(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
+  return url.hostname === "storage.googleapis.com" || url.hostname.endsWith(".googleapis.com");
+}
+
 const SIZES: DogSize[] = ["small", "medium", "large"];
 const ACTIVITIES: ActivityLevel[] = ["low", "moderate", "high"];
 
@@ -95,6 +115,9 @@ export function validateDogInput(
     ? input.allergies.map((a) => String(a).trim().toLowerCase()).filter(Boolean)
     : [];
   if (allergies.length) value.allergies = allergies;
+
+  const photo = String(input.photo ?? "").trim();
+  if (photo && isOwnStorageUrl(photo)) value.photo = photo;
 
   return { ok: true, value };
 }

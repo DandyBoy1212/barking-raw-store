@@ -124,3 +124,30 @@ describe("normaliseAddress", () => {
     expect(normaliseAddress(undefined)).toEqual({ line1: "", line2: "", city: "", postcode: "" });
   });
 });
+
+describe("validateDogInput photo", () => {
+  const signed =
+    "https://storage.googleapis.com/barking-raw.firebasestorage.app/dogs/u1/abc.jpg?X-Goog-Signature=x";
+
+  it("keeps a photo on our own storage host", () => {
+    const result = validateDogInput({ name: "Loki", photo: signed });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.photo).toBe(signed);
+  });
+
+  it("drops a photo hosted anywhere else", () => {
+    // The photo is echoed back by the client after upload, and step 10.2 puts dog
+    // photos on a public page. An arbitrary URL would put arbitrary content there.
+    const result = validateDogInput({ name: "Loki", photo: "https://evil.example/x.jpg" });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.photo).toBeUndefined();
+  });
+
+  it("drops a non-https or unparseable photo", () => {
+    for (const photo of ["javascript:alert(1)", "http://storage.googleapis.com/x.jpg", "not a url"]) {
+      const result = validateDogInput({ name: "Loki", photo });
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.value.photo).toBeUndefined();
+    }
+  });
+});
