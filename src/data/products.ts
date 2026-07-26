@@ -1,6 +1,10 @@
 // Single source of truth for the 9 products. Prices in GBP (pounds).
 // Copy drafted from docs/research-dossier.md, honesty-flag compliant.
 
+import type { ProductImage } from "@/lib/product-images";
+
+export type { ProductImage };
+
 export type Badge =
   | "Most Popular"
   | "Best for Big Dogs"
@@ -60,7 +64,17 @@ export interface Product {
   hook: string;
   description: string;
   badges: Badge[];
-  image: string; // path under /public
+  /**
+   * The photos, in display order, exactly one marked primary. The primary is what
+   * Stripe receives, what the basket shows, and what any fulfilment surface uses.
+   */
+  images: ProductImage[];
+  /**
+   * Derived: the primary image's URL (a path under /public, or a storage URL).
+   * Kept because Stripe sync, the basket and legacy Firestore readers all read a
+   * single string. Never set independently of images.
+   */
+  image: string;
   safetyNote?: string;
   /** Exactly one pillar. A product with no pillar appears on no page, so this is required. */
   pillar: Pillar;
@@ -86,7 +100,10 @@ export interface Product {
   stripePriceId?: string;
 }
 
-export const products: Product[] = [
+/** The seed literals carry a single image; the photo list is derived from it below. */
+type SeedProduct = Omit<Product, "images">;
+
+const seedProducts: SeedProduct[] = [
   {
     slug: "beef-trachea-rings",
     name: "Beef Trachea Rings",
@@ -223,6 +240,11 @@ export const products: Product[] = [
       "Keep treats to roughly 10% of daily calories, and go easy if the meat is organ or liver.",
   },
 ];
+
+export const products: Product[] = seedProducts.map((p) => ({
+  ...p,
+  images: [{ url: p.image, primary: true }],
+}));
 
 export const productBySlug = (slug: string) =>
   products.find((p) => p.slug === slug);

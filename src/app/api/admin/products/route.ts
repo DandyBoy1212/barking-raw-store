@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
       hook: draft.hook,
       description: draft.description,
       badges: draft.badges,
+      images: draft.images,
       image: draft.image,
       ...(draft.safetyNote ? { safetyNote: draft.safetyNote } : {}),
       pillar: draft.pillar,

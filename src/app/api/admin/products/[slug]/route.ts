@@ -55,6 +55,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
         hook: next.hook,
         description: next.description,
         badges: next.badges,
+        images: next.images,
         image: next.image,
         ...(next.safetyNote ? { safetyNote: next.safetyNote } : { safetyNote: FieldValue.delete() }),
         pillar: next.pillar,

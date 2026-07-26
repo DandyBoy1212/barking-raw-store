@@ -175,6 +175,41 @@ describe("validateProductInput fulfilment", () => {
   });
 });
 
+describe("validateProductInput images", () => {
+  const withPillar = { ...base, pillar: "good-food" as const };
+
+  it("accepts an images list and derives the primary image", () => {
+    const r = validateProductInput({
+      ...withPillar,
+      image: undefined,
+      images: [{ url: "/a.png", primary: false }, { url: "/b.png", primary: true }],
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.images).toEqual([
+        { url: "/a.png", primary: false },
+        { url: "/b.png", primary: true },
+      ]);
+      expect(r.value.image).toBe("/b.png");
+    }
+  });
+
+  it("folds a legacy single image into the list", () => {
+    const r = validateProductInput(withPillar);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.images).toEqual([{ url: "/products/rabbit-ears.png", primary: true }]);
+      expect(r.value.image).toBe("/products/rabbit-ears.png");
+    }
+  });
+
+  it("rejects a product with no photos at all", () => {
+    const r = validateProductInput({ ...withPillar, image: undefined, images: [] });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors).toContain("At least one photo is required.");
+  });
+});
+
 describe("validateProductInput pack size", () => {
   it("leaves both undefined when neither is given, since the nine originals have none", () => {
     const r = validateProductInput({ ...base, pillar: "good-food" });

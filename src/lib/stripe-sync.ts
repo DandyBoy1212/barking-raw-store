@@ -1,5 +1,6 @@
 import type Stripe from "stripe";
 import type { StoredProduct } from "@/lib/products-store";
+import { primaryImageUrl } from "@/lib/product-images";
 
 /** Pounds to integer pence, rounded, avoiding float drift. */
 export function priceToPence(price: number): number {
@@ -14,7 +15,9 @@ function absoluteImage(image: string, siteUrl: string): string {
 }
 
 export function buildStripeProductParams(sp: StoredProduct, siteUrl = "https://barkingraw.dog") {
-  const img = absoluteImage(sp.image, siteUrl);
+  // A Stripe product takes one image, and it is always the primary. The legacy
+  // single field is the fallback for a doc that somehow lost its list.
+  const img = absoluteImage(primaryImageUrl(sp.images) || sp.image, siteUrl);
   return {
     name: sp.name,
     description: sp.description,

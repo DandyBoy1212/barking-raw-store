@@ -3,6 +3,7 @@ import { getPublicProducts, toCatalogue } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { PawTrail } from "@/components/PawTrail";
 import { EmailCapture } from "@/components/EmailCapture";
+import { RingHero } from "@/components/Ring";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,9 @@ export default async function Home() {
   const products = (await getPublicProducts()).map(toCatalogue);
   return (
     <main>
+      {/* THE RING: positioning first, navigation second (spec section 3.2). */}
+      <RingHero />
+
       {/* HERO */}
       <section className="band hero" style={{ background: "#000", color: "#fff" }}>
         <div
@@ -17,7 +21,8 @@ export default async function Home() {
           style={{ display: "flex", gap: "2.5rem", alignItems: "center", flexWrap: "wrap" }}
         >
           <div style={{ flex: "1 1 340px" }}>
-            <h1 className="display">You've been lied to.</h1>
+            {/* An h2 since the ring hero above carries the page's single h1. */}
+            <h2 className="display">You've been lied to.</h2>
             <p className="hero__sub">
               The "beef" treat in your cupboard is roughly 2% beef. The "dental stick" is basically a
               cereal biscuit with a few milligrams of flavouring. You didn't know, because the label

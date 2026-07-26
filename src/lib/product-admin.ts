@@ -1,4 +1,5 @@
 import { ALL_BADGES, ALL_PILLARS, type Badge, type Pillar, type FulfilmentPath } from "@/data/products";
+import { normaliseImages, primaryImageUrl, type ProductImage } from "@/lib/product-images";
 
 export { ALL_BADGES, ALL_PILLARS };
 
@@ -16,6 +17,9 @@ export type ProductInput = {
   hook: string;
   description: string;
   badges: Badge[];
+  /** The photo list, ordered, exactly one primary after validation. */
+  images: ProductImage[];
+  /** Derived from images: the primary photo's URL. */
   image: string;
   safetyNote?: string;
   pillar: Pillar;
@@ -57,7 +61,10 @@ export function validateProductInput(
   const price = Number(input.price ?? 0);
   const hook = String(input.hook ?? "").trim();
   const description = String(input.description ?? "").trim();
-  const image = String(input.image ?? "").trim();
+  // The form sends a photo list; an older payload may still send the single
+  // image string. Either way the primary is derived, never trusted from input.
+  const images = normaliseImages(input.images, input.image);
+  const image = primaryImageUrl(images);
   const badges = Array.isArray(input.badges)
     ? input.badges.filter((b): b is Badge => ALL_BADGES.includes(b as Badge))
     : [];
@@ -67,7 +74,7 @@ export function validateProductInput(
   if (!(Number.isFinite(price) && price > 0)) errors.push("Price must be greater than 0.");
   if (!hook) errors.push("Hook is required.");
   if (!description) errors.push("Description is required.");
-  if (!image) errors.push("An image is required.");
+  if (images.length === 0) errors.push("At least one photo is required.");
 
   // A product with no pillar appears on no page, which looks exactly like the site
   // working while the product is invisible. Required, never defaulted, on the way in.
@@ -140,6 +147,7 @@ export function validateProductInput(
       hook,
       description,
       badges,
+      images,
       image,
       safetyNote,
       pillar,
