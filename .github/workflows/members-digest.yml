@@ -1,0 +1,27 @@
+name: Members digest
+
+# Vercel Hobby allows only two crons, and both slots are taken (abandoned cart
+# and the daily digest). The members digest follows the same free GitHub
+# Action pattern as abandoned-cart.yml and welcome-sequence.yml. Weekly on a
+# Friday morning, after the two daily runs, because the endpoint is idempotent
+# per ISO week: it claims the week before sending, so a rerun (manual or
+# otherwise) inside the same week sends nothing.
+#
+# Requires the same two repository secrets as abandoned-cart.yml:
+#   SITE_URL     e.g. https://barkingraw.dog   (or the .vercel.app URL)
+#   CRON_SECRET  the same value set as CRON_SECRET in Vercel env vars
+
+on:
+  schedule:
+    - cron: "45 8 * * 5" # Fridays, after the 8:00 and 8:30 daily pings
+  workflow_dispatch: {} # lets you run it manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the members digest
+        run: |
+          curl -fsS -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/cron/members-digest"
