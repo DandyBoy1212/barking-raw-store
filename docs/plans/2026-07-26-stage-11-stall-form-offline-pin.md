@@ -41,8 +41,11 @@ iPad when the record is saved locally), and identity is resolved **server side a
   cannot collide with a Firebase uid, Michaela still has the data, and if the person ever
   does hand over an email there is a record to merge by hand.
 
-Membership is granted by the write itself: `isMemberUid` is "does a `store_customers` doc
-exist", which is exactly the same mechanism the Stripe webhook uses.
+Membership is granted explicitly: the stall patch writes `member: true` onto the customer
+doc. (This changed mid-build: membership used to be inferred from the doc merely existing,
+which turned out to be a privilege escalation, since the account routes create that doc for
+any signed-in user. The base branch now owns the `member` flag semantics and the
+`isMemberDoc` predicate; this track only writes the flag, per spec 10.1.)
 
 **Idempotency:** a marker document `store_stall_signups/{clientId}` records that a clientId
 has been applied, and which uid it landed on. The sync route checks the marker before doing
@@ -2664,7 +2667,7 @@ Expected: clean.
   welcome email with magic link afterwards (Task 6), staff PIN with explicit end-of-day
   logout (Tasks 3, 5, 8), nothing left on the device (Tasks 7, 8 wipe), a web page with
   nothing to install (all of it).
-- **Membership granted:** the sync write creates the `store_customers` doc, which is the
-  membership test `isMemberUid` uses. Section 10.1 satisfied without touching
-  `membership.ts`.
+- **Membership granted:** the sync write stamps `member: true` on the customer doc, the
+  explicit flag the base branch's `isMemberDoc` reads. Section 10.1 satisfied without
+  touching `membership.ts`.
 - **12.2:** marketing consent unticked at capture, stored with a timestamp.

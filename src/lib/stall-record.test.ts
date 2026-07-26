@@ -158,11 +158,20 @@ describe("buildStallCustomerPatch", () => {
       address: { line1: "1 High St", line2: "", city: "Dundee", postcode: "DD5 1AA" },
       lastPostcode: "DD5 1AA",
       dogs: [{ id: "dog-1", name: "Loki", breed: "Collie" }],
+      member: true,
       marketingConsent: true,
       photoConsent: false,
       consentAt: "2026-07-26T08:30:00.000Z",
       stallSignupAt: "2026-07-26T08:30:00.000Z",
     });
+  });
+
+  it("always grants membership explicitly, since doc existence no longer counts", () => {
+    // Spec 10.1: signing up at the stall grants membership. Membership became an
+    // explicit member: true flag when doc-existence membership was found to be a
+    // privilege escalation, so the stall write must say it in so many words.
+    const patch = buildStallCustomerPatch(BLANK_CUSTOMER, record({ name: "Sam" }), []);
+    expect(patch.member).toBe(true);
   });
 
   it("never blanks an existing field with a skipped one", () => {

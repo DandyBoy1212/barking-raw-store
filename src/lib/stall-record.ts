@@ -156,6 +156,11 @@ export function buildStallCustomerPatch(
     patch.dogs = dogs;
   }
 
+  // Spec 10.1: signing up at the stall grants membership. Membership is an
+  // explicit flag, not doc existence (existence-as-membership let any signed-in
+  // user self-grant by adding a dog), so the stall write says it in so many words.
+  patch.member = true;
+
   patch.marketingConsent = record.consent.marketing;
   patch.photoConsent = record.consent.photo;
   patch.consentAt = record.capturedAt;
