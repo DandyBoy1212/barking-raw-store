@@ -4,6 +4,7 @@ import { ALL_SENSITIVITIES, SENSITIVITY_BADGE } from "@/data/customers";
 import {
   deriveLifeStage,
   dogOwnerLabel,
+  isMemberDoc,
   normaliseAddress,
   validateDogInput,
 } from "./customer-fields";
@@ -149,5 +150,31 @@ describe("validateDogInput photo", () => {
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.value.photo).toBeUndefined();
     }
+  });
+});
+
+describe("isMemberDoc", () => {
+  it("is true only for an explicit member flag", () => {
+    expect(isMemberDoc({ member: true })).toBe(true);
+  });
+
+  it("is false for a doc that merely exists", () => {
+    // The bug this replaces: membership used to be "a store_customers doc exists",
+    // and the A.2 account routes create that doc with set({merge:true}). So adding
+    // a dog, or saving an address, made any signed-in user a member and handed them
+    // the members-only early access that spec 10.1 says signing up must not grant.
+    expect(isMemberDoc({ dogs: [{ id: "dog-1", name: "Freeloader" }] })).toBe(false);
+    expect(isMemberDoc({ name: "Nobody", address: { line1: "", postcode: "" } })).toBe(false);
+    expect(isMemberDoc({})).toBe(false);
+  });
+
+  it("is false for a missing doc", () => {
+    expect(isMemberDoc(undefined)).toBe(false);
+  });
+
+  it("does not accept a truthy non-true value", () => {
+    // Firestore will happily store a string. "false" is truthy.
+    expect(isMemberDoc({ member: "false" })).toBe(false);
+    expect(isMemberDoc({ member: 1 })).toBe(false);
   });
 });

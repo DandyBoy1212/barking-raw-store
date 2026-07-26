@@ -132,3 +132,20 @@ export function normaliseAddress(input: Partial<CustomerAddress> | undefined): C
     postcode: String(input.postcode ?? "").trim().toUpperCase(),
   };
 }
+
+/**
+ * Whether a store_customers document represents a member.
+ *
+ * Membership used to be inferred from the document merely existing, which was true
+ * while a paid Stripe order was the only thing that ever created one. The A.2 account
+ * routes broke that: they set({merge: true}) on the same document, so adding a dog or
+ * saving an address created it, and any signed-in visitor became a member and got the
+ * members-only early access that spec section 10.1 says signing up must not grant.
+ *
+ * So membership is now an explicit flag, written by the paths that actually confer it:
+ * a paid order, and the stall signup. Strict === true, because Firestore will store a
+ * string and "false" is truthy.
+ */
+export function isMemberDoc(data: Record<string, unknown> | undefined): boolean {
+  return data?.member === true;
+}
