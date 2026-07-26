@@ -69,7 +69,7 @@
 **Interfaces:**
 - Produces: `type ProductImage = { url: string; primary: boolean }`; `normaliseImages(images: unknown, legacyImage?: unknown): ProductImage[]`; `primaryImageUrl(images: ProductImage[]): string`; `setPrimary(images, index): ProductImage[]`; `moveImage(images, from, to): ProductImage[]`; `removeImage(images, index): ProductImage[]`; `cycleIndex(current: number, delta: number, length: number): number`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // src/lib/product-images.test.ts
@@ -212,12 +212,12 @@ describe("cycleIndex", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run src/lib/product-images.test.ts`
 Expected: FAIL, cannot resolve `@/lib/product-images`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // src/lib/product-images.ts
@@ -295,12 +295,12 @@ export function cycleIndex(current: number, delta: number, length: number): numb
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/lib/product-images.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/product-images.ts src/lib/product-images.test.ts
@@ -320,7 +320,7 @@ git commit -m "feat: pure image list logic, one primary among several photos"
 - Consumes: `normaliseImages`, `primaryImageUrl`, `ProductImage` from Task 1.
 - Produces: `Product.images: ProductImage[]` (required); `Product.image: string` stays, documented as the derived primary; `docToStoredProduct` and `toCatalogue` carry `images`.
 
-- [ ] **Step 1: Write the failing tests** (append to `src/lib/products-store.test.ts`)
+- [x] **Step 1: Write the failing tests** (append to `src/lib/products-store.test.ts`)
 
 ```ts
 import { seedAsStoredProducts } from "@/lib/products-store"; // extend existing imports as needed
@@ -360,12 +360,12 @@ describe("seed images", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/lib/products-store.test.ts`
 Expected: FAIL, `images` undefined.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `src/data/products.ts`:
 
@@ -415,12 +415,12 @@ import { normaliseImages, primaryImageUrl } from "@/lib/product-images";
 
 And `toCatalogue` gains `images: sp.images,`.
 
-- [ ] **Step 4: Run the full suite and typecheck**
+- [x] **Step 4: Run the full suite and typecheck**
 
 Run: `npm test && npx tsc --noEmit`
 Expected: all tests pass (the compiler is the check that no consumer broke; `image` still exists so none should).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/data/products.ts src/lib/products-store.ts src/lib/products-store.test.ts
@@ -442,7 +442,7 @@ git commit -m "feat: products carry an ordered photo list, reads tolerate the le
 - Consumes: `normaliseImages`, `primaryImageUrl` from Task 1.
 - Produces: `ProductInput.images: ProductImage[]`; `validateProductInput` accepts `images` (list) or legacy `image` (string) and returns both `images` and the derived `image`.
 
-- [ ] **Step 1: Write the failing tests** (append to `src/lib/product-admin.test.ts`; the existing valid-input fixture keeps working because a legacy `image` string still validates)
+- [x] **Step 1: Write the failing tests** (append to `src/lib/product-admin.test.ts`; the existing valid-input fixture keeps working because a legacy `image` string still validates)
 
 ```ts
 describe("validateProductInput images", () => {
@@ -480,12 +480,12 @@ describe("validateProductInput images", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/lib/product-admin.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `src/lib/product-admin.ts`:
 
@@ -519,12 +519,12 @@ Firestore writes, add `images: draft.images,` / `images: next.images,`.
 In `src/app/api/dev/seed-products/route.ts`, next to `image: seedSp.image,` add
 `images: seedSp.images,`.
 
-- [ ] **Step 4: Run suite and typecheck**
+- [x] **Step 4: Run suite and typecheck**
 
 Run: `npm test && npx tsc --noEmit`
 Expected: PASS and clean.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/product-admin.ts src/lib/product-admin.test.ts src/app/api/admin/products/route.ts "src/app/api/admin/products/[slug]/route.ts" src/app/api/dev/seed-products/route.ts
@@ -542,7 +542,7 @@ git commit -m "feat: the admin validates and persists the photo list, primary de
 **Interfaces:**
 - Consumes: `primaryImageUrl` from Task 1.
 
-- [ ] **Step 1: Write the failing test** (append)
+- [x] **Step 1: Write the failing test** (append)
 
 ```ts
 it("sends the primary image to Stripe, not the first", () => {
@@ -561,12 +561,12 @@ it("sends the primary image to Stripe, not the first", () => {
 
 (Adapt the fixture name to what the file actually uses; it builds a full product literal near the top.)
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/lib/stripe-sync.test.ts`
 Expected: FAIL (it currently uses `sp.image`, which the fixture leaves pointing elsewhere).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `buildStripeProductParams`:
 
@@ -578,12 +578,12 @@ import { primaryImageUrl } from "@/lib/product-images";
 
 The `|| sp.image` fallback keeps a doc that somehow lost its list from losing its Stripe image too.
 
-- [ ] **Step 4: Run suite and typecheck**
+- [x] **Step 4: Run suite and typecheck**
 
 Run: `npm test && npx tsc --noEmit`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/stripe-sync.ts src/lib/stripe-sync.test.ts
@@ -603,7 +603,7 @@ git commit -m "feat: stripe receives the primary photo, whichever position it ho
 
 No unit test: the cycling arithmetic was tested in Task 1 and the vitest environment is node-only. The compiler and lint are the checks here.
 
-- [ ] **Step 1: Implement the card**
+- [x] **Step 1: Implement the card**
 
 Replace the single `<img>` in `ProductCard` with a gallery. The card is already a client component:
 
@@ -652,7 +652,7 @@ and in the media div, after the badges:
         )}
 ```
 
-- [ ] **Step 2: Append the styles to globals.css**
+- [x] **Step 2: Append the styles to globals.css**
 
 ```css
 /* ---------- Product card gallery (B.5) ---------- */
@@ -666,12 +666,12 @@ and in the media div, after the badges:
 .card__dot--on { opacity: 0.9; }
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npm test && npx tsc --noEmit && npm run lint`
 Expected: tests pass, tsc clean, lint still exactly 3 errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/ProductCard.tsx src/app/globals.css
@@ -689,7 +689,7 @@ git commit -m "feat: the product card cycles through its photos, primary first"
 **Interfaces:**
 - Consumes: `normaliseImages`, `setPrimary`, `moveImage`, `removeImage`, `ProductImage` from Task 1; the existing single-file upload endpoint `/api/admin/products/image` (called once per file).
 
-- [ ] **Step 1: Implement the form changes**
+- [x] **Step 1: Implement the form changes**
 
 Replace the `image` state with a list, keeping the existing upload endpoint and error handling:
 
@@ -808,7 +808,7 @@ The save button's guard changes from `!image` to `images.length === 0`:
         <button className="btn btn--solid-ink btn--block" disabled={busy || images.length === 0} type="submit">
 ```
 
-- [ ] **Step 2: Append the styles**
+- [x] **Step 2: Append the styles**
 
 ```css
 /* ---------- Admin photo list (B.5) ---------- */
@@ -818,12 +818,12 @@ The save button's guard changes from `!image` to `images.length === 0`:
 .photo-list__ctl .chip:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npm test && npx tsc --noEmit && npm run lint`
 Expected: tests pass, tsc clean, lint at 3.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/admin/ProductForm.tsx src/app/globals.css
@@ -841,7 +841,7 @@ git commit -m "feat: the product form takes several photos, reorder, remove, and
 **Interfaces:**
 - Produces: exported `planImagePatch(data)` returning `{ images, image } | null`. `null` means nothing to write. The script never runs Firestore work on import (main is guarded), so the test can import it. Do NOT run the script against anything; there is no env here.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 // scripts/backfill-product-images.test.mjs
@@ -900,12 +900,12 @@ describe("planImagePatch", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run scripts/backfill-product-images.test.mjs`
 Expected: FAIL, module not found.
 
-- [ ] **Step 3: Implement the script**
+- [x] **Step 3: Implement the script**
 
 ```js
 // scripts/backfill-product-images.mjs
@@ -999,12 +999,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 }
 ```
 
-- [ ] **Step 4: Run suite**
+- [x] **Step 4: Run suite**
 
 Run: `npm test`
 Expected: PASS, including the new .mjs test file.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/backfill-product-images.mjs scripts/backfill-product-images.test.mjs
@@ -1023,7 +1023,7 @@ git commit -m "feat: a backfill folds the single image field into the photo list
 - Consumes: `Pillar`, `ALL_PILLARS` from `@/data/products`.
 - Produces: `filterByPillar<T extends { pillar: Pillar }>(items: T[], pillar: Pillar): T[]`; `RING_PHOTOS: Record<Pillar, string>`; `PILLAR_META: Record<Pillar, { title: string; description: string }>`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // src/lib/pillars.test.ts
@@ -1072,12 +1072,12 @@ describe("PILLAR_META", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/lib/pillars.test.ts`
 Expected: FAIL, module not found.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // src/lib/pillars.ts
@@ -1133,12 +1133,12 @@ export const PILLAR_META: Record<Pillar, { title: string; description: string }>
 };
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/lib/pillars.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/pillars.ts src/lib/pillars.test.ts
@@ -1160,7 +1160,7 @@ git commit -m "feat: the pillar filter, the ring photo map, and the four pages' 
 
 No unit test: markup and CSS. The compiler, lint, and the pillar photo existence test from Task 8 are the checks.
 
-- [ ] **Step 1: Implement the component**
+- [x] **Step 1: Implement the component**
 
 ```tsx
 // src/components/Ring.tsx
@@ -1215,13 +1215,13 @@ export function RingHero() {
 }
 ```
 
-- [ ] **Step 2: Mount it and demote the old hero heading**
+- [x] **Step 2: Mount it and demote the old hero heading**
 
 In `src/app/page.tsx`: add `import { RingHero } from "@/components/Ring";` and `<RingHero />`
 as the first child of `<main>`. In the old hero section, change `<h1 className="display">You've been lied to.</h1>`
 to `<h2 className="display">You've been lied to.</h2>` so the page keeps one h1 (the ring hero's).
 
-- [ ] **Step 3: Append the styles**
+- [x] **Step 3: Append the styles**
 
 Mobile-first: the grid of circles is the default, the pie takes over at 720px.
 
@@ -1270,12 +1270,12 @@ Note the desktop `.ring` uses `display: block`; the wedges position absolutely i
 Centre it: add `margin: 0 auto;` inside the desktop block too (the mobile rule's margin
 is overridden by the media query redefinition, so restate it).
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `npm test && npx tsc --noEmit && npm run lint`
 Expected: tests pass, tsc clean, lint at 3.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/Ring.tsx src/app/page.tsx src/app/globals.css
@@ -1302,7 +1302,7 @@ Teaching copy rules, honesty-checked against `docs/research-dossier.md`:
 - Good Food claims are all dossier-sourced (label law, group terms, percentage rules, adaptable meat-first biology, treats around 10% of daily calories, omega-3 for sprats and salmon, chewing helps teeth but never replaces vet care).
 - Comfy Walks, Fun & Games and Cosy Sleep have no dossier entries, so their pages carry practical, observational guidance only: no statistics, no injury claims, no "sniffing equals exercise" multipliers, no calming-product efficacy claims.
 
-- [ ] **Step 1: The shared grid**
+- [x] **Step 1: The shared grid**
 
 ```tsx
 // src/components/PillarProducts.tsx
@@ -1347,7 +1347,7 @@ CSS (append):
 .shelf-empty a { text-decoration: underline; font-weight: 700; }
 ```
 
-- [ ] **Step 2: The Good Food page**
+- [x] **Step 2: The Good Food page**
 
 ```tsx
 // src/app/good-food/page.tsx
@@ -1447,7 +1447,7 @@ export default function GoodFoodPage() {
 }
 ```
 
-- [ ] **Step 3: The Comfy Walks page**
+- [x] **Step 3: The Comfy Walks page**
 
 ```tsx
 // src/app/comfy-walks/page.tsx
@@ -1519,7 +1519,7 @@ export default function ComfyWalksPage() {
 }
 ```
 
-- [ ] **Step 4: The Fun & Games page**
+- [x] **Step 4: The Fun & Games page**
 
 ```tsx
 // src/app/fun-and-games/page.tsx
@@ -1592,7 +1592,7 @@ export default function FunAndGamesPage() {
 }
 ```
 
-- [ ] **Step 5: The Cosy Sleep page**
+- [x] **Step 5: The Cosy Sleep page**
 
 ```tsx
 // src/app/cosy-sleep/page.tsx
@@ -1663,12 +1663,12 @@ export default function CosySleepPage() {
 }
 ```
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run: `npm test && npx tsc --noEmit && npm run lint`
 Expected: tests pass, tsc clean, lint at 3.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/components/PillarProducts.tsx src/app/good-food src/app/comfy-walks src/app/fun-and-games src/app/cosy-sleep src/app/globals.css
@@ -1685,7 +1685,7 @@ git commit -m "feat: four pillar pages that teach first, with a shared shelf com
 **Interfaces:**
 - Consumes: `getPublicProducts`, `toCatalogue`, `ProductCard`.
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 ```tsx
 // src/app/shop/page.tsx
@@ -1732,12 +1732,12 @@ export default async function ShopPage() {
 }
 ```
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 Run: `npx tsc --noEmit && npm run lint`
 Expected: clean, lint at 3.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/shop/page.tsx
@@ -1755,7 +1755,7 @@ git commit -m "feat: a flat shop page for anyone who arrived ready to buy"
 **Interfaces:**
 - Consumes: `ALL_PILLARS`, `PILLAR_LABELS` from `@/data/products` (safe in a client component: it is plain data, no server imports).
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 In `Header.tsx`, add the imports and a nav row under the existing `header__inner` (inside
 `<header className="header">`):
@@ -1773,7 +1773,7 @@ import { ALL_PILLARS, PILLAR_LABELS } from "@/data/products";
       </nav>
 ```
 
-- [ ] **Step 2: Append the styles**
+- [x] **Step 2: Append the styles**
 
 ```css
 /* ---------- Header nav (B.1) ---------- */
@@ -1783,12 +1783,12 @@ import { ALL_PILLARS, PILLAR_LABELS } from "@/data/products";
 .header__nav a:hover { opacity: 1; }
 ```
 
-- [ ] **Step 3: Final verification for the whole stage**
+- [x] **Step 3: Final verification for the whole stage**
 
 Run: `npm test && npx tsc --noEmit && npm run lint`
 Expected: all tests pass (143 baseline plus everything added), tsc clean, lint at exactly 3 errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/Header.tsx src/app/globals.css
