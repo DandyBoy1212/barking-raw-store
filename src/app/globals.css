@@ -282,3 +282,9 @@ h1, h2, h3 { line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; }
 /* ---------- Pillar pages (B.1) ---------- */
 .shelf-empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; padding: 1.8rem 1.4rem; text-align: center; }
 .shelf-empty a { text-decoration: underline; font-weight: 700; }
+
+/* ---------- Header nav (B.1) ---------- */
+.header__nav { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--pad) 0.55rem; display: flex; gap: 1.4rem; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.header__nav::-webkit-scrollbar { display: none; }
+.header__nav a { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; transition: opacity 0.12s ease; }
+.header__nav a:hover { opacity: 1; }
