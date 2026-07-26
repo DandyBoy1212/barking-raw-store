@@ -12,6 +12,12 @@
 // granting membership to a record that never bought anything is the exact bug this
 // is here to close.
 //
+// ORDERING, and it matters. Deploy the membership fix, then run this, and only then
+// ship the stall form (D.1). The stall grants membership at the table, so a signup
+// created after D.1 ships but before this has run would be written under the old
+// assumption and would need patching by hand. Nothing is deployed yet, so the order
+// is free today and expensive to get wrong later.
+//
 // Dry run:  node scripts/backfill-membership-flag.mjs
 // Apply:    node scripts/backfill-membership-flag.mjs --apply
 
