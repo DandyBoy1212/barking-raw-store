@@ -60,4 +60,6 @@ export const COLLECTIONS = {
   customers: "store_customers",
   subscribers: "store_subscribers",
   staff: "store_staff",
+  posts: "store_posts",
+  membersDigest: "store_members_digest",
 } as const;
