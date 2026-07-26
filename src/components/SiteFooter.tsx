@@ -18,6 +18,7 @@ export function SiteFooter() {
           aria-label="Legal and information"
           style={{ display: "flex", flexWrap: "wrap", gap: "1rem", fontSize: "0.85rem" }}
         >
+          <Link href="/about">About us</Link>
           <Link href="/delivery">Delivery</Link>
           <Link href="/returns">Returns &amp; cancellations</Link>
           <Link href="/terms">Terms</Link>

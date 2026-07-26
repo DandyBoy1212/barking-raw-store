@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getPublicProducts, toCatalogue } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
+import { EmailCapture } from "@/components/EmailCapture";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,11 @@ export default async function ShopPage() {
           </div>
         </div>
       </section>
+      <EmailCapture
+        source="shop"
+        heading="10% off your first order"
+        sub="Pop your email in, tick the box, and the code lands in your inbox."
+      />
     </main>
   );
 }

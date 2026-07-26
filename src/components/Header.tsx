@@ -40,6 +40,7 @@ export function Header() {
           </Link>
         ))}
         <Link href="/shop">Shop</Link>
+        <Link href="/about">About us</Link>
       </nav>
     </header>
   );
