@@ -41,7 +41,9 @@ B.3 turns a match between those and a product's badges into a ribbon over the pr
 
 **The moment badges live in Firestore, that guarantee becomes a property of Michaela's data.** If she retires "Gentle on Dodgy Tummies" while tidying her list, the dodgy-tummy ribbon silently stops appearing, on every product, for every dog that has it flagged. No error, no failing test, no log line. A feature that quietly stops working months after anyone connected the two.
 
-So five badges are **system badges**: the four above, plus "Most Popular", which `Badge.tsx` string-matches to decide whether to draw the star. System badges cannot be retired and cannot be renamed, and the admin says why rather than just refusing.
+So five badges are **system badges**: the four above, plus "Most Popular", which `Badge.tsx` string-matches to decide whether to draw the star. System badges cannot be retired and cannot be renamed, and the admin names the feature it is protecting rather than just refusing, because a refusal Michaela cannot understand becomes a message to Liam, and B.6 exists so she does not need him for this.
+
+**The invariant runs both ways, and that is the point.** Michaela cannot remove a badge that a sensitivity points at, because the admin refuses at runtime. And we cannot add a sensitivity without adding its badge, because the Task 1 test asserts `SYSTEM_BADGES` covers every `SENSITIVITY_BADGE` value and fails the build otherwise. So if B.3's vocabulary ever grows a fifth sensitivity, the missing badge is a red test on our side rather than a ribbon nobody can see on hers. Neither half is much use without the other: a runtime guard alone lets us ship a broken mapping, and a compile-time test alone lets her retire the badge afterwards.
 
 **The accepted limitation:** Michaela can reword only three of the eight badges she starts with. That is the price of products storing labels rather than badge ids, and products storing labels is what keeps this change out of `ProductCard.tsx` and off B.3's toes. The upgrade path, if she ever asks to reword the other five, is to store badge ids on products and resolve them at render, which is a bigger job and wants its own plan.
 
@@ -52,7 +54,7 @@ So five badges are **system badges**: the four above, plus "Most Popular", which
 | File | Responsibility |
 |---|---|
 | `src/data/badges.ts` | The `StoredBadge` type, the eight seed labels, and which of them are system badges. Types and constants only |
-| `src/lib/badge-admin.ts` | Pure helpers: `badgeSlug`, `validateBadgeInput`, `canRetireBadge`, `docToStoredBadge`. Mirrors `product-admin.ts` |
+| `src/lib/badge-admin.ts` | Pure helpers: `badgeSlug`, `validateBadgeInput`, `badgeProtectionReason`, `canRetireBadge`, `docToStoredBadge`. Mirrors `product-admin.ts` |
 | `src/lib/badge-admin.test.ts` | Unit tests for the above |
 | `src/lib/badges-store.ts` | Firestore reads and writes: `getAllBadges`, `getActiveBadgeLabels`, `createBadge`, `renameBadge`, `setBadgeRetired` |
 | `src/lib/product-admin.ts` | `validateProductInput` takes the allowed labels as an argument instead of filtering against `ALL_BADGES` |
@@ -76,7 +78,9 @@ So five badges are **system badges**: the four above, plus "Most Popular", which
 
 **Interfaces:**
 - Consumes: nothing from other tasks.
-- Produces: `type StoredBadge = { slug: string; label: string; retired: boolean; system: boolean }`, `SEED_BADGES: string[]`, `SYSTEM_BADGES: string[]`, `badgeSlug(label): string`, `validateBadgeInput(input, existing): {ok: true; value: {label: string}} | {ok: false; errors: string[]}`, `canRetireBadge(badge): {ok: true} | {ok: false; reason: string}`, `docToStoredBadge(slug, data): StoredBadge`.
+- Produces: `type StoredBadge = { slug: string; label: string; retired: boolean; system: boolean }`, `SEED_BADGES: string[]`, `SYSTEM_BADGES: string[]`, `badgeSlug(label): string`, `validateBadgeInput(input, existing): {ok: true; value: {label: string}} | {ok: false; errors: string[]}`, `badgeProtectionReason(label): string | null`, `canRetireBadge(badge): {ok: true} | {ok: false; reason: string}`, `docToStoredBadge(slug, data): StoredBadge`.
+
+Note this makes `badge-admin.ts` import from `@/data/customers`. That coupling is real, and naming it in code is better than leaving it in a comment: the badge list and the dog sensitivity vocabulary genuinely constrain each other.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -161,10 +165,21 @@ describe("canRetireBadge", () => {
       .toEqual({ ok: true });
   });
 
-  it("refuses a system badge and says why", () => {
-    const r = canRetireBadge({ slug: "novel-protein", label: "Novel Protein", retired: false, system: true });
+  it("names the ribbon a sensitivity badge powers, rather than just refusing", () => {
+    // A refusal Michaela cannot understand becomes a support message to Liam, and
+    // the whole point of B.6 is that she does not need him for this.
+    const r = canRetireBadge({ slug: "gentle-on-dodgy-tummies", label: "Gentle on Dodgy Tummies", retired: false, system: true });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.reason).toContain("dog profile");
+    if (!r.ok) {
+      expect(r.reason).toContain("Dodgy tummy");
+      expect(r.reason).toContain("stop putting it on products");
+    }
+  });
+
+  it("explains the star for Most Popular, which is protected for a different reason", () => {
+    const r = canRetireBadge({ slug: "most-popular", label: "Most Popular", retired: false, system: true });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain("star");
   });
 });
 
@@ -248,6 +263,7 @@ export const MAX_BADGE_LENGTH = 40;
 // so this module is trivially unit-testable (mirrors product-admin.ts).
 
 import { MAX_BADGE_LENGTH, type StoredBadge } from "@/data/badges";
+import { SENSITIVITY_BADGE, SENSITIVITY_LABEL, type Sensitivity } from "@/data/customers";
 
 /** The Firestore document id for a badge label. */
 export function badgeSlug(label: string): string {
@@ -294,24 +310,51 @@ export function validateBadgeInput(
   return { ok: true, value: { label } };
 }
 
+/**
+ * Why a badge is protected, named specifically, or null if it is not.
+ *
+ * Deliberately names the feature rather than saying "this is a system badge". A
+ * refusal Michaela cannot understand becomes a message to Liam, and B.6 exists so
+ * that she does not need him to manage her own labels. It also always tells her what
+ * she CAN do instead, because what she usually wants is this badge off this product,
+ * not the badge gone entirely.
+ */
+export function badgeProtectionReason(label: string): string | null {
+  const sensitivity = (Object.keys(SENSITIVITY_BADGE) as Sensitivity[]).find(
+    (s) => SENSITIVITY_BADGE[s] === label,
+  );
+  if (sensitivity) {
+    return (
+      `This badge powers the "${SENSITIVITY_LABEL[sensitivity]}" ribbon, shown to owners whose ` +
+      `dog has that flagged on their profile. Retiring it would stop those ribbons appearing. ` +
+      `You can stop putting it on products instead.`
+    );
+  }
+  if (label === "Most Popular") {
+    return (
+      "This badge draws the star on a product card, so the site looks for it by name. " +
+      "You can stop putting it on products instead."
+    );
+  }
+  return null;
+}
+
 /** Whether a badge may be retired, and a reason Michaela can act on if not. */
 export function canRetireBadge(badge: StoredBadge): { ok: true } | { ok: false; reason: string } {
-  if (badge.system) {
-    return {
-      ok: false,
-      reason:
-        "This badge is used to match products to a dog profile, so retiring it would stop that " +
-        "matching working. You can stop putting it on products instead.",
-    };
-  }
-  return { ok: true };
+  if (!badge.system) return { ok: true };
+  return {
+    ok: false,
+    reason:
+      badgeProtectionReason(badge.label) ??
+      "This badge is built in and the site depends on it by name. You can stop putting it on products instead.",
+  };
 }
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- --run src/lib/badge-admin.test.ts`
-Expected: PASS, 15 tests.
+Expected: PASS, 16 tests.
 
 - [ ] **Step 5: Commit**
 
