@@ -85,6 +85,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
         ...(next.packPieceCount !== undefined
           ? { packPieceCount: next.packPieceCount }
           : { packPieceCount: FieldValue.delete() }),
+        // Blank clears: untracked stock and the default points rate are the
+        // absence of the field, deliberately distinct from zero.
+        ...(next.stock !== undefined ? { stock: next.stock } : { stock: FieldValue.delete() }),
+        ...(next.pointsPerPound !== undefined
+          ? { pointsPerPound: next.pointsPerPound }
+          : { pointsPerPound: FieldValue.delete() }),
         stripeProductId: ids.stripeProductId,
         stripePriceId: ids.stripePriceId,
         // A merge set cannot empty a nested map, so a cleared map (price change

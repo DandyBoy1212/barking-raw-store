@@ -31,6 +31,10 @@ export type ProductInput = {
   supplierArrivalMaxDays?: number;
   packWeightGrams?: number;
   packPieceCount?: number;
+  /** Whole units on the shelf. Absent means untracked (stage 4's rule); 0 means sold out. */
+  stock?: number;
+  /** Loyalty earn rate. Absent means loyalty.ts's default; 0 means deliberately no points. */
+  pointsPerPound?: number;
 };
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -149,6 +153,28 @@ export function validateProductInput(
   const packWeightGrams = optionalPositiveInteger(input.packWeightGrams, "Pack weight", errors);
   const packPieceCount = optionalPositiveInteger(input.packPieceCount, "Piece count", errors);
 
+  // Stock and points rate. Blank and zero are different answers: blank stock is
+  // untracked and blank rate is the default, while zero is sold out and no
+  // points respectively, both deliberate.
+  let stock: number | undefined;
+  if (!(input.stock === undefined || input.stock === null || String(input.stock).trim() === "")) {
+    const n = Number(input.stock);
+    if (Number.isFinite(n) && n >= 0 && Number.isInteger(n)) stock = n;
+    else errors.push("Stock must be a whole number, 0 or more, or left blank.");
+  }
+  let pointsPerPound: number | undefined;
+  if (
+    !(
+      input.pointsPerPound === undefined ||
+      input.pointsPerPound === null ||
+      String(input.pointsPerPound).trim() === ""
+    )
+  ) {
+    const n = Number(input.pointsPerPound);
+    if (Number.isFinite(n) && n >= 0) pointsPerPound = n;
+    else errors.push("Points per pound must be 0 or more, or left blank.");
+  }
+
   if (errors.length) return { ok: false, errors };
   return {
     ok: true,
@@ -170,6 +196,8 @@ export function validateProductInput(
       supplierArrivalMaxDays,
       packWeightGrams,
       packPieceCount,
+      stock,
+      pointsPerPound,
     },
   };
 }

@@ -301,3 +301,47 @@ describe("validateProductInput badges", () => {
     if (r.ok) expect(r.value.badges).toEqual([]);
   });
 });
+
+describe("validateProductInput stock and points rate", () => {
+  const withPillar = { ...base, pillar: "good-food" as const };
+
+  it("accepts blank as untracked stock and default rate", () => {
+    const r = validateProductInput(withPillar);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.stock).toBeUndefined();
+      expect(r.value.pointsPerPound).toBeUndefined();
+    }
+  });
+
+  it("accepts zero for both, which mean sold out and no points, not blank", () => {
+    const r = validateProductInput({ ...withPillar, stock: 0, pointsPerPound: 0 });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.stock).toBe(0);
+      expect(r.value.pointsPerPound).toBe(0);
+    }
+  });
+
+  it("accepts a positive count and rate", () => {
+    const r = validateProductInput({ ...withPillar, stock: 24, pointsPerPound: 15 });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.stock).toBe(24);
+      expect(r.value.pointsPerPound).toBe(15);
+    }
+  });
+
+  it("rejects negative or fractional stock", () => {
+    for (const stock of [-1, 2.5]) {
+      const r = validateProductInput({ ...withPillar, stock });
+      expect(r.ok).toBe(false);
+    }
+  });
+
+  it("rejects a negative points rate", () => {
+    const r = validateProductInput({ ...withPillar, pointsPerPound: -5 });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors).toContain("Points per pound must be 0 or more, or left blank.");
+  });
+});

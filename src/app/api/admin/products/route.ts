@@ -75,6 +75,8 @@ export async function POST(req: NextRequest) {
         : {}),
       ...(draft.packWeightGrams !== undefined ? { packWeightGrams: draft.packWeightGrams } : {}),
       ...(draft.packPieceCount !== undefined ? { packPieceCount: draft.packPieceCount } : {}),
+      ...(draft.stock !== undefined ? { stock: draft.stock } : {}),
+      ...(draft.pointsPerPound !== undefined ? { pointsPerPound: draft.pointsPerPound } : {}),
       active: true,
       archived: false,
       stripeProductId: ids.stripeProductId,

@@ -239,3 +239,14 @@ describe("splitByMembersOnly", () => {
     expect(result.membersOnly).toEqual([]);
   });
 });
+
+describe("docToStoredProduct stock and points rate", () => {
+  it("reads them tolerantly and leaves junk absent", () => {
+    const good = docToStoredProduct("x", { name: "X", price: 5, stock: 7, pointsPerPound: 0 });
+    expect(good.stock).toBe(7);
+    expect(good.pointsPerPound).toBe(0);
+    const junk = docToStoredProduct("y", { name: "Y", price: 5, stock: "lots", pointsPerPound: -3 });
+    expect(junk.stock).toBeUndefined();
+    expect(junk.pointsPerPound).toBeUndefined();
+  });
+});

@@ -29,7 +29,9 @@ export function ProductForm({
   availableBadges,
 }: {
   mode: Mode;
-  initial?: Product;
+  /** stock and pointsPerPound ride alongside, admin-only: they are read off the
+      stored doc by the edit page and never travel in the public catalogue. */
+  initial?: Product & { stock?: number; pointsPerPound?: number };
   /** The badge labels currently in the collection, fetched by the page. */
   availableBadges: string[];
 }) {
@@ -62,6 +64,10 @@ export function ProductForm({
   );
   const [packPieceCount, setPackPieceCount] = useState(
     initial?.packPieceCount === undefined ? "" : String(initial.packPieceCount),
+  );
+  const [stock, setStock] = useState(initial?.stock === undefined ? "" : String(initial.stock));
+  const [pointsPerPound, setPointsPerPound] = useState(
+    initial?.pointsPerPound === undefined ? "" : String(initial.pointsPerPound),
   );
   const [errors, setErrors] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -119,6 +125,8 @@ export function ProductForm({
         supplierArrivalMaxDays === "" ? undefined : Number(supplierArrivalMaxDays),
       packWeightGrams: packWeightGrams === "" ? undefined : Number(packWeightGrams),
       packPieceCount: packPieceCount === "" ? undefined : Number(packPieceCount),
+      stock: stock === "" ? undefined : Number(stock),
+      pointsPerPound: pointsPerPound === "" ? undefined : Number(pointsPerPound),
     };
     const url = mode.kind === "create" ? "/api/admin/products" : `/api/admin/products/${mode.slug}`;
     const method = mode.kind === "create" ? "POST" : "PATCH";
@@ -294,6 +302,40 @@ export function ProductForm({
             />
             <span className="field__hint">
               Optional. Before this date only members can see it or buy it.
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div className="panel">
+        <p className="panel__title">Stock and points</p>
+        <div className="form-grid form-grid--2">
+          <label className="field">
+            <span>Units on the shelf</span>
+            <input
+              type="number"
+              step="1"
+              min="0"
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+            />
+            <span className="field__hint">
+              Blank means not counted: the product sells without a number. 0 means sold out.
+              Online orders and stall sales count this down on their own.
+            </span>
+          </label>
+          <label className="field">
+            <span>Points per pound spent</span>
+            <input
+              type="number"
+              step="1"
+              min="0"
+              value={pointsPerPound}
+              onChange={(e) => setPointsPerPound(e.target.value)}
+            />
+            <span className="field__hint">
+              Blank means the usual 10. 0 means this product earns none. 100 points are worth
+              a pound off, so 10 gives a tenth back.
             </span>
           </label>
         </div>

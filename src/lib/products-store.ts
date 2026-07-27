@@ -14,6 +14,13 @@ import { normaliseImages, primaryImageUrl } from "@/lib/product-images";
 export type StoredProduct = Product & {
   active: boolean;
   archived: boolean;
+  /**
+   * Stock and points rate, admin-facing only: deliberately NOT carried into
+   * toCatalogue, so shelf counts never ride in every visitor's page payload.
+   * Absent stock means untracked; absent rate means loyalty.ts's default.
+   */
+  stock?: number;
+  pointsPerPound?: number;
   stripeProductId?: string;
   stripePriceId?: string;
   /** Recurring subscribe-and-save prices, keyed by frequency in weeks ("2" | "4" | "8"). */
@@ -66,6 +73,8 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     supplierArrivalMaxDays: supplier ? num(data.supplierArrivalMaxDays) : undefined,
     packWeightGrams: num(data.packWeightGrams),
     packPieceCount: num(data.packPieceCount),
+    stock: num(data.stock),
+    pointsPerPound: num(data.pointsPerPound),
     active: data.active === undefined ? true : Boolean(data.active),
     archived: Boolean(data.archived ?? false),
     stripeProductId: data.stripeProductId ? String(data.stripeProductId) : undefined,

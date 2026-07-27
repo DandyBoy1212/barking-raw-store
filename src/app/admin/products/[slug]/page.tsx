@@ -22,7 +22,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ sl
         <h1 className="display">Edit: {product.name}</h1>
         <ProductForm
           mode={{ kind: "edit", slug }}
-          initial={toCatalogue(product)}
+          initial={{ ...toCatalogue(product), stock: product.stock, pointsPerPound: product.pointsPerPound }}
           availableBadges={availableBadges}
         />
       </div>
