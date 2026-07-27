@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   docToStoredProduct,
+  sortStoredProducts,
   seedAsStoredProducts,
   splitByMembersOnly,
   toCatalogue,
@@ -248,5 +249,22 @@ describe("docToStoredProduct stock and points rate", () => {
     const junk = docToStoredProduct("y", { name: "Y", price: 5, stock: "lots", pointsPerPound: -3 });
     expect(junk.stock).toBeUndefined();
     expect(junk.pointsPerPound).toBeUndefined();
+  });
+});
+
+describe("sortStoredProducts", () => {
+  const p = (slug: string, sortOrder?: number) =>
+    docToStoredProduct(slug, { name: slug.toUpperCase(), price: 5, ...(sortOrder ? { sortOrder } : {}) });
+
+  it("puts ordered products first, ascending, then the rest alphabetically", () => {
+    // The curated shelf comes first in Michaela's order; anything she has not
+    // placed follows alphabetically rather than in Firestore's doc-id accident.
+    const sorted = sortStoredProducts([p("zebra"), p("apple"), p("last", 9), p("first", 1)]);
+    expect(sorted.map((x) => x.slug)).toEqual(["first", "last", "apple", "zebra"]);
+  });
+
+  it("breaks a sort-order tie alphabetically, so the order is stable", () => {
+    const sorted = sortStoredProducts([p("beta", 3), p("alpha", 3)]);
+    expect(sorted.map((x) => x.slug)).toEqual(["alpha", "beta"]);
   });
 });

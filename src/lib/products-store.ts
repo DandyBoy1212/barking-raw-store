@@ -21,6 +21,8 @@ export type StoredProduct = Product & {
    */
   stock?: number;
   pointsPerPound?: number;
+  /** Shelf position, 1 first; absent sorts after every placed product. Admin-set. */
+  sortOrder?: number;
   stripeProductId?: string;
   stripePriceId?: string;
   /** Recurring subscribe-and-save prices, keyed by frequency in weeks ("2" | "4" | "8"). */
@@ -75,6 +77,7 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     packPieceCount: num(data.packPieceCount),
     stock: num(data.stock),
     pointsPerPound: num(data.pointsPerPound),
+    sortOrder: num(data.sortOrder),
     active: data.active === undefined ? true : Boolean(data.active),
     archived: Boolean(data.archived ?? false),
     stripeProductId: data.stripeProductId ? String(data.stripeProductId) : undefined,
@@ -157,6 +160,20 @@ export function splitByMembersOnly(
 }
 
 /** All buyable products (active, not archived). Falls back to the seed if Firestore is down or errors. */
+/**
+ * Michaela's shelf order: placed products first, ascending by sortOrder, then
+ * the unplaced ones alphabetically by name. Before this, the shop led with
+ * whatever Firestore's doc ids happened to sort first, which nobody chose.
+ */
+export function sortStoredProducts(list: StoredProduct[]): StoredProduct[] {
+  return [...list].sort((a, b) => {
+    const ao = a.sortOrder ?? Infinity;
+    const bo = b.sortOrder ?? Infinity;
+    if (ao !== bo) return ao - bo;
+    return a.name.localeCompare(b.name);
+  });
+}
+
 export async function getStoredProducts(): Promise<StoredProduct[]> {
   const db = getDb();
   if (!db) return seedAsStoredProducts().filter((p) => p.active && !p.archived);
@@ -167,7 +184,7 @@ export async function getStoredProducts(): Promise<StoredProduct[]> {
       return seedAsStoredProducts().filter((p) => p.active && !p.archived);
     }
     const all = snap.docs.map((d) => docToStoredProduct(d.id, d.data() as Record<string, unknown>));
-    return all.filter((p) => p.active && !p.archived);
+    return sortStoredProducts(all.filter((p) => p.active && !p.archived));
   } catch (err) {
     console.error("[products-store] getStoredProducts Firestore read failed, falling back to seed:", err);
     return seedAsStoredProducts().filter((p) => p.active && !p.archived);
@@ -180,7 +197,7 @@ export async function getAllStoredProducts(): Promise<StoredProduct[]> {
   if (!db) return seedAsStoredProducts();
   const snap = await db.collection(COLLECTIONS.products).get();
   const all = snap.docs.map((d) => docToStoredProduct(d.id, d.data() as Record<string, unknown>));
-  return all.length ? all : seedAsStoredProducts();
+  return sortStoredProducts(all.length ? all : seedAsStoredProducts());
 }
 
 /** A single product by slug (its Firestore doc id). Falls back to the seed. */

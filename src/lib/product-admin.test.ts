@@ -345,3 +345,20 @@ describe("validateProductInput stock and points rate", () => {
     if (!r.ok) expect(r.errors).toContain("Points per pound must be 0 or more, or left blank.");
   });
 });
+
+describe("validateProductInput sort order", () => {
+  const withPillar = { ...base, pillar: "good-food" as const };
+
+  it("accepts blank as unordered and a position from 1 up", () => {
+    const blank = validateProductInput(withPillar);
+    expect(blank.ok && blank.value.sortOrder).toBeUndefined();
+    const first = validateProductInput({ ...withPillar, sortOrder: 1 });
+    expect(first.ok && first.value.sortOrder).toBe(1);
+  });
+
+  it("rejects zero, negatives and fractions, since Michaela counts from 1", () => {
+    for (const sortOrder of [0, -1, 2.5]) {
+      expect(validateProductInput({ ...withPillar, sortOrder }).ok).toBe(false);
+    }
+  });
+});

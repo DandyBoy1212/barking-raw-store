@@ -31,7 +31,7 @@ export function ProductForm({
   mode: Mode;
   /** stock and pointsPerPound ride alongside, admin-only: they are read off the
       stored doc by the edit page and never travel in the public catalogue. */
-  initial?: Product & { stock?: number; pointsPerPound?: number };
+  initial?: Product & { stock?: number; pointsPerPound?: number; sortOrder?: number };
   /** The badge labels currently in the collection, fetched by the page. */
   availableBadges: string[];
 }) {
@@ -68,6 +68,9 @@ export function ProductForm({
   const [stock, setStock] = useState(initial?.stock === undefined ? "" : String(initial.stock));
   const [pointsPerPound, setPointsPerPound] = useState(
     initial?.pointsPerPound === undefined ? "" : String(initial.pointsPerPound),
+  );
+  const [sortOrder, setSortOrder] = useState(
+    initial?.sortOrder === undefined ? "" : String(initial.sortOrder),
   );
   const [errors, setErrors] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -127,6 +130,7 @@ export function ProductForm({
       packPieceCount: packPieceCount === "" ? undefined : Number(packPieceCount),
       stock: stock === "" ? undefined : Number(stock),
       pointsPerPound: pointsPerPound === "" ? undefined : Number(pointsPerPound),
+      sortOrder: sortOrder === "" ? undefined : Number(sortOrder),
     };
     const url = mode.kind === "create" ? "/api/admin/products" : `/api/admin/products/${mode.slug}`;
     const method = mode.kind === "create" ? "POST" : "PATCH";
@@ -211,6 +215,21 @@ export function ProductForm({
           </select>
           <span className="field__hint">
             Which of the four pages this shows on. A product without one appears on none of them.
+          </span>
+        </label>
+
+        <label className="field">
+          <span>Shelf position</span>
+          <input
+            type="number"
+            step="1"
+            min="1"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          />
+          <span className="field__hint">
+            1 shows first on the shop and pillar pages. Blank sits after everything you have
+            placed, in alphabetical order.
           </span>
         </label>
 

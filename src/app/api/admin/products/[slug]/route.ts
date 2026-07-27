@@ -91,6 +91,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
         ...(next.pointsPerPound !== undefined
           ? { pointsPerPound: next.pointsPerPound }
           : { pointsPerPound: FieldValue.delete() }),
+        ...(next.sortOrder !== undefined
+          ? { sortOrder: next.sortOrder }
+          : { sortOrder: FieldValue.delete() }),
         stripeProductId: ids.stripeProductId,
         stripePriceId: ids.stripePriceId,
         // A merge set cannot empty a nested map, so a cleared map (price change

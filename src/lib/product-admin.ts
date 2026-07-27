@@ -35,6 +35,8 @@ export type ProductInput = {
   stock?: number;
   /** Loyalty earn rate. Absent means loyalty.ts's default; 0 means deliberately no points. */
   pointsPerPound?: number;
+  /** Shelf position, 1 is first. Absent means unplaced: after the placed ones, alphabetically. */
+  sortOrder?: number;
 };
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -175,6 +177,10 @@ export function validateProductInput(
     else errors.push("Points per pound must be 0 or more, or left blank.");
   }
 
+  // Shelf position. Counts from 1 because that is how Michaela will think of it;
+  // blank means unplaced, which sorts after everything she has placed.
+  const sortOrder = optionalPositiveInteger(input.sortOrder, "Sort position", errors);
+
   if (errors.length) return { ok: false, errors };
   return {
     ok: true,
@@ -198,6 +204,7 @@ export function validateProductInput(
       packPieceCount,
       stock,
       pointsPerPound,
+      sortOrder,
     },
   };
 }
