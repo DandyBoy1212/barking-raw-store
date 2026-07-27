@@ -105,7 +105,7 @@ border. No new colours, one small append-only block in `globals.css`.
 - Consumes: `Dog`, `Sensitivity`, `SENSITIVITY_BADGE`, `ALL_SENSITIVITIES` from `@/data/customers`; `Badge` from `@/data/products`.
 - Produces: `type RibbonKind = "suit" | "caution"`, `type Ribbon = { key: string; kind: RibbonKind; text: string }`, `const MAX_CARD_RIBBONS = 2`, `const RIBBON_WORDING: Record<Sensitivity, (name: string) => string>`, `function productRibbons(dogs: Dog[], product: { name: string; badges: Badge[] }): Ribbon[]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // src/lib/dog-merchandising.test.ts
@@ -241,12 +241,12 @@ describe("productRibbons", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npx vitest run src/lib/dog-merchandising.test.ts`
 Expected: FAIL, module not found.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 // src/lib/dog-merchandising.ts
@@ -340,12 +340,12 @@ export function productRibbons(
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass, then the full gates**
+- [x] **Step 4: Run the tests to verify they pass, then the full gates**
 
 Run: `npx vitest run src/lib/dog-merchandising.test.ts` then `npm test`, `npx tsc --noEmit`, `npm run lint`.
 Expected: new file green, 271 + 16 total, tsc clean, lint at exactly 3.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/dog-merchandising.ts src/lib/dog-merchandising.test.ts
@@ -363,7 +363,7 @@ git commit -m "feat: the pure ribbon logic, a dog's profile against a product's 
 **Interfaces:**
 - Produces: `dogOwnerLabel` keeps its exact signature; only the rendered word changes from `Mum` to `human`.
 
-- [ ] **Step 1: Update the tests to the decided wording (failing first)**
+- [x] **Step 1: Update the tests to the decided wording (failing first)**
 
 In `src/lib/customer-fields.test.ts`, rewrite the `dogOwnerLabel` block:
 
@@ -391,12 +391,12 @@ describe("dogOwnerLabel", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify the three wording tests fail**
+- [x] **Step 2: Run to verify the three wording tests fail**
 
 Run: `npx vitest run src/lib/customer-fields.test.ts`
 Expected: 3 failures, all expecting `human` and receiving `Mum`.
 
-- [ ] **Step 3: Change the implementation**
+- [x] **Step 3: Change the implementation**
 
 In `src/lib/customer-fields.ts`, update the doc comment and the return line of `dogOwnerLabel`:
 
@@ -420,12 +420,12 @@ export function dogOwnerLabel(dogs: { id: string; name: string }[]): string {
 }
 ```
 
-- [ ] **Step 4: Run the full gates**
+- [x] **Step 4: Run the full gates**
 
 Run: `npm test`, `npx tsc --noEmit`, `npm run lint`.
 Expected: all green, lint at exactly 3.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/customer-fields.ts src/lib/customer-fields.test.ts
@@ -444,7 +444,7 @@ git commit -m "feat: the greeting goes gender-neutral, Loki's human"
 - Consumes: `productRibbons`, `Ribbon` from `@/lib/dog-merchandising`; `Dog` from `@/data/customers`.
 - Produces: `ProductCard({ product, dogs = [] }: { product: Product; dogs?: Dog[] })`. Every existing call site compiles unchanged.
 
-- [ ] **Step 1: Add the prop and the overlay to ProductCard**
+- [x] **Step 1: Add the prop and the overlay to ProductCard**
 
 In `src/components/ProductCard.tsx`: add imports, widen the signature, compute ribbons, and render the overlay as the first child of `.card__media` after the badges block.
 
@@ -475,7 +475,7 @@ with, above the return:
 const ribbons = productRibbons(dogs, product);
 ```
 
-- [ ] **Step 2: Append the CSS block to globals.css**
+- [x] **Step 2: Append the CSS block to globals.css**
 
 ```css
 /* B.3 profile ribbons: the dog's side of the card. Michaela's badges sit top left,
@@ -487,12 +487,12 @@ const ribbons = productRibbons(dogs, product);
 .ribbon--caution { background: var(--paper); color: var(--ink); border-style: dashed; }
 ```
 
-- [ ] **Step 3: Run the gates**
+- [x] **Step 3: Run the gates**
 
 Run: `npm test`, `npx tsc --noEmit`, `npm run lint`.
 Expected: all green (no call site passes dogs yet, prop is optional), lint at exactly 3.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/ProductCard.tsx src/app/globals.css
@@ -511,7 +511,7 @@ git commit -m "feat: the card takes the viewer's dogs and wears their ribbons"
 - Consumes: `getSessionUser` from `@/lib/auth`, `getCustomer` from `@/lib/customers-store`, `ProductCard`'s `dogs` prop from Task 3.
 - Produces: `async function getViewerDogs(): Promise<Dog[]>` (server-only).
 
-- [ ] **Step 1: Write the helper**
+- [x] **Step 1: Write the helper**
 
 ```ts
 // src/lib/viewer-dogs.ts
@@ -535,7 +535,7 @@ export async function getViewerDogs(): Promise<Dog[]> {
 }
 ```
 
-- [ ] **Step 2: Wire the three surfaces**
+- [x] **Step 2: Wire the three surfaces**
 
 `src/components/PillarProducts.tsx` (covers all four pillar pages):
 
@@ -556,16 +556,16 @@ const [products, dogs] = await Promise.all([
 ]);
 ```
 
-- [ ] **Step 3: Run the gates**
+- [x] **Step 3: Run the gates**
 
 Run: `npm test`, `npx tsc --noEmit`, `npm run lint`.
 Expected: all green, lint at exactly 3.
 
-- [ ] **Step 4: Look at it running (optional but cheap)**
+- [x] **Step 4: Look at it running (optional but cheap)**
 
 Start a dev server in the worktree on a spare port (`npm run dev -- -p 3457`), load `/shop` signed out, confirm the cards are pixel-identical, stop the server. Without `.env.local` no session exists, so the signed-in path is exercised by the unit tests instead.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/viewer-dogs.ts src/components/PillarProducts.tsx src/app/page.tsx src/app/shop/page.tsx
@@ -576,12 +576,12 @@ git commit -m "feat: the viewer's dogs reach every product grid, server side"
 
 ### Task 5: Tick the plan through and close out
 
-- [ ] **Step 1: Mark every checkbox above, re-run the full gates one last time**
+- [x] **Step 1: Mark every checkbox above, re-run the full gates one last time**
 
 Run: `npm test`, `npx tsc --noEmit`, `npm run lint`.
 Expected: 271 + new tests passing, tsc clean, lint at exactly 3.
 
-- [ ] **Step 2: Commit the plan updates**
+- [x] **Step 2: Commit the plan updates**
 
 ```bash
 git add docs/plans/2026-07-26-stage-15-profile-ribbons.md
