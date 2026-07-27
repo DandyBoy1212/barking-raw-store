@@ -172,7 +172,7 @@ markers). Features live in `store_dogs_of_the_day`. Orders reuse `store_orders`.
 - Consumes: `applySubscription`, `docToSubscriber`, `normaliseSubscriberEmail`, `type Subscriber` from `@/lib/subscribers`; `StallRecord` from Task 0 (existing).
 - Produces: `CONSENT_TEXT: Record<SubscriberSource, string>`; `applySubscription(existing, input: { source: SubscriberSource; consent: boolean })`; `nextWelcomeAction` treating `"stall"` like `"shop"`; `stallMarketingSubscription(record: StallRecord, existing: Subscriber | null): ReturnType<typeof applySubscription> | null` and `isUsableClientId(value: string): boolean` from `stall-record.ts`; `sendStallWelcomeEmail(record: StallRecord, siteUrl: string): Promise<void>` from `stall-store.ts`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `src/lib/subscribers.test.ts` (a `stall source` describe):
 
@@ -263,9 +263,9 @@ describe("stallMarketingSubscription", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure** `npm test -- --run src/lib/subscribers.test.ts src/lib/stall-record.test.ts` fails (CONSENT_TEXT.stall missing, function missing).
+- [x] **Step 2: Run to verify failure** `npm test -- --run src/lib/subscribers.test.ts src/lib/stall-record.test.ts` fails (CONSENT_TEXT.stall missing, function missing).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `subscribers.ts`: `CONSENT_TEXT` becomes `Record<SubscriberSource, string>` with
 `stall: "Email me the new stuff and the member offers. Unsubscribe any time."`;
@@ -315,8 +315,8 @@ export async function sendStallWelcomeEmail(record: StallRecord, siteUrl: string
 and have `src/app/api/stall/sync/route.ts` call it (same `result.created && record.email`
 condition), so Task 6's `/api/join` shares it.
 
-- [ ] **Step 4: Run** `npm test -- --run` all green, `npx tsc --noEmit` clean.
-- [ ] **Step 5: Commit** `feat: a ticked stall consent joins the one marketing list`
+- [x] **Step 4: Run** `npm test -- --run` all green, `npx tsc --noEmit` clean.
+- [x] **Step 5: Commit** `feat: a ticked stall consent joins the one marketing list`
 
 ---
 
@@ -330,7 +330,7 @@ condition), so Task 6's `/api/join` shares it.
 **Interfaces:**
 - Produces: `type QueueRecord = { clientId: string }`, `type Queued<T extends QueueRecord>`, `type QueueState<T extends QueueRecord>`, `emptyQueue<T>(): QueueState<T>`, `interface QueueStorage<T extends QueueRecord>`, `type SyncSender<T extends QueueRecord> = (record: T) => Promise<StallSyncOutcome>`, generic `normaliseQueueState<T>`, `enqueueRecord<T>`, `queueSummary<T>`, `syncQueue<T>`; back-compat aliases `QueuedStallRecord`, `StallQueueState`, `EMPTY_QUEUE`, `StallQueueStorage`, `StallSyncSender` unchanged in meaning so `StallForm.tsx` needs no edit. `createBrowserQueueStorage<T extends QueueRecord>(key?: string): QueueStorage<T>` with the default key `"state"` (signups) and one shared database, so the end-of-day wipe clears every queue.
 
-- [ ] **Step 1: Failing test** appended to `stall-queue.test.ts`:
+- [x] **Step 1: Failing test** appended to `stall-queue.test.ts`:
 
 ```typescript
 describe("a second record type", () => {
@@ -347,10 +347,10 @@ describe("a second record type", () => {
 });
 ```
 
-- [ ] **Step 2: Verify failure** (no `emptyQueue` export).
-- [ ] **Step 3: Implement.** Generic signatures as above; bodies unchanged. Browser adapter takes `key = "state"`, keeps DB `br-stall` and store `queue`; comment why one DB (one wipe).
-- [ ] **Step 4: Full suite green, tsc clean.**
-- [ ] **Step 5: Commit** `feat: the offline queue goes generic, one wipe for every record type`
+- [x] **Step 2: Verify failure** (no `emptyQueue` export).
+- [x] **Step 3: Implement.** Generic signatures as above; bodies unchanged. Browser adapter takes `key = "state"`, keeps DB `br-stall` and store `queue`; comment why one DB (one wipe).
+- [x] **Step 4: Full suite green, tsc clean.**
+- [x] **Step 5: Commit** `feat: the offline queue goes generic, one wipe for every record type`
 
 ---
 
@@ -394,7 +394,7 @@ absent: absent means untracked). `buildSaleOutcome` fails listing every missing 
 ("Not on the shelf list: x"); stock changes only for tracked products,
 `Math.max(0, stock - qty)`.
 
-- [ ] **Step 1: Failing tests.** In `loyalty.test.ts`: earnRateFor default 10,
+- [x] **Step 1: Failing tests.** In `loyalty.test.ts`: earnRateFor default 10,
 per-product override, zero override honoured, junk override falls back; earnedPoints
 floors (7.50 at 10 is 75; 0.99 at 10 is 9) and never goes negative. In
 `stall-sale.test.ts`: full valid sale normalises (case, merge duplicates, qty
@@ -403,10 +403,10 @@ junk lines dropped while good ones survive; non-object refused; recordedAt fallb
 docToSaleProduct defaults and the absent-means-untracked stock rule; buildSaleOutcome
 amounts, per-product points, total sums, missing product fails naming the slug, stock
 clamps at zero, untracked product produces no stock change.
-- [ ] **Step 2: Verify failure** (module not found).
-- [ ] **Step 3: Implement** as specified.
-- [ ] **Step 4: Green, tsc clean.**
-- [ ] **Step 5: Commit** `feat: a stall sale validates leniently and prices itself server side`
+- [x] **Step 2: Verify failure** (module not found).
+- [x] **Step 3: Implement** as specified.
+- [x] **Step 4: Green, tsc clean.**
+- [x] **Step 5: Commit** `feat: a stall sale validates leniently and prices itself server side`
 
 ---
 
@@ -449,9 +449,9 @@ Shape of `applyStallSale`:
 those with a name or an email, map to `{ uid, name, email }`, sort by name then email.
 Empty array on db null or error.
 
-- [ ] **Step 1: Implement.**
-- [ ] **Step 2: `npx tsc --noEmit` clean, suite still green.**
-- [ ] **Step 3: Commit** `feat: a sale lands once: stock, points, order and marker in one transaction`
+- [x] **Step 1: Implement.**
+- [x] **Step 2: `npx tsc --noEmit` clean, suite still green.**
+- [x] **Step 3: Commit** `feat: a sale lands once: stock, points, order and marker in one transaction`
 
 ---
 
@@ -466,9 +466,9 @@ parse 400, `validateStallSale` 400 with errors, `applyStallSale`: retryable fals
 with its errors (the iPad flags it for a second look), retryable true is 503, ok is
 `{ ok: true }`. No email of any kind.
 
-- [ ] **Step 1: Implement.**
-- [ ] **Step 2: tsc clean, lint at 3.**
-- [ ] **Step 3: Commit** `feat: the sale route takes one queued sale, or says try again`
+- [x] **Step 1: Implement.**
+- [x] **Step 2: tsc clean, lint at 3.**
+- [x] **Step 3: Commit** `feat: the sale route takes one queued sale, or says try again`
 
 ---
 
@@ -505,9 +505,9 @@ signup page and clears this queue too (one database), said in a comment.
 `StallForm` start screen gains one `next/link` styled `btn` to `/stall/sale`, "Record a
 sale".
 
-- [ ] **Step 1: Implement all three.**
-- [ ] **Step 2: tsc clean, lint at 3, suite green.**
-- [ ] **Step 3: Commit** `feat: the sale recorder, offline like the signups it sits beside`
+- [x] **Step 1: Implement all three.**
+- [x] **Step 2: tsc clean, lint at 3, suite green.**
+- [x] **Step 3: Commit** `feat: the sale recorder, offline like the signups it sits beside`
 
 ---
 
@@ -532,9 +532,9 @@ route must not be a path for arbitrary images into our bucket, where they would 
 own-host guard). `applyStallRecord` failure is 503; success calls
 `sendStallWelcomeEmail` when `result.created && record.email`, then `{ ok: true }`.
 
-- [ ] **Step 1: Implement.**
-- [ ] **Step 2: tsc clean, lint at 3.**
-- [ ] **Step 3: Commit** `feat: the QR route writes the same record the iPad does`
+- [x] **Step 1: Implement.**
+- [x] **Step 2: tsc clean, lint at 3.**
+- [x] **Step 3: Commit** `feat: the QR route writes the same record the iPad does`
 
 ---
 
@@ -565,9 +565,9 @@ wording from the stall screen. No photo capture. Submit flow:
   A 400 returns to `editing` showing the server's errors; 429 and network errors go to
   `waiting`; an `online` listener and a Retry button resubmit the same record.
 
-- [ ] **Step 1: Implement both.**
-- [ ] **Step 2: tsc clean, lint at 3, suite green.**
-- [ ] **Step 3: Commit** `feat: the QR page, typed from a poster, forgiving of no signal`
+- [x] **Step 1: Implement both.**
+- [x] **Step 2: tsc clean, lint at 3, suite green.**
+- [x] **Step 3: Commit** `feat: the QR page, typed from a poster, forgiving of no signal`
 
 ---
 
@@ -600,15 +600,15 @@ tolerantly (object, string id and name), keeps only dogs whose photo passes the 
 `ownerName` is the doc's name or "" (shown only in the staff picker, never stored on a
 feature, never rendered publicly).
 
-- [ ] **Step 1: Failing tests** covering: guard passes a signed
+- [x] **Step 1: Failing tests** covering: guard passes a signed
 `https://storage.googleapis.com/...` URL and refuses http, foreign hosts
 (`https://evil.example/x.jpg`), javascript:, and junk; validate requires the name, refuses
 a foreign photo, falls back the date; docToDogFeature maps a good doc, nulls a foreign
 photo and a nameless doc; sort newest first by date with id as tiebreak; consentedDogPhotos
 refuses `photoConsent: "true"` (string), refuses consent without a photo, keeps only
 guard-passing dogs, and never invents owner data.
-- [ ] **Step 2: Verify failure.** **Step 3: Implement.** **Step 4: Green.**
-- [ ] **Step 5: Commit** `feat: dogs of the day trusts only consent and our own storage`
+- [x] **Step 2: Verify failure.** **Step 3: Implement.** **Step 4: Green.**
+- [x] **Step 5: Commit** `feat: dogs of the day trusts only consent and our own storage`
 
 ---
 
@@ -649,9 +649,9 @@ Admin nav, the flagged single line inside `BUILT`:
   { href: "/admin/dogs", title: "Dogs of the day", blurb: "Feature a consented stall dog on the public page." },
 ```
 
-- [ ] **Step 1: Implement all five.**
-- [ ] **Step 2: tsc clean, lint at 3, suite green.**
-- [ ] **Step 3: Commit** `feat: the picker shows Michaela only the dogs she may publish`
+- [x] **Step 1: Implement all five.**
+- [x] **Step 2: tsc clean, lint at 3, suite green.**
+- [x] **Step 3: Commit** `feat: the picker shows Michaela only the dogs she may publish`
 
 ---
 
@@ -673,15 +673,15 @@ heading, a horizontal row of photos with names, a link to `/dogs-of-the-day`, an
 line empty state so mounting it early still looks deliberate. NOT mounted anywhere in
 this track, stated in the file's doc comment.
 
-- [ ] **Step 1: Implement both.**
-- [ ] **Step 2: tsc clean, lint at 3, suite green.**
-- [ ] **Step 3: Commit** `feat: dogs of the day, photos out, discussion in`
+- [x] **Step 1: Implement both.**
+- [x] **Step 2: tsc clean, lint at 3, suite green.**
+- [x] **Step 3: Commit** `feat: dogs of the day, photos out, discussion in`
 
 ---
 
 ### Task 12: Final verification
 
-- [ ] `npm test -- --run` green (318 baseline plus this stage's), `npx tsc --noEmit`
+- [x] `npm test -- --run` green (318 baseline plus this stage's), `npx tsc --noEmit`
 clean, `npm run lint` exactly the 3 pre-existing errors, `git status` clean, every task
 committed. Confirm no touched file belongs to another track beyond the one flagged admin
 nav line.
