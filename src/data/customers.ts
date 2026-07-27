@@ -88,4 +88,6 @@ export type StoredCustomer = {
   phone: string;
   address: CustomerAddress;
   dogs: Dog[];
+  /** Stripe's id for this buyer, stored by webhook fulfilment; the billing portal needs it. */
+  stripeCustomerId?: string;
 };

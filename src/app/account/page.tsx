@@ -5,6 +5,7 @@ import { dogOwnerLabel } from "@/lib/customer-fields";
 import { PawTrail } from "@/components/PawTrail";
 import DogForm from "@/components/account/DogForm";
 import DogList from "@/components/account/DogList";
+import ManageSubscriptionButton from "@/components/account/ManageSubscriptionButton";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,17 @@ export default async function AccountPage() {
           </div>
 
           <DogForm />
+
+          {customer?.stripeCustomerId && (
+            <div className="panel" style={{ marginTop: "1.6rem" }}>
+              <p className="panel__title">Your repeating order</p>
+              <p className="notice" style={{ marginBottom: "0.9rem" }}>
+                Change the schedule, update your card or cancel any time. Stripe handles it
+                all securely.
+              </p>
+              <ManageSubscriptionButton />
+            </div>
+          )}
 
           <p className="notice" style={{ marginTop: "1.6rem" }}>
             Points and order history arrive in a later stage.
