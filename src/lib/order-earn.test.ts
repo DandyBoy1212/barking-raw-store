@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { SaleProduct } from "./stall-sale";
 import { buildOrderOutcome } from "./order-earn";
+import * as orderEarn from "./order-earn";
 
 const products = new Map<string, SaleProduct>([
   ["chicken-feet", { slug: "chicken-feet", name: "Chicken Feet", price: 6, stock: 10 }],
@@ -109,5 +110,20 @@ describe("buildOrderOutcome empty", () => {
       stockChanges: [],
       unmatched: [],
     });
+  });
+});
+
+describe("linesFromPaidItems", () => {
+  it("synthesises cart lines by name-join, for subscription invoices which have no cart", () => {
+    const { linesFromPaidItems } = orderEarn;
+    expect(
+      linesFromPaidItems(
+        [
+          { name: "Chicken Feet", qty: 2, amount: 10.8 },
+          { name: "Pick & Mix (10 treats)", qty: 1, amount: 18.5 },
+        ],
+        products,
+      ),
+    ).toEqual([{ slug: "chicken-feet", qty: 2 }]);
   });
 });

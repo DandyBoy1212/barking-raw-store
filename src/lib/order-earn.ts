@@ -71,3 +71,25 @@ export function buildOrderOutcome(
     unmatched,
   };
 }
+
+/**
+ * Cart-shaped lines synthesised from paid items by the same name join, for
+ * subscription invoices, which carry no cart. Unmatched names simply do not
+ * become lines, so a bundle on a subscription (not sellable today anyway)
+ * could never corrupt stock.
+ */
+export function linesFromPaidItems(
+  paidItems: PaidItem[],
+  products: Map<string, SaleProduct>,
+): OrderCartLine[] {
+  const byName = new Map<string, SaleProduct>();
+  for (const product of products.values()) byName.set(product.name, product);
+  const lines: OrderCartLine[] = [];
+  for (const item of paidItems) {
+    const product = byName.get(item.name);
+    const qty = Math.trunc(Number(item.qty));
+    if (!product || !Number.isFinite(qty) || qty < 1) continue;
+    lines.push({ slug: product.slug, qty });
+  }
+  return lines;
+}
