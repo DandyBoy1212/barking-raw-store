@@ -46,17 +46,20 @@ describe("deriveLifeStage", () => {
 });
 
 describe("dogOwnerLabel", () => {
-  it("names the first dog, which is the Loki's Mum convention in spec section 8.2", () => {
-    expect(dogOwnerLabel([{ id: "d1", name: "Loki" }])).toBe("Loki's Mum");
+  // The spec calls this the "Loki's Mum" convention, but the record never stores
+  // who is reading: gender is not collected, and one account serves a household
+  // (spec 8.3). So the site always renders the neutral form, "Loki's human".
+  it("names the first dog, the Loki's Mum convention rendered gender-neutrally", () => {
+    expect(dogOwnerLabel([{ id: "d1", name: "Loki" }])).toBe("Loki's human");
   });
 
   it("adds an apostrophe only for a name ending in s", () => {
-    expect(dogOwnerLabel([{ id: "d1", name: "Gus" }])).toBe("Gus' Mum");
+    expect(dogOwnerLabel([{ id: "d1", name: "Gus" }])).toBe("Gus' human");
   });
 
   it("joins two dogs with and, because both names are how she knows them", () => {
     expect(dogOwnerLabel([{ id: "d1", name: "Loki" }, { id: "d2", name: "Bear" }]))
-      .toBe("Loki and Bear's Mum");
+      .toBe("Loki and Bear's human");
   });
 
   it("falls back to a plain greeting with no dogs, never to an empty possessive", () => {
