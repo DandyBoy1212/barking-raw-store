@@ -16,6 +16,8 @@ export type StoredProduct = Product & {
   archived: boolean;
   stripeProductId?: string;
   stripePriceId?: string;
+  /** Recurring subscribe-and-save prices, keyed by frequency in weeks ("2" | "4" | "8"). */
+  stripeRecurringPriceIds?: Record<string, string>;
 };
 
 /** Normalise a raw Firestore doc into a StoredProduct, applying defaults. */
@@ -68,7 +70,35 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     archived: Boolean(data.archived ?? false),
     stripeProductId: data.stripeProductId ? String(data.stripeProductId) : undefined,
     stripePriceId: data.stripePriceId ? String(data.stripePriceId) : undefined,
+    stripeRecurringPriceIds: parseRecurringPriceIds(data.stripeRecurringPriceIds),
   };
+}
+
+/** A string-to-string map or nothing; anything else in a doc is dropped, not guessed at. */
+function parseRecurringPriceIds(raw: unknown): Record<string, string> | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof v === "string" && v) out[k] = v;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/**
+ * Persist a freshly minted recurring price id on the product doc. A merge set
+ * with a nested map merges keys, so frequencies never clobber each other.
+ */
+export async function saveRecurringPriceId(
+  slug: string,
+  weeks: number,
+  priceId: string,
+): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await db
+    .collection(COLLECTIONS.products)
+    .doc(slug)
+    .set({ stripeRecurringPriceIds: { [String(weeks)]: priceId } }, { merge: true });
 }
 
 /** The static seed, expressed as StoredProducts (used as the fallback catalogue). */

@@ -7,6 +7,8 @@ import {
   priceChanged,
   applyStripeProductUpdate,
   archiveStripeProduct,
+  buildRecurringPriceParams,
+  ensureRecurringPrice,
 } from "./stripe-sync";
 import type { StoredProduct } from "./products-store";
 
@@ -165,7 +167,11 @@ describe("applyStripeProductUpdate", () => {
       },
     } as unknown as import("stripe").default;
     const out = await applyStripeProductUpdate(fake, existing, { ...existing }, "https://barkingraw.dog");
-    expect(out).toEqual({ stripeProductId: "prod_1", stripePriceId: "price_old" });
+    expect(out).toEqual({
+      stripeProductId: "prod_1",
+      stripePriceId: "price_old",
+      stripeRecurringPriceIds: {},
+    });
     expect(calls).toEqual(["product.update:prod_1"]);
   });
 
@@ -187,13 +193,122 @@ describe("applyStripeProductUpdate", () => {
       },
     } as unknown as import("stripe").default;
     const out = await applyStripeProductUpdate(fake, existing, { ...existing, price: 7 }, "https://barkingraw.dog");
-    expect(out).toEqual({ stripeProductId: "prod_1", stripePriceId: "price_new" });
+    expect(out).toEqual({
+      stripeProductId: "prod_1",
+      stripePriceId: "price_new",
+      stripeRecurringPriceIds: {},
+    });
     expect(calls).toEqual([
       "product.update:prod_1:fields",
       "price.create",
       "product.update:prod_1:price_new",
       "price.update:price_old:active=false",
     ]);
+  });
+});
+
+describe("buildRecurringPriceParams", () => {
+  it("prices the recurring interval at the FULL list price (the coupon discounts, not the price)", () => {
+    expect(
+      buildRecurringPriceParams({ ...base, stripeProductId: "prod_1", price: 6.5 }, 4),
+    ).toEqual({
+      product: "prod_1",
+      currency: "gbp",
+      unit_amount: 650,
+      recurring: { interval: "week", interval_count: 4 },
+    });
+  });
+});
+
+describe("ensureRecurringPrice", () => {
+  it("returns the stored id for that frequency without calling Stripe", async () => {
+    let calls = 0;
+    const fake = {
+      prices: { create: async () => { calls++; return { id: "price_new" }; } },
+    } as unknown as import("stripe").default;
+    const id = await ensureRecurringPrice(
+      fake,
+      { ...base, stripeProductId: "prod_1", stripeRecurringPriceIds: { "4": "price_r4" } },
+      4,
+    );
+    expect(id).toBe("price_r4");
+    expect(calls).toBe(0);
+  });
+
+  it("creates a recurring price on demand when that frequency has none", async () => {
+    let seen: unknown = null;
+    const fake = {
+      prices: { create: async (p: unknown) => { seen = p; return { id: "price_r8" }; } },
+    } as unknown as import("stripe").default;
+    const id = await ensureRecurringPrice(
+      fake,
+      { ...base, stripeProductId: "prod_1", stripeRecurringPriceIds: { "4": "price_r4" } },
+      8,
+    );
+    expect(id).toBe("price_r8");
+    expect(seen).toEqual({
+      product: "prod_1",
+      currency: "gbp",
+      unit_amount: 600,
+      recurring: { interval: "week", interval_count: 8 },
+    });
+  });
+
+  it("returns null when the product has never been synced to Stripe", async () => {
+    let calls = 0;
+    const fake = {
+      prices: { create: async () => { calls++; return { id: "x" }; } },
+    } as unknown as import("stripe").default;
+    expect(await ensureRecurringPrice(fake, base, 2)).toBeNull();
+    expect(calls).toBe(0);
+  });
+});
+
+describe("applyStripeProductUpdate with recurring prices", () => {
+  const existing: StoredProduct = {
+    slug: "chicken-feet",
+    name: "Chicken Feet",
+    price: 6,
+    hook: "h",
+    description: "d",
+    badges: [],
+    images: [{ url: "/products/chicken-feet.png", primary: true }],
+    image: "/products/chicken-feet.png",
+    pillar: "good-food",
+    leadTimeDays: 0,
+    fulfilment: "own-stock",
+    active: true,
+    archived: false,
+    stripeProductId: "prod_1",
+    stripePriceId: "price_old",
+    stripeRecurringPriceIds: { "2": "price_r2", "8": "price_r8" },
+  };
+
+  it("keeps the recurring prices when the price is unchanged", async () => {
+    const fake = {
+      products: { update: async (id: string) => ({ id }) },
+      prices: { create: async () => ({ id: "n" }), update: async (id: string) => ({ id }) },
+    } as unknown as import("stripe").default;
+    const out = await applyStripeProductUpdate(fake, existing, { ...existing }, "https://barkingraw.dog");
+    expect(out.stripeRecurringPriceIds).toEqual({ "2": "price_r2", "8": "price_r8" });
+  });
+
+  it("deactivates every recurring price and clears the map on a price change", async () => {
+    const deactivated: string[] = [];
+    const fake = {
+      products: { update: async (id: string) => ({ id }) },
+      prices: {
+        create: async () => ({ id: "price_new" }),
+        update: async (id: string, params: Record<string, unknown>) => {
+          if (params.active === false) deactivated.push(id);
+          return { id };
+        },
+      },
+    } as unknown as import("stripe").default;
+    const out = await applyStripeProductUpdate(fake, existing, { ...existing, price: 7 }, "https://barkingraw.dog");
+    expect(out.stripeRecurringPriceIds).toEqual({});
+    expect(deactivated).toEqual(expect.arrayContaining(["price_old", "price_r2", "price_r8"]));
+    expect(deactivated).toHaveLength(3);
   });
 });
 
