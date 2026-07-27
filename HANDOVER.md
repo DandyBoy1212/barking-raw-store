@@ -93,10 +93,13 @@ decision is written down there, not here.
    the old inference was a privilege escalation (any signed-in user could self-grant by adding a
    dog). As of the fix there were zero real members, so the backfill had nothing to grant, but run
    it once real orders exist if any predate the fix.
-2. `node scripts/backfill-product-images.mjs` (dry run, then `--apply`) before the multi-photo
-   admin is used. `Product.image` is now derived from `Product.images` with one primary.
+2. Product images backfill is DONE: `scripts/backfill-product-images.mjs` ran against barking-raw
+   on the 27th (dry 9, apply 9, re-run 0).
 3. Badge seeding is DONE: `scripts/seed-badges.mjs --apply` ran against barking-raw on the 26th,
    eight badges, five system.
+
+So the only outstanding pre-deploy script is the membership backfill in item 1, which currently
+has nothing to grant and exists for the case where real orders predate the flag fix.
 
 ### Invariants the seams depend on. Do not relax these
 

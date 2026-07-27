@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://barkingraw.dog";
   const out: Array<{ slug: string; stripeProductId: string; stripePriceId: string }> = [];
 
-  for (const seedSp of seedAsStoredProducts()) {
+  for (const [seedIndex, seedSp] of seedAsStoredProducts().entries()) {
     const ref = db.collection(COLLECTIONS.products).doc(seedSp.slug);
     // Re-read any existing doc so a re-run stays idempotent (keeps existing Stripe ids).
     const existing = await ref.get();
@@ -53,6 +53,9 @@ export async function POST(req: NextRequest) {
         pillar: seedSp.pillar,
         leadTimeDays: seedSp.leadTimeDays,
         fulfilment: seedSp.fulfilment,
+        // The nine originals keep their curated order (Beef Trachea Rings first,
+        // Pure Meat Tit-bits last) instead of falling back to alphabetical.
+        sortOrder: seedIndex + 1,
         ...(seedSp.membersOnlyUntil ? { membersOnlyUntil: seedSp.membersOnlyUntil } : {}),
         ...(seedSp.safetyNote ? { safetyNote: seedSp.safetyNote } : {}),
         active: true,
