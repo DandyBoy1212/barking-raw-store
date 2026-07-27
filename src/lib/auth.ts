@@ -104,10 +104,10 @@ export async function ensureCustomer(input: {
   postcode?: string;
   /** Set by webhook fulfilment when Stripe told us its customer id; the billing portal needs it. */
   stripeCustomerId?: string;
-}): Promise<void> {
+}): Promise<string | null> {
   const auth = getAuthAdmin();
   const db = getDb();
-  if (!auth || !db || !input.email) return;
+  if (!auth || !db || !input.email) return null;
   let uid: string;
   try {
     uid = (await auth.getUserByEmail(input.email)).uid;
@@ -127,4 +127,6 @@ export async function ensureCustomer(input: {
       },
       { merge: true },
     );
+  // The webhook needs this to credit loyalty points to the right customer doc.
+  return uid;
 }
