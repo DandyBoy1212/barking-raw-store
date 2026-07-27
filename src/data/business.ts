@@ -16,18 +16,18 @@ export const BUSINESS = {
   tradingName: "Barking Raw",
 
   /**
-   * The legal name that has to appear on the terms. A sole trader trades under her
-   * own name unless a company is registered, so this is either "Michaela <surname>"
-   * or "Michaela <surname> trading as Barking Raw". She confirms which.
+   * The legal name that has to appear on the terms. Confirmed 2026-07-27: she is
+   * self-employed, trading as Barking Raw, so the terms render this name with
+   * "trading as Barking Raw" after it.
    */
-  legalName: PENDING as string | Pending,
+  legalName: "Michaela Anderson" as string | Pending,
 
   /**
-   * Required by the Companies Act only if she has incorporated. Left pending rather
-   * than defaulted to "sole trader", because guessing her legal structure on a
-   * public page is not ours to guess.
+   * Confirmed 2026-07-27: she is a sole trader, no limited company, so there is no
+   * company number and the pages simply do not mention one. Empty means
+   * "not applicable", which is different from PENDING, which means "unanswered".
    */
-  companyNumber: PENDING as string | Pending,
+  companyNumber: "" as string | Pending,
 
   /**
    * A real geographic address. UK consumer law requires it, and Stripe asks for it
@@ -39,16 +39,19 @@ export const BUSINESS = {
   address: "12 Brown Constable Pend, Dundee, DD4 6QU" as string | Pending,
 
   /** The address customers write to. Often the same as above. */
-  contactEmail: PENDING as string | Pending,
+  contactEmail: "mikkzter@gmail.com" as string | Pending,
 
-  /** Optional in law, but the stall crowd will ring rather than email. */
-  contactPhone: PENDING as string | Pending,
+  /**
+   * Optional in law, but the stall crowd will ring rather than email. Not supplied
+   * yet; the pages hide the phone section until it is.
+   */
+  contactPhone: "" as string | Pending,
 
   /**
    * VAT registration, if she is registered. Most new sole traders are under the
    * threshold and are not, in which case prices simply carry no VAT line.
    */
-  vatNumber: PENDING as string | Pending,
+  vatNumber: "" as string | Pending,
 
   /** Scotland, so Scots law governs and the courts are the Scottish courts. */
   jurisdiction: "Scotland",
@@ -64,15 +67,22 @@ function hasPostcode(value: string): boolean {
   return /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i.test(value);
 }
 
-/** Every field Michaela still has to supply, in the order the pages need them. */
+/** True when a field holds a real value: not PENDING, not empty. */
+export function provided(key: keyof typeof BUSINESS): boolean {
+  const value = BUSINESS[key];
+  return value !== PENDING && String(value).trim() !== "";
+}
+
+/**
+ * The fields the pages cannot lawfully publish without. Phone, VAT number and
+ * company number are deliberately not here: they are optional, render nothing
+ * when absent, and must not keep the "not ready to publish" notice up.
+ */
 export function pendingBusinessFields(): string[] {
   const labels: Record<string, string> = {
     legalName: "the legal trading name",
-    companyNumber: "the company number, if she has incorporated",
     address: "a real business address",
     contactEmail: "a contact email address",
-    contactPhone: "a contact phone number",
-    vatNumber: "a VAT number, if she is registered",
   };
   const missing = Object.entries(labels)
     .filter(([key]) => BUSINESS[key as keyof typeof BUSINESS] === PENDING)

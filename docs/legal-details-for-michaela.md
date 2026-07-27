@@ -76,3 +76,20 @@ Three things it did NOT settle, so the red "not ready to publish" notices are st
   across the 30 day short-term right to reject, which no term can. And "proven defective" is not
   used, because in the first six months the burden runs the other way: goods that fail are
   presumed faulty unless the trader shows otherwise.
+
+## 6. The details arrived, and the pages are publishable (added 2026-07-27)
+
+Liam supplied the rest: Michaela Anderson, self-employed sole trader (no limited company),
+trading as Barking Raw, contact mikkzter@gmail.com, address 12 Brown Constable Pend, Dundee,
+DD4 6QU. Every "not ready to publish" notice has cleared, because the three legally required
+details (name, address, contact route) now exist. What remains is optional or hers to decide:
+
+- **A phone number**, if she wants one published. The pages hide the phone section until it
+  is in `src/data/business.ts`.
+- **A VAT number**, only if she ever registers. Same file, same behaviour.
+- **The read-through.** The pages commit her to positions (returns, opened food, the 48 hour
+  damage request, Scots law) and she should read them as the person agreeing to them. The
+  solicitor's hour from section 2 still applies.
+- **The email address.** A gmail address is lawful and works; when barkingraw.dog email exists
+  (the Resend domain verification gives her exactly that), swapping it in this one file updates
+  every page.

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PendingDetails } from "@/components/legal/PendingDetails";
-import { BUSINESS, PENDING, detail } from "@/data/business";
+import { BUSINESS, detail, provided } from "@/data/business";
 
 export const metadata: Metadata = {
   title: "Terms & Conditions | Barking Raw",
@@ -24,11 +24,9 @@ export default function TermsPage() {
         <p>
           This shop is run by {detail("legalName")}, trading as Barking Raw, of {detail("address")}.
           You can reach us at {detail("contactEmail")}
-          {BUSINESS.contactPhone !== PENDING ? ` or on ${detail("contactPhone")}` : ""}.
-          {BUSINESS.companyNumber !== PENDING
-            ? ` Company number ${detail("companyNumber")}.`
-            : ""}
-          {BUSINESS.vatNumber !== PENDING ? ` VAT number ${detail("vatNumber")}.` : ""}
+          {provided("contactPhone") ? ` or on ${detail("contactPhone")}` : ""}.
+          {provided("companyNumber") ? ` Company number ${detail("companyNumber")}.` : ""}
+          {provided("vatNumber") ? ` VAT number ${detail("vatNumber")}.` : ""}
         </p>
 
         <h2 style={{ marginTop: "2rem" }}>2. How an order is made</h2>

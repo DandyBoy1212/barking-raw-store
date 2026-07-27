@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PendingDetails } from "@/components/legal/PendingDetails";
-import { BUSINESS, PENDING, detail } from "@/data/business";
+import { detail, provided } from "@/data/business";
 
 export const metadata: Metadata = {
   title: "Contact Us | Barking Raw",
@@ -33,7 +33,7 @@ export default function ContactPage() {
           and we can look it up straight away.
         </p>
 
-        {BUSINESS.contactPhone !== PENDING && (
+        {provided("contactPhone") && (
           <>
             <h2 style={{ marginTop: "2rem" }}>Phone</h2>
             <p>{detail("contactPhone")}</p>
