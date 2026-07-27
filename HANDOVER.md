@@ -120,12 +120,18 @@ decision is written down there, not here.
 ### Known gaps, honestly stated
 
 - **Stage 4 stock and stage 5 loyalty were plans only; nothing had been built.** The stall sale
-  recorder (D.5) now decrements a `stock` field where present (absent means untracked) and earns
+  recorder (D.5) decrements a `stock` field where present (absent means untracked) and earns
   points into `pointsBalance` through `src/lib/loyalty.ts`, which is the single definition of
-  rates. **Online orders through the Stripe webhook still neither decrement stock nor earn
-  points.** Until that is built, points exist only for stall sales and the points-owed report
-  understates the spec's promise. The admin product form also has no stock or points-rate fields
-  yet.
+  rates. **Closed on 2026-07-27** (`docs/plans/2026-07-27-stage-18-online-earn-and-stock.md`):
+  the Stripe webhook now runs the same maths for one-off checkouts and every subscription
+  invoice, earning on the amounts actually paid so discount codes never over-award, applying the
+  order, the stock decrements and the points credit in one transaction gated on the order doc not
+  existing. The admin product form gained its stock and points-rate fields, and `toCatalogue`
+  deliberately does not carry them, so shelf counts never ride in the public page payload. Two
+  honest caveats: pick-and-mix bundle lines neither earn nor deplete (their drawn contents exist
+  only as metadata text, and parsing prose to mutate counts is how stock goes quietly wrong), and
+  the webhook wiring is review-only until a Stripe key exists, though the maths behind it is
+  unit-tested.
 - The welcome sequence, digest and all marketing email cannot deliver until the Resend domain is
   verified (the standing launch blocker below).
 - No route-level test harness exists; routes are thin by design and all pure logic is unit-tested.
