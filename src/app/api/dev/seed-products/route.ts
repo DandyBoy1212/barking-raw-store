@@ -48,6 +48,12 @@ export async function POST(req: NextRequest) {
         badges: seedSp.badges,
         images: seedSp.images,
         image: seedSp.image,
+        // The A.1 fields. Leaving them out meant every fresh seed needed the
+        // backfill script run after it before the pillar pages showed anything.
+        pillar: seedSp.pillar,
+        leadTimeDays: seedSp.leadTimeDays,
+        fulfilment: seedSp.fulfilment,
+        ...(seedSp.membersOnlyUntil ? { membersOnlyUntil: seedSp.membersOnlyUntil } : {}),
         ...(seedSp.safetyNote ? { safetyNote: seedSp.safetyNote } : {}),
         active: true,
         archived: false,
