@@ -71,7 +71,107 @@ Three things worth knowing before touching this:
 
 Still open from this work: the account page can add a dog but not yet edit or delete one from the
 UI, though the routes for both exist and were verified by hand. The stall form (D.1) is the real
-collection surface.
+collection surface. (Both closed overnight on the 26th: the dog UI landed at e4258bd, and the
+stall form exists. See the next section.)
+
+## The night of 2026-07-26: the whole build order, executed
+
+Two Claude sessions ran the remaining build order overnight in parallel worktrees, one track per
+agent, merging into `feat/accounts-loyalty-admin` as each landed. Every step in spec section 15 is
+now built and merged: B.1 the ring and pillar pages, B.2 About Us, B.3 profile ribbons, B.5 several
+photos per product, B.6 badges in Firestore, C.1 email capture, C.2 the welcome sequence, C.3 the
+members area and posts admin, C.4 the weekly digest, C.5 the points-owed report, D.1 to D.3 the
+stall form with offline queue and staff PIN, D.4 the /join QR route, D.5 the stall sale recorder,
+D.6 dogs of the day, E.1 subscribe and save, and E.2 pick and mix. 468 tests, clean tsc, lint at
+the 3 known errors. Each step has its own plan in `docs/plans/` dated 2026-07-26; every design
+decision is written down there, not here.
+
+### Deploy order, before the matching feature is used in anger
+
+1. `node scripts/backfill-membership-flag.mjs` (dry run, then `--apply`) BEFORE the stall form or
+   members area go live. Membership is now an explicit `member: true` flag, never doc existence:
+   the old inference was a privilege escalation (any signed-in user could self-grant by adding a
+   dog). As of the fix there were zero real members, so the backfill had nothing to grant, but run
+   it once real orders exist if any predate the fix.
+2. `node scripts/backfill-product-images.mjs` (dry run, then `--apply`) before the multi-photo
+   admin is used. `Product.image` is now derived from `Product.images` with one primary.
+3. Badge seeding is DONE: `scripts/seed-badges.mjs --apply` ran against barking-raw on the 26th,
+   eight badges, five system.
+
+### Invariants the seams depend on. Do not relax these
+
+- **One marketing list, one unsubscribe.** `store_customers` records what was agreed (the stall's
+  `marketingConsent`/`photoConsent`/`consentAt`); `store_subscribers` decides what is SENT. Nothing
+  may ever send from `customer.marketingConsent`. Stall and /join signups with consent and an email
+  are bridged into `store_subscribers` through `applySubscription` with the server-only "stall"
+  source; the public /api/subscribe still refuses that source.
+- **Membership is `member === true`**, written only by `ensureCustomer` (paid orders, every
+  subscription invoice) and the stall/join sync. Gate only through `isMemberUid` /
+  `currentUserIsMember`.
+- **Dog photos render only from validated own-storage URLs** (`validateDogInput`, re-checked at
+  read time by dogs-of-the-day). The guard is the only thing between a caller-supplied URL and a
+  public page.
+- **The five system badges cannot be retired or renamed**; four are the SENSITIVITY_BADGE targets
+  the B.3 ribbons key on, plus Most Popular for the star. The admin refuses with a reason.
+- **Vercel Hobby has two cron slots and both are taken.** New scheduled work follows the GitHub
+  Action pattern (abandoned-cart, welcome-sequence, members-digest workflows; secrets SITE_URL and
+  CRON_SECRET).
+
+### Known gaps, honestly stated
+
+- **Stage 4 stock and stage 5 loyalty were plans only; nothing had been built.** The stall sale
+  recorder (D.5) now decrements a `stock` field where present (absent means untracked) and earns
+  points into `pointsBalance` through `src/lib/loyalty.ts`, which is the single definition of
+  rates. **Online orders through the Stripe webhook still neither decrement stock nor earn
+  points.** Until that is built, points exist only for stall sales and the points-owed report
+  understates the spec's promise. The admin product form also has no stock or points-rate fields
+  yet.
+- The welcome sequence, digest and all marketing email cannot deliver until the Resend domain is
+  verified (the standing launch blocker below).
+- No route-level test harness exists; routes are thin by design and all pure logic is unit-tested.
+
+### Decisions Liam should review, each reversible in one place
+
+- The greeting renders "Loki's human", not the spec's "Loki's Mum": gender is never collected.
+  One function, `dogOwnerLabel` in `src/lib/customer-fields.ts`.
+- The ring wedge photos are placeholder product shots; swap points in `RING_PHOTOS`,
+  `src/lib/pillars.ts`. Real walk/play/sleep photos wanted.
+- The four welcome email bodies and the About Us page carry drafted copy awaiting Michaela's
+  read-through; About Us is gated behind `storySignedOff` in `src/data/founder.ts` and her
+  questions live in `docs/about-details-for-michaela.md`.
+- Pick and mix takes 5% off drawn prices (below the 10% reserved for subscribe and save) and
+  never stacks with other discounts; `BUNDLE_PERCENT` in `src/lib/pick-and-mix.ts`.
+- Subscription price changes grandfather existing subscribers deliberately (spec 6.1).
+
+### Stripe configuration Michaela's dashboard still owes
+
+- Enable the Customer Portal (Settings > Billing > Customer portal), allowing cancellation and
+  payment-method updates, or the account page's manage button 502s politely.
+- Add `invoice.paid` to the webhook endpoint's events alongside `checkout.session.completed`.
+
+### New environment: `STALL_PIN` (see .env.example), optional `UNSUBSCRIBE_SECRET` (falls back to
+CRON_SECRET), and the two GitHub Action secrets already required by the abandoned-cart workflow.
+
+### The morning punch list: things only humans can do, in rough order
+
+1. Michaela opens her Stripe account (guide: `docs/stripe-setup-for-michaela.md`), invites Liam as
+   Developer; keys into env; one live pound through the whole path (step 0.3).
+2. Michaela verifies `barkingraw.dog` at resend.com/domains and `EMAIL_FROM` moves onto it. Until
+   then no email leaves the building except to one address.
+3. Michaela's business details into `src/data/business.ts` (list: `docs/legal-details-for-michaela.md`);
+   the red banners clear themselves.
+4. Michaela reads the About page and the two depth versions, supplies course names, flips
+   `storySignedOff` (list: `docs/about-details-for-michaela.md`).
+5. The repricing decision (spec 6.1, divide by 0.9) before discounts go loud. Her call, with the
+   competitor check.
+6. `main` is merged locally but deliberately NOT pushed: pushing likely deploys, and the site
+   should not deploy with red legal banners and a dead checkout. When 1 to 3 are done, push main
+   (or merge feat into it again first) and point `barkingraw.dog` at Vercel.
+7. Liam reruns the human test pass (`docs/plans/2026-07-25-wave-1-kickoff.md` Track 3 checklist,
+   updated on the 26th) over the new surfaces: the stall form on a real phone or iPad in
+   aeroplane mode is the one nothing else can prove.
+8. STALL_PIN set in Vercel env before the first market day; run the GitHub Action secrets for the
+   two new workflows (same two values as abandoned-cart).
 
 ## No email reaches anybody except one address, and this is a launch blocker
 
