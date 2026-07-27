@@ -1,6 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { slugify, validateProductInput } from "./product-admin";
-import type { Pillar } from "@/data/products";
+import { slugify, validateProductInput as validate } from "./product-admin";
+import { ALL_BADGES, type Pillar } from "@/data/products";
+
+/**
+ * B.6 gave validateProductInput a second argument: the badge labels currently in the
+ * collection. Almost every test below is about something other than badges, so they
+ * go through this wrapper with the seed list as the allowed set, and the tests that
+ * are actually about badges call `validate` directly with their own list.
+ */
+const validateProductInput = (input: Parameters<typeof validate>[0]) =>
+  validate(input, ALL_BADGES);
 
 describe("slugify", () => {
   it("lowercases, hyphenates, and trims", () => {
@@ -250,5 +259,45 @@ describe("validateProductInput pack size", () => {
     const r = validateProductInput({ ...base, pillar: "good-food", packPieceCount: 2.5 });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors).toContain("Piece count must be a whole number above 0, or left blank.");
+  });
+});
+
+describe("validateProductInput badges", () => {
+  const allowed = ["Most Popular", "Single Ingredient"];
+  const withBadges = (badges: string[]) => ({
+    name: "Beef Trachea Rings",
+    price: 6.5,
+    hook: "One ingredient",
+    description: "Beef trachea, dried.",
+    images: [{ url: "https://storage.googleapis.com/x/a.png", primary: true }],
+    pillar: "good-food" as const,
+    badges,
+  });
+
+  it("keeps a badge that is currently on the list", () => {
+    const r = validate(withBadges(["Most Popular"]), allowed);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.badges).toEqual(["Most Popular"]);
+  });
+
+  it("drops a badge that is not on the list", () => {
+    // Retired or invented. Either way it must not reach the product, or the card
+    // renders a badge nobody can manage.
+    const r = validate(withBadges(["Most Popular", "Made Up"]), allowed);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.badges).toEqual(["Most Popular"]);
+  });
+
+  it("accepts a badge Michaela added that was never in the old compiled union", () => {
+    // The entire point of B.6.
+    const r = validate(withBadges(["Great for Puppies"]), [...allowed, "Great for Puppies"]);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.badges).toEqual(["Great for Puppies"]);
+  });
+
+  it("drops everything when the allowed list is empty", () => {
+    const r = validate(withBadges(["Most Popular"]), []);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.badges).toEqual([]);
   });
 });

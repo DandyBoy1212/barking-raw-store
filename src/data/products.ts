@@ -5,16 +5,17 @@ import type { ProductImage } from "@/lib/product-images";
 
 export type { ProductImage };
 
-export type Badge =
-  | "Most Popular"
-  | "Best for Big Dogs"
-  | "Gentle on Dodgy Tummies"
-  | "Best for Skin & Coat"
-  | "Great for Training"
-  | "Natural Joint Support"
-  | "Single Ingredient"
-  | "Novel Protein";
+/**
+ * A badge label.
+ *
+ * Was a compiled union until B.6. Badges now live in the store_badges collection so
+ * Michaela can add her own without a deploy, which means the authority on what is
+ * valid is that collection, not this type. validateProductInput is handed the current
+ * labels and filters against them.
+ */
+export type Badge = string;
 
+/** The badges the site shipped with. Seed data, not the list of what is valid. */
 export const ALL_BADGES: Badge[] = [
   "Most Popular",
   "Best for Big Dogs",

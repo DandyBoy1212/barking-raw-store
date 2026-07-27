@@ -53,8 +53,17 @@ function optionalPositiveInteger(
   return n;
 }
 
+/**
+ * Validate a product from the admin form.
+ *
+ * `allowedBadges` is the labels currently in the badge collection, passed in rather
+ * than read here so this stays pure and synchronous, and so the Firestore read
+ * happens once per request instead of once per validation. Callers get it from
+ * getActiveBadgeLabels().
+ */
 export function validateProductInput(
   input: Partial<ProductInput>,
+  allowedBadges: string[],
 ): { ok: true; value: ProductInput } | { ok: false; errors: string[] } {
   const errors: string[] = [];
   const name = String(input.name ?? "").trim();
@@ -65,8 +74,10 @@ export function validateProductInput(
   // image string. Either way the primary is derived, never trusted from input.
   const images = normaliseImages(input.images, input.image);
   const image = primaryImageUrl(images);
+  // Filtered against what is in the badge collection right now, so a retired or
+  // invented badge never reaches a product.
   const badges = Array.isArray(input.badges)
-    ? input.badges.filter((b): b is Badge => ALL_BADGES.includes(b as Badge))
+    ? input.badges.filter((b): b is Badge => allowedBadges.includes(String(b)))
     : [];
   const safetyNote = input.safetyNote ? String(input.safetyNote).trim() : undefined;
 
