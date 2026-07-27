@@ -10,12 +10,20 @@ const BUILT = [
     title: "Products",
     blurb: "Add a product, change a price, set which pillar it belongs to, hide or archive it.",
   },
+  {
+    href: "/admin/posts",
+    title: "Posts",
+    blurb: "Write the weekly pillar post for the members area.",
+  },
+  {
+    href: "/admin/points",
+    title: "Points owed",
+    blurb: "See the total loyalty points customers have not spent yet.",
+  },
 ];
 
 const COMING = [
-  { title: "Posts", blurb: "Write the weekly pillar post for the members area." },
   { title: "Stall sales", blurb: "Record a cash or card sale made at the market stall." },
-  { title: "Points owed", blurb: "See the total loyalty points customers have not spent yet." },
 ];
 
 export default async function AdminHome() {
