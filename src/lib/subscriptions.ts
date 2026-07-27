@@ -140,3 +140,109 @@ export function subscriptionMetadata(input: {
     br_postage_pence: String(input.postagePence),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Invoice to order. Every billing cycle raises an invoice; this maps it to the
+// exact shape the one-off webhook writes, so Michaela's orders and sheet never
+// fork into two formats. Structural types, not Stripe's, so tests need no SDK.
+// ---------------------------------------------------------------------------
+
+interface AddressLike {
+  line1?: string | null;
+  line2?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+}
+
+/** The slice of a Stripe SDK v22 invoice this mapping actually reads. */
+export interface SubscriptionInvoiceLike {
+  id: string;
+  parent: {
+    type: string;
+    subscription_details: {
+      subscription: string | { id: string };
+      metadata: Record<string, string> | null;
+    } | null;
+  } | null;
+  customer: string | { id: string } | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  customer_address?: AddressLike | null;
+  customer_shipping?: { address?: AddressLike | null } | null;
+  /** Pence, pre-discount. */
+  subtotal: number;
+  /** Pence, what was actually charged after the coupon. */
+  total: number;
+  lines: { data: { description?: string | null; quantity?: number | null; amount: number }[] };
+}
+
+export interface SubscriptionOrder {
+  invoiceId: string;
+  subscriptionId: string;
+  stripeCustomerId: string;
+  frequencyWeeks: FrequencyWeeks | null;
+  items: { name: string; qty: number; amount: number }[];
+  customer: { name: string; email: string; address: string; postcode: string };
+  /** Pounds, pre-discount, goods only. */
+  subtotal: number;
+  /** Pounds, the recurring postage line (0 when the basket earned it free). */
+  shipping: number;
+  /** Pounds, what was actually paid. */
+  total: number;
+  itemSummary: string;
+}
+
+function joinAddress(a: AddressLike | null | undefined): string {
+  if (!a) return "";
+  return [a.line1, a.line2, a.city, a.postal_code].filter(Boolean).join(", ");
+}
+
+/**
+ * Null for anything that is not a subscription invoice. Postage splits out by
+ * its own line (POSTAGE_LINE_NAME), never by metadata, so the money columns are
+ * right even if the metadata was lost. Metadata supplies only the summary, the
+ * frequency and the postcode of last resort.
+ */
+export function invoiceToOrder(inv: SubscriptionInvoiceLike): SubscriptionOrder | null {
+  const details = inv.parent?.type === "subscription_details" ? inv.parent.subscription_details : null;
+  if (!details) return null;
+
+  const meta = details.metadata || {};
+  const lines = inv.lines?.data || [];
+  const postageLines = lines.filter((l) => l.description === POSTAGE_LINE_NAME);
+  const goodsLines = lines.filter((l) => l.description !== POSTAGE_LINE_NAME);
+
+  const items = goodsLines.map((l) => ({
+    name: l.description || "",
+    qty: l.quantity ?? 1,
+    amount: l.amount / 100,
+  }));
+  const shippingPence = postageLines.reduce((s, l) => s + l.amount, 0);
+
+  const shippingAddr = inv.customer_shipping?.address ?? null;
+  const billingAddr = inv.customer_address ?? null;
+  const address = joinAddress(shippingAddr) || joinAddress(billingAddr);
+  const postcode =
+    shippingAddr?.postal_code || billingAddr?.postal_code || meta.br_postcode || "";
+
+  return {
+    invoiceId: inv.id,
+    subscriptionId:
+      typeof details.subscription === "string" ? details.subscription : details.subscription.id,
+    stripeCustomerId:
+      typeof inv.customer === "string" ? inv.customer : (inv.customer?.id ?? ""),
+    frequencyWeeks: parseFrequencyWeeks(meta.br_frequency_weeks),
+    items,
+    customer: {
+      name: inv.customer_name || "",
+      email: inv.customer_email || "",
+      address,
+      postcode,
+    },
+    subtotal: (inv.subtotal - shippingPence) / 100,
+    shipping: shippingPence / 100,
+    total: inv.total / 100,
+    itemSummary:
+      meta.br_item_summary || items.map((i) => `${i.qty} x ${i.name}`).join(", "),
+  };
+}

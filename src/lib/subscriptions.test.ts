@@ -11,6 +11,8 @@ import {
   buildPostageLineItem,
   ensureSubscribeCoupon,
   subscriptionMetadata,
+  invoiceToOrder,
+  type SubscriptionInvoiceLike,
 } from "./subscriptions";
 import type { StoredProduct } from "./products-store";
 
@@ -205,5 +207,136 @@ describe("subscriptionMetadata", () => {
     });
     expect(meta.br_item_summary.length).toBe(480);
     expect(meta.br_postage_pence).toBe("0");
+  });
+});
+
+describe("invoiceToOrder", () => {
+  const paidInvoice: SubscriptionInvoiceLike = {
+    id: "in_1ABCDEFGH",
+    parent: {
+      type: "subscription_details",
+      subscription_details: {
+        subscription: "sub_123",
+        metadata: {
+          br_frequency_weeks: "4",
+          br_postcode: "DD5 1AB",
+          br_item_summary: "2 x Chicken Feet, 1 x Duck Necks",
+          br_postage_pence: "395",
+        },
+      },
+    },
+    customer: "cus_9",
+    customer_name: "Sam Smith",
+    customer_email: "sam@example.com",
+    customer_address: { line1: "1 Bark Lane", city: "Dundee", postal_code: "DD9 9ZZ" },
+    customer_shipping: {
+      address: { line1: "2 Paw Street", line2: "Flat 3", city: "Dundee", postal_code: "DD5 1AB" },
+    },
+    subtotal: 2595, // 12.00 + 10.00 goods + 3.95 postage, pre-discount, in pence
+    total: 2336, // after the 10% coupon
+    lines: {
+      data: [
+        { description: "Chicken Feet", quantity: 2, amount: 1200 },
+        { description: "Duck Necks", quantity: 1, amount: 1000 },
+        { description: "UK postage", quantity: 1, amount: 395 },
+      ],
+    },
+  };
+
+  it("returns null for anything that is not a subscription invoice", () => {
+    expect(invoiceToOrder({ ...paidInvoice, parent: null })).toBeNull();
+    expect(
+      invoiceToOrder({
+        ...paidInvoice,
+        parent: { type: "quote_details", subscription_details: null },
+      }),
+    ).toBeNull();
+  });
+
+  it("maps goods lines to items and splits postage out by its own line", () => {
+    const order = invoiceToOrder(paidInvoice)!;
+    expect(order.items).toEqual([
+      { name: "Chicken Feet", qty: 2, amount: 12 },
+      { name: "Duck Necks", qty: 1, amount: 10 },
+    ]);
+    expect(order.shipping).toBe(3.95);
+    expect(order.subtotal).toBe(22); // pre-discount goods only
+    expect(order.total).toBe(23.36); // what was actually paid
+  });
+
+  it("keeps the money right when there is no postage line", () => {
+    const free = invoiceToOrder({
+      ...paidInvoice,
+      subtotal: 2200,
+      total: 1980,
+      lines: {
+        data: [
+          { description: "Chicken Feet", quantity: 2, amount: 1200 },
+          { description: "Duck Necks", quantity: 1, amount: 1000 },
+        ],
+      },
+    })!;
+    expect(free.shipping).toBe(0);
+    expect(free.subtotal).toBe(22);
+    expect(free.total).toBe(19.8);
+  });
+
+  it("carries the ids the webhook needs for idempotency and the portal", () => {
+    const order = invoiceToOrder(paidInvoice)!;
+    expect(order.invoiceId).toBe("in_1ABCDEFGH");
+    expect(order.subscriptionId).toBe("sub_123");
+    expect(order.stripeCustomerId).toBe("cus_9");
+    expect(order.frequencyWeeks).toBe(4);
+  });
+
+  it("accepts expanded subscription and customer objects", () => {
+    const order = invoiceToOrder({
+      ...paidInvoice,
+      customer: { id: "cus_obj" },
+      parent: {
+        type: "subscription_details",
+        subscription_details: { subscription: { id: "sub_obj" }, metadata: {} },
+      },
+    })!;
+    expect(order.subscriptionId).toBe("sub_obj");
+    expect(order.stripeCustomerId).toBe("cus_obj");
+    expect(order.frequencyWeeks).toBeNull();
+  });
+
+  it("prefers the shipping address postcode, then billing, then metadata", () => {
+    expect(invoiceToOrder(paidInvoice)!.customer.postcode).toBe("DD5 1AB");
+    expect(invoiceToOrder(paidInvoice)!.customer.address).toBe(
+      "2 Paw Street, Flat 3, Dundee, DD5 1AB",
+    );
+    const noShipping = invoiceToOrder({ ...paidInvoice, customer_shipping: null })!;
+    expect(noShipping.customer.postcode).toBe("DD9 9ZZ");
+    expect(noShipping.customer.address).toBe("1 Bark Lane, Dundee, DD9 9ZZ");
+    const bare = invoiceToOrder({
+      ...paidInvoice,
+      customer_shipping: null,
+      customer_address: null,
+    })!;
+    expect(bare.customer.postcode).toBe("DD5 1AB"); // the metadata fallback
+    expect(bare.customer.address).toBe("");
+  });
+
+  it("prefers the metadata item summary and falls back to the mapped lines", () => {
+    expect(invoiceToOrder(paidInvoice)!.itemSummary).toBe("2 x Chicken Feet, 1 x Duck Necks");
+    const noMeta = invoiceToOrder({
+      ...paidInvoice,
+      parent: {
+        type: "subscription_details",
+        subscription_details: { subscription: "sub_123", metadata: null },
+      },
+    })!;
+    expect(noMeta.itemSummary).toBe("2 x Chicken Feet, 1 x Duck Necks");
+    expect(noMeta.shipping).toBe(3.95); // postage splits by its line, not by metadata
+    expect(noMeta.customer.postcode).toBe("DD5 1AB"); // still from the shipping address
+  });
+
+  it("copes with a missing customer name and email", () => {
+    const order = invoiceToOrder({ ...paidInvoice, customer_name: null, customer_email: null })!;
+    expect(order.customer.name).toBe("");
+    expect(order.customer.email).toBe("");
   });
 });
