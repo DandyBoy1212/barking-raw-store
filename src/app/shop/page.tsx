@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getPublicProducts, toCatalogue } from "@/lib/products-store";
+import { getViewerDogs } from "@/lib/viewer-dogs";
 import { ProductCard } from "@/components/ProductCard";
 import { EmailCapture } from "@/components/EmailCapture";
 
@@ -17,7 +18,10 @@ export const metadata: Metadata = {
  * repeated here on purpose.
  */
 export default async function ShopPage() {
-  const products = (await getPublicProducts()).map(toCatalogue);
+  const [products, dogs] = await Promise.all([
+    getPublicProducts().then((list) => list.map(toCatalogue)),
+    getViewerDogs(),
+  ]);
   return (
     <main>
       <section className="band band--paper">
@@ -32,7 +36,7 @@ export default async function ShopPage() {
           </div>
           <div className="grid">
             {products.map((p) => (
-              <ProductCard key={p.slug} product={p} />
+              <ProductCard key={p.slug} product={p} dogs={dogs} />
             ))}
           </div>
         </div>

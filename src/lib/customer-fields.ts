@@ -35,8 +35,10 @@ export function deriveLifeStage(bornAt: string | undefined, now: Date): LifeStag
 
 /**
  * The "Loki's Mum" naming convention from spec section 8.2, used in emails and on
- * the account page. Returns "" with no dogs, so the caller falls back to a plain
- * greeting rather than printing a dangling possessive.
+ * the account page, rendered gender-neutrally as "Loki's human": the record never
+ * stores who is reading (gender is not collected, and spec 8.3 gives one account
+ * to a whole household), so the site never guesses. Returns "" with no dogs, so
+ * the caller falls back to a plain greeting rather than a dangling possessive.
  */
 export function dogOwnerLabel(dogs: { id: string; name: string }[]): string {
   const names = dogs.map((d) => d.name.trim()).filter(Boolean);
@@ -45,8 +47,8 @@ export function dogOwnerLabel(dogs: { id: string; name: string }[]): string {
     names.length === 1
       ? names[0]
       : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-  // "Gus' Mum", not "Gus's Mum".
-  return joined.endsWith("s") ? `${joined}' Mum` : `${joined}'s Mum`;
+  // "Gus' human", not "Gus's human".
+  return joined.endsWith("s") ? `${joined}' human` : `${joined}'s human`;
 }
 
 /**

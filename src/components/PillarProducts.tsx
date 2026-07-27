@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Pillar } from "@/data/products";
 import { getPublicProducts, toCatalogue } from "@/lib/products-store";
 import { filterByPillar } from "@/lib/pillars";
+import { getViewerDogs } from "@/lib/viewer-dogs";
 import { ProductCard } from "@/components/ProductCard";
 
 /**
@@ -10,7 +11,8 @@ import { ProductCard } from "@/components/ProductCard";
  * bare grid that looks broken.
  */
 export async function PillarProducts({ pillar }: { pillar: Pillar }) {
-  const products = filterByPillar((await getPublicProducts()).map(toCatalogue), pillar);
+  const [allProducts, dogs] = await Promise.all([getPublicProducts(), getViewerDogs()]);
+  const products = filterByPillar(allProducts.map(toCatalogue), pillar);
   if (products.length === 0) {
     return (
       <div className="shelf-empty">
@@ -24,7 +26,7 @@ export async function PillarProducts({ pillar }: { pillar: Pillar }) {
   return (
     <div className="grid">
       {products.map((p) => (
-        <ProductCard key={p.slug} product={p} />
+        <ProductCard key={p.slug} product={p} dogs={dogs} />
       ))}
     </div>
   );

@@ -294,3 +294,12 @@ h1, h2, h3 { line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; }
 .header__nav::-webkit-scrollbar { display: none; }
 .header__nav a { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; transition: opacity 0.12s ease; }
 .header__nav a:hover { opacity: 1; }
+
+/* ---------- Profile ribbons (B.3) ---------- */
+/* The dog's side of the card. Michaela's badges sit top left, uppercase, and
+   describe the product; these sit top right, sentence case, and react to the
+   viewer's dogs (spec 3.4 keeps the two systems separate). Absolutely
+   positioned, so a card with none renders exactly as before. */
+.card__ribbons { position: absolute; top: 0.7rem; right: 0.7rem; display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-end; z-index: 2; pointer-events: none; }
+.ribbon { font-size: 0.7rem; font-weight: 700; padding: 0.32rem 0.65rem; border-radius: 999px; background: var(--ink); color: var(--paper); border: 1.5px solid var(--ink); white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.ribbon--caution { background: var(--paper); color: var(--ink); border-style: dashed; }
