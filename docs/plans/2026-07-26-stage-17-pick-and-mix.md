@@ -64,7 +64,7 @@
   - `summariseBundleContents(items: string[], bySlug: Map<string, { name: string }>): string`
   - `bundleDeliveryProduct(lineSlug: string, size: BundleSize, price: number): DeliveryProduct`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/lib/pick-and-mix.test.ts`:
 
@@ -244,12 +244,12 @@ describe("bundleDeliveryProduct", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npx vitest run src/lib/pick-and-mix.test.ts`
 Expected: FAIL, cannot resolve `@/lib/pick-and-mix`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `src/lib/pick-and-mix.ts`:
 
@@ -410,12 +410,12 @@ export function bundleDeliveryProduct(
 
 (`isMembersOnly` is imported now and used by Task 2's `validateBundle`; if the linter objects to the unused import in this intermediate state, add it in Task 2 instead.)
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `npx vitest run src/lib/pick-and-mix.test.ts`
 Expected: PASS. Then `npx tsc --noEmit` clean.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/pick-and-mix.ts src/lib/pick-and-mix.test.ts docs/plans/2026-07-26-stage-17-pick-and-mix.md
@@ -437,7 +437,7 @@ git commit -m "feat: the pick and mix draw, priced in pence with the saving stat
   - `type BundleVerdict = { ok: true } | { ok: false; status: 400 | 403; error: string }`
   - `validateBundle(sel: BundleSelection, catalogue: Array<{ slug: string; pillar: Pillar; fulfilment: FulfilmentPath; leadTimeDays?: number; membersOnlyUntil?: string }>, opts: { isMember: boolean; now: Date }): BundleVerdict`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `src/lib/pick-and-mix.test.ts` (add `parseBundle`, `validateBundle` to the import):
 
@@ -522,12 +522,12 @@ describe("validateBundle", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npx vitest run src/lib/pick-and-mix.test.ts`
 Expected: FAIL, `parseBundle` is not exported.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Append to `src/lib/pick-and-mix.ts`:
 
@@ -596,12 +596,12 @@ export function validateBundle(
 
 (Add the `isMembersOnly` import to the top of the file if Task 1 deferred it.)
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `npx vitest run src/lib/pick-and-mix.test.ts`
 Expected: PASS. Then `npx tsc --noEmit` clean.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/pick-and-mix.ts src/lib/pick-and-mix.test.ts
@@ -624,7 +624,7 @@ There are no component tests in this codebase and this task follows that
 convention; the pure arithmetic it leans on is tested in Tasks 1 and 2, and
 the wiring is proven by tsc, lint and the Task 6 sweep.
 
-- [ ] **Step 1: Extend CartProvider**
+- [x] **Step 1: Extend CartProvider**
 
 In `src/components/CartProvider.tsx`:
 
@@ -722,7 +722,7 @@ const delivery = (postcode: string) =>
 Do not touch the two `useEffect` blocks: the known lint error lives there and
 must stay at exactly one error in this file.
 
-- [ ] **Step 2: Render bundle lines in BasketDrawer**
+- [x] **Step 2: Render bundle lines in BasketDrawer**
 
 In `src/components/BasketDrawer.tsx`:
 
@@ -795,11 +795,11 @@ and extend the notice chain after the subscribe fieldset:
 their minted slug; `hasBundle` makes the intent explicit rather than relying
 on that accident.)
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npx tsc --noEmit` clean, `npm run lint` still exactly 3 errors, `npm test` all passing.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/CartProvider.tsx src/components/BasketDrawer.tsx
@@ -818,7 +818,7 @@ git commit -m "feat: the basket holds a bundle as one line with its contents sho
 - Consumes: Task 2's `parseBundle` and `validateBundle`; Task 1's `priceBundle`, `bundleLabel`, `summariseBundleContents`, `bundleDeliveryProduct`; `priceToPence` from `@/lib/stripe-sync`; `DeliveryProduct` from `@/lib/shipping`.
 - Produces: request `lines` may carry `bundle`; session metadata gains `bundle_1..n`; order docs gain `bundles: string[]` when present.
 
-- [ ] **Step 1: Accept and price bundle lines in the checkout route**
+- [x] **Step 1: Accept and price bundle lines in the checkout route**
 
 In `src/app/api/checkout/route.ts`:
 
@@ -949,7 +949,7 @@ metadata: {
 },
 ```
 
-- [ ] **Step 2: Carry the contents onto the order doc**
+- [x] **Step 2: Carry the contents onto the order doc**
 
 In `src/app/api/webhooks/stripe/route.ts`, inside `fulfil()` where the one-off
 order doc is written, collect the per-bundle metadata (numeric order, so
@@ -974,11 +974,11 @@ needs no change either: nothing in this webhook decrements a counter, because
 none exists (the stage 4 inventory plan was never implemented); when it lands,
 `bundles` on the order doc is the record it will need.
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npm test` all passing, `npx tsc --noEmit` clean, `npm run lint` at exactly 3.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/app/api/checkout/route.ts src/app/api/webhooks/stripe/route.ts
@@ -996,7 +996,7 @@ git commit -m "feat: checkout re-prices the bundle, refuses tampering and stacki
 **Interfaces:**
 - Consumes: Task 3's `useCart().addBundle` and `useCart().catalogue`; Task 1's `BUNDLE_SIZES`, `bundlePool`, `drawBundle`, `priceBundle`, `summariseBundleContents`, `bundleLabel`, `BundleSize`; `gbp` from `@/lib/format`.
 
-- [ ] **Step 1: Write the builder component**
+- [x] **Step 1: Write the builder component**
 
 Create `src/components/PickAndMixBuilder.tsx`:
 
@@ -1095,7 +1095,7 @@ export function PickAndMixBuilder() {
 }
 ```
 
-- [ ] **Step 2: Add the band to the Good Food page**
+- [x] **Step 2: Add the band to the Good Food page**
 
 In `src/app/good-food/page.tsx`, import the builder and add a band after the
 shelf section (before `</main>`):
@@ -1122,11 +1122,11 @@ import { PickAndMixBuilder } from "@/components/PickAndMixBuilder";
 </section>
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `npx tsc --noEmit` clean, `npm run lint` at exactly 3, `npm test` all passing.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/PickAndMixBuilder.tsx src/app/good-food/page.tsx
@@ -1137,13 +1137,13 @@ git commit -m "feat: the pick and mix block, let us surprise your dog"
 
 ### Task 6: Full verification and the plan ticked through
 
-- [ ] **Step 1: The full gate**
+- [x] **Step 1: The full gate**
 
 Run: `npm test` (390 baseline plus the new pick-and-mix tests, all passing),
 `npx tsc --noEmit` (clean), `npm run lint` (exactly 3 pre-existing errors, in
 CartProvider.tsx and thank-you/page.tsx, none new).
 
-- [ ] **Step 2: Tick this plan through and commit**
+- [x] **Step 2: Tick this plan through and commit**
 
 Mark every checkbox above done, then:
 
