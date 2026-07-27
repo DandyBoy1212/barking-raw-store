@@ -1,5 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import { getPublicProducts, toCatalogue } from "@/lib/products-store";
+import { getViewerDogs } from "@/lib/viewer-dogs";
 import { ProductCard } from "@/components/ProductCard";
 import { PawTrail } from "@/components/PawTrail";
 import { EmailCapture } from "@/components/EmailCapture";
@@ -8,7 +9,10 @@ import { RingHero } from "@/components/Ring";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const products = (await getPublicProducts()).map(toCatalogue);
+  const [products, dogs] = await Promise.all([
+    getPublicProducts().then((list) => list.map(toCatalogue)),
+    getViewerDogs(),
+  ]);
   return (
     <main>
       {/* THE RING: positioning first, navigation second (spec section 3.2). */}
@@ -185,7 +189,7 @@ export default async function Home() {
           </div>
           <div className="grid">
             {products.map((p) => (
-              <ProductCard key={p.slug} product={p} />
+              <ProductCard key={p.slug} product={p} dogs={dogs} />
             ))}
           </div>
         </div>
