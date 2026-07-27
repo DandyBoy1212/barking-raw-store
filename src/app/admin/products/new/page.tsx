@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { getActiveBadgeLabels } from "@/lib/badges-store";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewProductPage() {
   await requireStaff();
+  const availableBadges = await getActiveBadgeLabels();
   return (
     <main className="band band--paper">
       <div className="wrap">
@@ -15,7 +17,7 @@ export default async function NewProductPage() {
           &larr; Back to products
         </Link>
         <h1 className="display">New product</h1>
-        <ProductForm mode={{ kind: "create" }} />
+        <ProductForm mode={{ kind: "create" }} availableBadges={availableBadges} />
       </div>
     </main>
   );

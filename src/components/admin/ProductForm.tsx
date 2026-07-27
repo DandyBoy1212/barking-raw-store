@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ALL_BADGES, ALL_PILLARS } from "@/lib/product-admin";
+import { ALL_PILLARS } from "@/lib/product-admin";
 import { PILLAR_LABELS, ALL_FULFILMENT_PATHS } from "@/data/products";
 import type { Badge, Product, Pillar, FulfilmentPath } from "@/data/products";
 import {
@@ -23,7 +23,16 @@ type Mode = { kind: "create" } | { kind: "edit"; slug: string };
  * chips for anything multiple choice, and the shared .field treatment. She is the
  * person who uses this most, and it was the plainest screen on the site.
  */
-export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }) {
+export function ProductForm({
+  mode,
+  initial,
+  availableBadges,
+}: {
+  mode: Mode;
+  initial?: Product;
+  /** The badge labels currently in the collection, fetched by the page. */
+  availableBadges: string[];
+}) {
   const router = useRouter();
   const [name, setName] = useState(initial?.name ?? "");
   const [price, setPrice] = useState(String(initial?.price ?? ""));
@@ -200,7 +209,7 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
         <fieldset className="fieldset">
           <legend>Badges</legend>
           <div className="chips">
-            {ALL_BADGES.map((b) => (
+            {availableBadges.map((b) => (
               <button
                 key={b}
                 type="button"
@@ -211,6 +220,21 @@ export function ProductForm({ mode, initial }: { mode: Mode; initial?: Product }
                 {b}
               </button>
             ))}
+            {/* A badge this product carries that has since been retired. It stays on
+                the product, because retiring is not meant to edit products behind her
+                back, but it is not offered to anything else. */}
+            {badges
+              .filter((b) => !availableBadges.includes(b))
+              .map((b) => (
+                <span
+                  key={b}
+                  className="badge"
+                  style={{ opacity: 0.5 }}
+                  title="Retired badge, still on this product"
+                >
+                  {b}
+                </span>
+              ))}
           </div>
         </fieldset>
       </div>

@@ -11,6 +11,11 @@ const BUILT = [
     blurb: "Add a product, change a price, set which pillar it belongs to, hide or archive it.",
   },
   {
+    href: "/admin/badges",
+    title: "Badges",
+    blurb: "Add your own labels for products, rename them, or retire one you have stopped using.",
+  },
+  {
     href: "/admin/posts",
     title: "Posts",
     blurb: "Write the weekly pillar post for the members area.",
