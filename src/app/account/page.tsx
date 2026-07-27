@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getCustomer } from "@/lib/customers-store";
-import { deriveLifeStage, dogOwnerLabel } from "@/lib/customer-fields";
-import { SENSITIVITY_LABEL } from "@/data/customers";
-import { Paw } from "@/components/Paw";
+import { dogOwnerLabel } from "@/lib/customer-fields";
 import { PawTrail } from "@/components/PawTrail";
 import DogForm from "@/components/account/DogForm";
+import DogList from "@/components/account/DogList";
+import ManageSubscriptionButton from "@/components/account/ManageSubscriptionButton";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,6 @@ export default async function AccountPage() {
   const customer = await getCustomer(user.uid);
   const dogs = customer?.dogs ?? [];
   const label = dogOwnerLabel(dogs);
-  const now = new Date();
 
   return (
     <main>
@@ -43,42 +42,21 @@ export default async function AccountPage() {
           <div className="panel">
             <p className="panel__title">Your dogs</p>
 
-            {dogs.length === 0 ? (
-              <p className="account-empty">
-                No dogs yet. Tell us about yours and we will point you at what actually suits them.
-              </p>
-            ) : (
-              dogs.map((dog) => {
-                const stage = deriveLifeStage(dog.bornAt, now);
-                return (
-                  <article className="dog" key={dog.id}>
-                    {dog.photo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img className="dog__photo" src={dog.photo} alt={dog.name} />
-                    ) : (
-                      <Paw size={44} className="dog__paw" />
-                    )}
-                    <div style={{ minWidth: 0 }}>
-                      <h2 className="dog__name">{dog.name}</h2>
-                      {dog.breed && <p className="dog__meta">{dog.breed}</p>}
-                      <div className="dog__tags">
-                        {stage !== "unknown" && <span className="badge">{stage}</span>}
-                        {dog.size && <span className="badge">{dog.size}</span>}
-                        {dog.activity && <span className="badge">{dog.activity} energy</span>}
-                        {dog.sensitivities?.map((s) => (
-                          <span className="badge" key={s}>
-                            {SENSITIVITY_LABEL[s]}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </article>
-                );
-              })
-            )}
+            <DogList dogs={dogs} />
           </div>
 
           <DogForm />
+
+          {customer?.stripeCustomerId && (
+            <div className="panel" style={{ marginTop: "1.6rem" }}>
+              <p className="panel__title">Your repeating order</p>
+              <p className="notice" style={{ marginBottom: "0.9rem" }}>
+                Change the schedule, update your card or cancel any time. Stripe handles it
+                all securely.
+              </p>
+              <ManageSubscriptionButton />
+            </div>
+          )}
 
           <p className="notice" style={{ marginTop: "1.6rem" }}>
             Points and order history arrive in a later stage.

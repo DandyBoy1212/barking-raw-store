@@ -35,8 +35,10 @@ export function deriveLifeStage(bornAt: string | undefined, now: Date): LifeStag
 
 /**
  * The "Loki's Mum" naming convention from spec section 8.2, used in emails and on
- * the account page. Returns "" with no dogs, so the caller falls back to a plain
- * greeting rather than printing a dangling possessive.
+ * the account page, rendered gender-neutrally as "Loki's human": the record never
+ * stores who is reading (gender is not collected, and spec 8.3 gives one account
+ * to a whole household), so the site never guesses. Returns "" with no dogs, so
+ * the caller falls back to a plain greeting rather than a dangling possessive.
  */
 export function dogOwnerLabel(dogs: { id: string; name: string }[]): string {
   const names = dogs.map((d) => d.name.trim()).filter(Boolean);
@@ -45,8 +47,8 @@ export function dogOwnerLabel(dogs: { id: string; name: string }[]): string {
     names.length === 1
       ? names[0]
       : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-  // "Gus' Mum", not "Gus's Mum".
-  return joined.endsWith("s") ? `${joined}' Mum` : `${joined}'s Mum`;
+  // "Gus' human", not "Gus's human".
+  return joined.endsWith("s") ? `${joined}' human` : `${joined}'s human`;
 }
 
 /**
@@ -131,4 +133,21 @@ export function normaliseAddress(input: Partial<CustomerAddress> | undefined): C
     city: String(input.city ?? "").trim(),
     postcode: String(input.postcode ?? "").trim().toUpperCase(),
   };
+}
+
+/**
+ * Whether a store_customers document represents a member.
+ *
+ * Membership used to be inferred from the document merely existing, which was true
+ * while a paid Stripe order was the only thing that ever created one. The A.2 account
+ * routes broke that: they set({merge: true}) on the same document, so adding a dog or
+ * saving an address created it, and any signed-in visitor became a member and got the
+ * members-only early access that spec section 10.1 says signing up must not grant.
+ *
+ * So membership is now an explicit flag, written by the paths that actually confer it:
+ * a paid order, and the stall signup. Strict === true, because Firestore will store a
+ * string and "false" is truthy.
+ */
+export function isMemberDoc(data: Record<string, unknown> | undefined): boolean {
+  return data?.member === true;
 }

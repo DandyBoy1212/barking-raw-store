@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/auth";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import { getStoredProductBySlugStrict, type StoredProduct } from "@/lib/products-store";
 import { slugify, validateProductInput } from "@/lib/product-admin";
+import { getActiveBadgeLabels } from "@/lib/badges-store";
 import { syncProductToStripe } from "@/lib/stripe-sync";
 
 export const runtime = "nodejs";
@@ -23,7 +24,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, errors: ["Bad request."] }, { status: 400 });
   }
 
-  const parsed = validateProductInput(body);
+  const allowedBadges = await getActiveBadgeLabels();
+  const parsed = validateProductInput(body, allowedBadges);
   if (!parsed.ok) return NextResponse.json({ ok: false, errors: parsed.errors }, { status: 400 });
 
   const slug = slugify(parsed.value.name);
@@ -57,6 +59,7 @@ export async function POST(req: NextRequest) {
       hook: draft.hook,
       description: draft.description,
       badges: draft.badges,
+      images: draft.images,
       image: draft.image,
       ...(draft.safetyNote ? { safetyNote: draft.safetyNote } : {}),
       pillar: draft.pillar,
@@ -72,6 +75,9 @@ export async function POST(req: NextRequest) {
         : {}),
       ...(draft.packWeightGrams !== undefined ? { packWeightGrams: draft.packWeightGrams } : {}),
       ...(draft.packPieceCount !== undefined ? { packPieceCount: draft.packPieceCount } : {}),
+      ...(draft.stock !== undefined ? { stock: draft.stock } : {}),
+      ...(draft.pointsPerPound !== undefined ? { pointsPerPound: draft.pointsPerPound } : {}),
+      ...(draft.sortOrder !== undefined ? { sortOrder: draft.sortOrder } : {}),
       active: true,
       archived: false,
       stripeProductId: ids.stripeProductId,

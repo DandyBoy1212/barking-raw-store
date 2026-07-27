@@ -1,16 +1,21 @@
 // Single source of truth for the 9 products. Prices in GBP (pounds).
 // Copy drafted from docs/research-dossier.md, honesty-flag compliant.
 
-export type Badge =
-  | "Most Popular"
-  | "Best for Big Dogs"
-  | "Gentle on Dodgy Tummies"
-  | "Best for Skin & Coat"
-  | "Great for Training"
-  | "Natural Joint Support"
-  | "Single Ingredient"
-  | "Novel Protein";
+import type { ProductImage } from "@/lib/product-images";
 
+export type { ProductImage };
+
+/**
+ * A badge label.
+ *
+ * Was a compiled union until B.6. Badges now live in the store_badges collection so
+ * Michaela can add her own without a deploy, which means the authority on what is
+ * valid is that collection, not this type. validateProductInput is handed the current
+ * labels and filters against them.
+ */
+export type Badge = string;
+
+/** The badges the site shipped with. Seed data, not the list of what is valid. */
 export const ALL_BADGES: Badge[] = [
   "Most Popular",
   "Best for Big Dogs",
@@ -60,7 +65,17 @@ export interface Product {
   hook: string;
   description: string;
   badges: Badge[];
-  image: string; // path under /public
+  /**
+   * The photos, in display order, exactly one marked primary. The primary is what
+   * Stripe receives, what the basket shows, and what any fulfilment surface uses.
+   */
+  images: ProductImage[];
+  /**
+   * Derived: the primary image's URL (a path under /public, or a storage URL).
+   * Kept because Stripe sync, the basket and legacy Firestore readers all read a
+   * single string. Never set independently of images.
+   */
+  image: string;
   safetyNote?: string;
   /** Exactly one pillar. A product with no pillar appears on no page, so this is required. */
   pillar: Pillar;
@@ -86,7 +101,10 @@ export interface Product {
   stripePriceId?: string;
 }
 
-export const products: Product[] = [
+/** The seed literals carry a single image; the photo list is derived from it below. */
+type SeedProduct = Omit<Product, "images">;
+
+const seedProducts: SeedProduct[] = [
   {
     slug: "beef-trachea-rings",
     name: "Beef Trachea Rings",
@@ -223,6 +241,11 @@ export const products: Product[] = [
       "Keep treats to roughly 10% of daily calories, and go easy if the meat is organ or liver.",
   },
 ];
+
+export const products: Product[] = seedProducts.map((p) => ({
+  ...p,
+  images: [{ url: p.image, primary: true }],
+}));
 
 export const productBySlug = (slug: string) =>
   products.find((p) => p.slug === slug);

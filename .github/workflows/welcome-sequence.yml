@@ -1,0 +1,26 @@
+name: Welcome sequence
+
+# Vercel Hobby allows only two crons, and both slots are taken (abandoned cart
+# and the daily digest). The welcome sequence follows the same free GitHub
+# Action pattern as abandoned-cart.yml instead. Once a day is exactly what the
+# sequence wants: the endpoint sends at most one email per contact per run and
+# tracks its own position, so repeat calls are safe.
+#
+# Requires the same two repository secrets as abandoned-cart.yml:
+#   SITE_URL     e.g. https://barkingraw.dog   (or the .vercel.app URL)
+#   CRON_SECRET  the same value set as CRON_SECRET in Vercel env vars
+
+on:
+  schedule:
+    - cron: "30 8 * * *" # daily, half an hour after the abandoned-cart morning run
+  workflow_dispatch: {} # lets you run it manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the welcome sequence
+        run: |
+          curl -fsS -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/cron/welcome"

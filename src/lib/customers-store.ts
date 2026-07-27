@@ -36,6 +36,7 @@ export function docToStoredCustomer(uid: string, data: Record<string, unknown>):
     phone: String(data.phone ?? ""),
     address,
     dogs,
+    ...(data.stripeCustomerId ? { stripeCustomerId: String(data.stripeCustomerId) } : {}),
   };
 }
 

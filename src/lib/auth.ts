@@ -90,15 +90,24 @@ export async function requireStaff(): Promise<SessionUser> {
   return user;
 }
 
-/** Create or match a Firebase user + store_customers doc for a buyer. */
+/**
+ * Create or match a Firebase user + store_customers doc for a buyer.
+ *
+ * Called from the Stripe webhook on a paid order, which is one of the two things that
+ * confer membership (the other is the stall signup, spec section 10.1). It therefore
+ * writes `member: true` explicitly. Membership is no longer implied by the document
+ * existing, because the account routes create that document too.
+ */
 export async function ensureCustomer(input: {
   email: string;
   name?: string;
   postcode?: string;
-}): Promise<void> {
+  /** Set by webhook fulfilment when Stripe told us its customer id; the billing portal needs it. */
+  stripeCustomerId?: string;
+}): Promise<string | null> {
   const auth = getAuthAdmin();
   const db = getDb();
-  if (!auth || !db || !input.email) return;
+  if (!auth || !db || !input.email) return null;
   let uid: string;
   try {
     uid = (await auth.getUserByEmail(input.email)).uid;
@@ -109,7 +118,15 @@ export async function ensureCustomer(input: {
     .collection(COLLECTIONS.customers)
     .doc(uid)
     .set(
-      { ...buildCustomerDoc(input), updatedAt: FieldValue.serverTimestamp(), createdAt: FieldValue.serverTimestamp() },
+      {
+        ...buildCustomerDoc(input),
+        ...(input.stripeCustomerId ? { stripeCustomerId: input.stripeCustomerId } : {}),
+        member: true,
+        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+      },
       { merge: true },
     );
+  // The webhook needs this to credit loyalty points to the right customer doc.
+  return uid;
 }

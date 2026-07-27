@@ -1,6 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { slugify, validateProductInput } from "./product-admin";
-import type { Pillar } from "@/data/products";
+import { slugify, validateProductInput as validate } from "./product-admin";
+import { ALL_BADGES, type Pillar } from "@/data/products";
+
+/**
+ * B.6 gave validateProductInput a second argument: the badge labels currently in the
+ * collection. Almost every test below is about something other than badges, so they
+ * go through this wrapper with the seed list as the allowed set, and the tests that
+ * are actually about badges call `validate` directly with their own list.
+ */
+const validateProductInput = (input: Parameters<typeof validate>[0]) =>
+  validate(input, ALL_BADGES);
 
 describe("slugify", () => {
   it("lowercases, hyphenates, and trims", () => {
@@ -175,6 +184,41 @@ describe("validateProductInput fulfilment", () => {
   });
 });
 
+describe("validateProductInput images", () => {
+  const withPillar = { ...base, pillar: "good-food" as const };
+
+  it("accepts an images list and derives the primary image", () => {
+    const r = validateProductInput({
+      ...withPillar,
+      image: undefined,
+      images: [{ url: "/a.png", primary: false }, { url: "/b.png", primary: true }],
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.images).toEqual([
+        { url: "/a.png", primary: false },
+        { url: "/b.png", primary: true },
+      ]);
+      expect(r.value.image).toBe("/b.png");
+    }
+  });
+
+  it("folds a legacy single image into the list", () => {
+    const r = validateProductInput(withPillar);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.images).toEqual([{ url: "/products/rabbit-ears.png", primary: true }]);
+      expect(r.value.image).toBe("/products/rabbit-ears.png");
+    }
+  });
+
+  it("rejects a product with no photos at all", () => {
+    const r = validateProductInput({ ...withPillar, image: undefined, images: [] });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors).toContain("At least one photo is required.");
+  });
+});
+
 describe("validateProductInput pack size", () => {
   it("leaves both undefined when neither is given, since the nine originals have none", () => {
     const r = validateProductInput({ ...base, pillar: "good-food" });
@@ -215,5 +259,106 @@ describe("validateProductInput pack size", () => {
     const r = validateProductInput({ ...base, pillar: "good-food", packPieceCount: 2.5 });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors).toContain("Piece count must be a whole number above 0, or left blank.");
+  });
+});
+
+describe("validateProductInput badges", () => {
+  const allowed = ["Most Popular", "Single Ingredient"];
+  const withBadges = (badges: string[]) => ({
+    name: "Beef Trachea Rings",
+    price: 6.5,
+    hook: "One ingredient",
+    description: "Beef trachea, dried.",
+    images: [{ url: "https://storage.googleapis.com/x/a.png", primary: true }],
+    pillar: "good-food" as const,
+    badges,
+  });
+
+  it("keeps a badge that is currently on the list", () => {
+    const r = validate(withBadges(["Most Popular"]), allowed);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.badges).toEqual(["Most Popular"]);
+  });
+
+  it("drops a badge that is not on the list", () => {
+    // Retired or invented. Either way it must not reach the product, or the card
+    // renders a badge nobody can manage.
+    const r = validate(withBadges(["Most Popular", "Made Up"]), allowed);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.badges).toEqual(["Most Popular"]);
+  });
+
+  it("accepts a badge Michaela added that was never in the old compiled union", () => {
+    // The entire point of B.6.
+    const r = validate(withBadges(["Great for Puppies"]), [...allowed, "Great for Puppies"]);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.badges).toEqual(["Great for Puppies"]);
+  });
+
+  it("drops everything when the allowed list is empty", () => {
+    const r = validate(withBadges(["Most Popular"]), []);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.badges).toEqual([]);
+  });
+});
+
+describe("validateProductInput stock and points rate", () => {
+  const withPillar = { ...base, pillar: "good-food" as const };
+
+  it("accepts blank as untracked stock and default rate", () => {
+    const r = validateProductInput(withPillar);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.stock).toBeUndefined();
+      expect(r.value.pointsPerPound).toBeUndefined();
+    }
+  });
+
+  it("accepts zero for both, which mean sold out and no points, not blank", () => {
+    const r = validateProductInput({ ...withPillar, stock: 0, pointsPerPound: 0 });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.stock).toBe(0);
+      expect(r.value.pointsPerPound).toBe(0);
+    }
+  });
+
+  it("accepts a positive count and rate", () => {
+    const r = validateProductInput({ ...withPillar, stock: 24, pointsPerPound: 15 });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.stock).toBe(24);
+      expect(r.value.pointsPerPound).toBe(15);
+    }
+  });
+
+  it("rejects negative or fractional stock", () => {
+    for (const stock of [-1, 2.5]) {
+      const r = validateProductInput({ ...withPillar, stock });
+      expect(r.ok).toBe(false);
+    }
+  });
+
+  it("rejects a negative points rate", () => {
+    const r = validateProductInput({ ...withPillar, pointsPerPound: -5 });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors).toContain("Points per pound must be 0 or more, or left blank.");
+  });
+});
+
+describe("validateProductInput sort order", () => {
+  const withPillar = { ...base, pillar: "good-food" as const };
+
+  it("accepts blank as unordered and a position from 1 up", () => {
+    const blank = validateProductInput(withPillar);
+    expect(blank.ok && blank.value.sortOrder).toBeUndefined();
+    const first = validateProductInput({ ...withPillar, sortOrder: 1 });
+    expect(first.ok && first.value.sortOrder).toBe(1);
+  });
+
+  it("rejects zero, negatives and fractions, since Michaela counts from 1", () => {
+    for (const sortOrder of [0, -1, 2.5]) {
+      expect(validateProductInput({ ...withPillar, sortOrder }).ok).toBe(false);
+    }
   });
 });

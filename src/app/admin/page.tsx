@@ -10,12 +10,27 @@ const BUILT = [
     title: "Products",
     blurb: "Add a product, change a price, set which pillar it belongs to, hide or archive it.",
   },
-];
-
-const COMING = [
-  { title: "Posts", blurb: "Write the weekly pillar post for the members area." },
-  { title: "Stall sales", blurb: "Record a cash or card sale made at the market stall." },
-  { title: "Points owed", blurb: "See the total loyalty points customers have not spent yet." },
+  {
+    href: "/admin/badges",
+    title: "Badges",
+    blurb: "Add your own labels for products, rename them, or retire one you have stopped using.",
+  },
+  {
+    href: "/admin/posts",
+    title: "Posts",
+    blurb: "Write the weekly pillar post for the members area.",
+  },
+  {
+    href: "/admin/points",
+    title: "Points owed",
+    blurb: "See the total loyalty points customers have not spent yet.",
+  },
+  { href: "/admin/dogs", title: "Dogs of the day", blurb: "Feature a consented stall dog on the public page." },
+  {
+    href: "/stall/sale",
+    title: "Stall sales",
+    blurb: "Record a cash or card sale made at the market stall. Works on the stall PIN too.",
+  },
 ];
 
 export default async function AdminHome() {
@@ -46,16 +61,6 @@ export default async function AdminHome() {
           ))}
         </div>
 
-        <h2 style={{ marginTop: "2.5rem", fontSize: "1rem", textTransform: "uppercase" }}>
-          Not built yet
-        </h2>
-        <ul style={{ opacity: 0.6, lineHeight: 1.8 }}>
-          {COMING.map((item) => (
-            <li key={item.title}>
-              <b>{item.title}.</b> {item.blurb}
-            </li>
-          ))}
-        </ul>
       </div>
     </main>
   );

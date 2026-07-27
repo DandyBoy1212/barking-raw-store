@@ -75,7 +75,9 @@ export default function ReturnsPage() {
         </p>
         <p style={{ marginTop: "1rem" }}>
           After 30 days we will repair or replace first, and refund if that does not sort it. If
-          something arrives damaged or off, a photo saves us both a lot of time.
+          something arrives damaged or off, a photo saves us both a lot of time, and telling us
+          within 48 hours helps us claim against the courier. Neither shortens your rights: they
+          run from the day the goods arrive, whatever day you get round to telling us.
         </p>
 
         <h2 style={{ marginTop: "2rem" }}>How to start a return</h2>

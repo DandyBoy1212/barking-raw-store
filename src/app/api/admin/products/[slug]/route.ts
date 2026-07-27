@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/auth";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import { getStoredProductBySlugStrict, type StoredProduct } from "@/lib/products-store";
 import { validateProductInput } from "@/lib/product-admin";
+import { getActiveBadgeLabels } from "@/lib/badges-store";
 import { applyStripeProductUpdate } from "@/lib/stripe-sync";
 
 export const runtime = "nodejs";
@@ -32,14 +33,19 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
   } catch {
     return NextResponse.json({ ok: false, errors: ["Bad request."] }, { status: 400 });
   }
-  const parsed = validateProductInput(body);
+  const allowedBadges = await getActiveBadgeLabels();
+  const parsed = validateProductInput(body, allowedBadges);
   if (!parsed.ok) return NextResponse.json({ ok: false, errors: parsed.errors }, { status: 400 });
 
   const next: StoredProduct = { ...existing, ...parsed.value };
   const stripe = new Stripe(secret);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://barkingraw.dog";
 
-  let ids: { stripeProductId: string; stripePriceId: string };
+  let ids: {
+    stripeProductId: string;
+    stripePriceId: string;
+    stripeRecurringPriceIds: Record<string, string>;
+  };
   try {
     ids = await applyStripeProductUpdate(stripe, existing, next, siteUrl);
   } catch (err) {
@@ -55,6 +61,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
         hook: next.hook,
         description: next.description,
         badges: next.badges,
+        images: next.images,
         image: next.image,
         ...(next.safetyNote ? { safetyNote: next.safetyNote } : { safetyNote: FieldValue.delete() }),
         pillar: next.pillar,
@@ -78,8 +85,22 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
         ...(next.packPieceCount !== undefined
           ? { packPieceCount: next.packPieceCount }
           : { packPieceCount: FieldValue.delete() }),
+        // Blank clears: untracked stock and the default points rate are the
+        // absence of the field, deliberately distinct from zero.
+        ...(next.stock !== undefined ? { stock: next.stock } : { stock: FieldValue.delete() }),
+        ...(next.pointsPerPound !== undefined
+          ? { pointsPerPound: next.pointsPerPound }
+          : { pointsPerPound: FieldValue.delete() }),
+        ...(next.sortOrder !== undefined
+          ? { sortOrder: next.sortOrder }
+          : { sortOrder: FieldValue.delete() }),
         stripeProductId: ids.stripeProductId,
         stripePriceId: ids.stripePriceId,
+        // A merge set cannot empty a nested map, so a cleared map (price change
+        // deactivated the recurring prices) becomes an explicit delete.
+        ...(Object.keys(ids.stripeRecurringPriceIds).length
+          ? { stripeRecurringPriceIds: ids.stripeRecurringPriceIds }
+          : { stripeRecurringPriceIds: FieldValue.delete() }),
         updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },

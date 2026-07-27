@@ -9,12 +9,24 @@ import {
   type FulfilmentPath,
 } from "@/data/products";
 import { isMembersOnly } from "@/lib/product-fields";
+import { normaliseImages, primaryImageUrl } from "@/lib/product-images";
 
 export type StoredProduct = Product & {
   active: boolean;
   archived: boolean;
+  /**
+   * Stock and points rate, admin-facing only: deliberately NOT carried into
+   * toCatalogue, so shelf counts never ride in every visitor's page payload.
+   * Absent stock means untracked; absent rate means loyalty.ts's default.
+   */
+  stock?: number;
+  pointsPerPound?: number;
+  /** Shelf position, 1 first; absent sorts after every placed product. Admin-set. */
+  sortOrder?: number;
   stripeProductId?: string;
   stripePriceId?: string;
+  /** Recurring subscribe-and-save prices, keyed by frequency in weeks ("2" | "4" | "8"). */
+  stripeRecurringPriceIds?: Record<string, string>;
 };
 
 /** Normalise a raw Firestore doc into a StoredProduct, applying defaults. */
@@ -40,6 +52,10 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     return Number.isFinite(n) && n >= 0 ? n : undefined;
   };
 
+  // A legacy doc predates the images list and carries only the single image
+  // string; fold it in rather than dropping the photo.
+  const images = normaliseImages(data.images, data.image);
+
   return {
     slug: id,
     name: String(data.name ?? ""),
@@ -47,7 +63,8 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     hook: String(data.hook ?? ""),
     description: String(data.description ?? ""),
     badges: Array.isArray(data.badges) ? (data.badges as Badge[]) : [],
-    image: String(data.image ?? ""),
+    images,
+    image: primaryImageUrl(images),
     safetyNote: data.safetyNote ? String(data.safetyNote) : undefined,
     pillar,
     leadTimeDays,
@@ -58,11 +75,42 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     supplierArrivalMaxDays: supplier ? num(data.supplierArrivalMaxDays) : undefined,
     packWeightGrams: num(data.packWeightGrams),
     packPieceCount: num(data.packPieceCount),
+    stock: num(data.stock),
+    pointsPerPound: num(data.pointsPerPound),
+    sortOrder: num(data.sortOrder),
     active: data.active === undefined ? true : Boolean(data.active),
     archived: Boolean(data.archived ?? false),
     stripeProductId: data.stripeProductId ? String(data.stripeProductId) : undefined,
     stripePriceId: data.stripePriceId ? String(data.stripePriceId) : undefined,
+    stripeRecurringPriceIds: parseRecurringPriceIds(data.stripeRecurringPriceIds),
   };
+}
+
+/** A string-to-string map or nothing; anything else in a doc is dropped, not guessed at. */
+function parseRecurringPriceIds(raw: unknown): Record<string, string> | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof v === "string" && v) out[k] = v;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/**
+ * Persist a freshly minted recurring price id on the product doc. A merge set
+ * with a nested map merges keys, so frequencies never clobber each other.
+ */
+export async function saveRecurringPriceId(
+  slug: string,
+  weeks: number,
+  priceId: string,
+): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await db
+    .collection(COLLECTIONS.products)
+    .doc(slug)
+    .set({ stripeRecurringPriceIds: { [String(weeks)]: priceId } }, { merge: true });
 }
 
 /** The static seed, expressed as StoredProducts (used as the fallback catalogue). */
@@ -79,6 +127,7 @@ export function toCatalogue(sp: StoredProduct): Product {
     hook: sp.hook,
     description: sp.description,
     badges: sp.badges,
+    images: sp.images,
     image: sp.image,
     safetyNote: sp.safetyNote,
     pillar: sp.pillar,
@@ -111,6 +160,20 @@ export function splitByMembersOnly(
 }
 
 /** All buyable products (active, not archived). Falls back to the seed if Firestore is down or errors. */
+/**
+ * Michaela's shelf order: placed products first, ascending by sortOrder, then
+ * the unplaced ones alphabetically by name. Before this, the shop led with
+ * whatever Firestore's doc ids happened to sort first, which nobody chose.
+ */
+export function sortStoredProducts(list: StoredProduct[]): StoredProduct[] {
+  return [...list].sort((a, b) => {
+    const ao = a.sortOrder ?? Infinity;
+    const bo = b.sortOrder ?? Infinity;
+    if (ao !== bo) return ao - bo;
+    return a.name.localeCompare(b.name);
+  });
+}
+
 export async function getStoredProducts(): Promise<StoredProduct[]> {
   const db = getDb();
   if (!db) return seedAsStoredProducts().filter((p) => p.active && !p.archived);
@@ -121,7 +184,7 @@ export async function getStoredProducts(): Promise<StoredProduct[]> {
       return seedAsStoredProducts().filter((p) => p.active && !p.archived);
     }
     const all = snap.docs.map((d) => docToStoredProduct(d.id, d.data() as Record<string, unknown>));
-    return all.filter((p) => p.active && !p.archived);
+    return sortStoredProducts(all.filter((p) => p.active && !p.archived));
   } catch (err) {
     console.error("[products-store] getStoredProducts Firestore read failed, falling back to seed:", err);
     return seedAsStoredProducts().filter((p) => p.active && !p.archived);
@@ -134,7 +197,7 @@ export async function getAllStoredProducts(): Promise<StoredProduct[]> {
   if (!db) return seedAsStoredProducts();
   const snap = await db.collection(COLLECTIONS.products).get();
   const all = snap.docs.map((d) => docToStoredProduct(d.id, d.data() as Record<string, unknown>));
-  return all.length ? all : seedAsStoredProducts();
+  return sortStoredProducts(all.length ? all : seedAsStoredProducts());
 }
 
 /** A single product by slug (its Firestore doc id). Falls back to the seed. */

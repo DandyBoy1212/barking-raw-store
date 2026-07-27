@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   docToStoredProduct,
+  sortStoredProducts,
   seedAsStoredProducts,
   splitByMembersOnly,
   toCatalogue,
@@ -47,6 +48,23 @@ describe("docToStoredProduct", () => {
     expect(sp.stripeProductId).toBe("prod_1");
     expect(sp.stripePriceId).toBe("price_1");
     expect(sp.safetyNote).toBe("care");
+  });
+
+  it("parses the recurring price map, keeping only string values", () => {
+    const sp = docToStoredProduct("x", {
+      name: "X",
+      price: 1,
+      stripeRecurringPriceIds: { "2": "price_r2", "4": 7, "8": "price_r8", junk: null },
+    });
+    expect(sp.stripeRecurringPriceIds).toEqual({ "2": "price_r2", "8": "price_r8" });
+  });
+
+  it("leaves the recurring price map undefined when absent or malformed", () => {
+    expect(docToStoredProduct("x", { name: "X", price: 1 }).stripeRecurringPriceIds).toBeUndefined();
+    expect(
+      docToStoredProduct("x", { name: "X", price: 1, stripeRecurringPriceIds: "nope" })
+        .stripeRecurringPriceIds,
+    ).toBeUndefined();
   });
 
   it("guards a non-finite price to 0 instead of yielding NaN", () => {
@@ -155,6 +173,55 @@ describe("toCatalogue new fields", () => {
   });
 });
 
+describe("docToStoredProduct images", () => {
+  it("folds a legacy doc's single image into the images list", () => {
+    const sp = docToStoredProduct("x", {
+      name: "X",
+      price: 1,
+      hook: "h",
+      description: "d",
+      image: "/x.png",
+    });
+    expect(sp.images).toEqual([{ url: "/x.png", primary: true }]);
+    expect(sp.image).toBe("/x.png");
+  });
+
+  it("respects a stored images list and derives image from its primary", () => {
+    const sp = docToStoredProduct("x", {
+      name: "X",
+      price: 1,
+      hook: "h",
+      description: "d",
+      image: "/stale.png",
+      images: [{ url: "/a.png" }, { url: "/b.png", primary: true }],
+    });
+    expect(sp.images).toEqual([
+      { url: "/a.png", primary: false },
+      { url: "/b.png", primary: true },
+    ]);
+    expect(sp.image).toBe("/b.png");
+  });
+
+  it("passes images through toCatalogue", () => {
+    const sp = docToStoredProduct("x", {
+      name: "X",
+      price: 1,
+      hook: "h",
+      description: "d",
+      image: "/x.png",
+    });
+    expect(toCatalogue(sp).images).toEqual([{ url: "/x.png", primary: true }]);
+  });
+});
+
+describe("seed images", () => {
+  it("gives every seed product a one-entry primary list matching its image", () => {
+    for (const sp of seedAsStoredProducts()) {
+      expect(sp.images).toEqual([{ url: sp.image, primary: true }]);
+    }
+  });
+});
+
 describe("splitByMembersOnly", () => {
   const now = new Date("2026-08-01T12:00:00Z");
 
@@ -171,5 +238,33 @@ describe("splitByMembersOnly", () => {
     const result = splitByMembersOnly([past], now);
     expect(result.open.map((p) => p.slug)).toEqual(["c"]);
     expect(result.membersOnly).toEqual([]);
+  });
+});
+
+describe("docToStoredProduct stock and points rate", () => {
+  it("reads them tolerantly and leaves junk absent", () => {
+    const good = docToStoredProduct("x", { name: "X", price: 5, stock: 7, pointsPerPound: 0 });
+    expect(good.stock).toBe(7);
+    expect(good.pointsPerPound).toBe(0);
+    const junk = docToStoredProduct("y", { name: "Y", price: 5, stock: "lots", pointsPerPound: -3 });
+    expect(junk.stock).toBeUndefined();
+    expect(junk.pointsPerPound).toBeUndefined();
+  });
+});
+
+describe("sortStoredProducts", () => {
+  const p = (slug: string, sortOrder?: number) =>
+    docToStoredProduct(slug, { name: slug.toUpperCase(), price: 5, ...(sortOrder ? { sortOrder } : {}) });
+
+  it("puts ordered products first, ascending, then the rest alphabetically", () => {
+    // The curated shelf comes first in Michaela's order; anything she has not
+    // placed follows alphabetically rather than in Firestore's doc-id accident.
+    const sorted = sortStoredProducts([p("zebra"), p("apple"), p("last", 9), p("first", 1)]);
+    expect(sorted.map((x) => x.slug)).toEqual(["first", "last", "apple", "zebra"]);
+  });
+
+  it("breaks a sort-order tie alphabetically, so the order is stable", () => {
+    const sorted = sortStoredProducts([p("beta", 3), p("alpha", 3)]);
+    expect(sorted.map((x) => x.slug)).toEqual(["alpha", "beta"]);
   });
 });

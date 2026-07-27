@@ -4,6 +4,7 @@ import { ALL_SENSITIVITIES, SENSITIVITY_BADGE } from "@/data/customers";
 import {
   deriveLifeStage,
   dogOwnerLabel,
+  isMemberDoc,
   normaliseAddress,
   validateDogInput,
 } from "./customer-fields";
@@ -45,17 +46,20 @@ describe("deriveLifeStage", () => {
 });
 
 describe("dogOwnerLabel", () => {
-  it("names the first dog, which is the Loki's Mum convention in spec section 8.2", () => {
-    expect(dogOwnerLabel([{ id: "d1", name: "Loki" }])).toBe("Loki's Mum");
+  // The spec calls this the "Loki's Mum" convention, but the record never stores
+  // who is reading: gender is not collected, and one account serves a household
+  // (spec 8.3). So the site always renders the neutral form, "Loki's human".
+  it("names the first dog, the Loki's Mum convention rendered gender-neutrally", () => {
+    expect(dogOwnerLabel([{ id: "d1", name: "Loki" }])).toBe("Loki's human");
   });
 
   it("adds an apostrophe only for a name ending in s", () => {
-    expect(dogOwnerLabel([{ id: "d1", name: "Gus" }])).toBe("Gus' Mum");
+    expect(dogOwnerLabel([{ id: "d1", name: "Gus" }])).toBe("Gus' human");
   });
 
   it("joins two dogs with and, because both names are how she knows them", () => {
     expect(dogOwnerLabel([{ id: "d1", name: "Loki" }, { id: "d2", name: "Bear" }]))
-      .toBe("Loki and Bear's Mum");
+      .toBe("Loki and Bear's human");
   });
 
   it("falls back to a plain greeting with no dogs, never to an empty possessive", () => {
@@ -149,5 +153,31 @@ describe("validateDogInput photo", () => {
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.value.photo).toBeUndefined();
     }
+  });
+});
+
+describe("isMemberDoc", () => {
+  it("is true only for an explicit member flag", () => {
+    expect(isMemberDoc({ member: true })).toBe(true);
+  });
+
+  it("is false for a doc that merely exists", () => {
+    // The bug this replaces: membership used to be "a store_customers doc exists",
+    // and the A.2 account routes create that doc with set({merge:true}). So adding
+    // a dog, or saving an address, made any signed-in user a member and handed them
+    // the members-only early access that spec 10.1 says signing up must not grant.
+    expect(isMemberDoc({ dogs: [{ id: "dog-1", name: "Freeloader" }] })).toBe(false);
+    expect(isMemberDoc({ name: "Nobody", address: { line1: "", postcode: "" } })).toBe(false);
+    expect(isMemberDoc({})).toBe(false);
+  });
+
+  it("is false for a missing doc", () => {
+    expect(isMemberDoc(undefined)).toBe(false);
+  });
+
+  it("does not accept a truthy non-true value", () => {
+    // Firestore will happily store a string. "false" is truthy.
+    expect(isMemberDoc({ member: "false" })).toBe(false);
+    expect(isMemberDoc({ member: 1 })).toBe(false);
   });
 });

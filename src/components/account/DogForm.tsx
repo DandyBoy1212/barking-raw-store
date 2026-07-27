@@ -6,6 +6,7 @@ import {
   ALL_SENSITIVITIES,
   SENSITIVITY_LABEL,
   type ActivityLevel,
+  type Dog,
   type DogSize,
   type Sensitivity,
 } from "@/data/customers";
@@ -34,15 +35,25 @@ const ACTIVITY: { value: ActivityLevel; label: string }[] = [
  * stall iPad in step D.1, where every answer has to be tappable with a dog lead in
  * the other hand.
  */
-export default function DogForm() {
+export default function DogForm({
+  initial,
+  onDone,
+  onCancel,
+}: {
+  /** Present when editing an existing dog. Absent means adding a new one. */
+  initial?: Dog;
+  onDone?: () => void;
+  onCancel?: () => void;
+} = {}) {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [breed, setBreed] = useState("");
-  const [bornAt, setBornAt] = useState("");
-  const [size, setSize] = useState<DogSize | "">("");
-  const [activity, setActivity] = useState<ActivityLevel | "">("");
-  const [sensitivities, setSensitivities] = useState<Sensitivity[]>([]);
-  const [photo, setPhoto] = useState("");
+  const editing = Boolean(initial);
+  const [name, setName] = useState(initial?.name ?? "");
+  const [breed, setBreed] = useState(initial?.breed ?? "");
+  const [bornAt, setBornAt] = useState(initial?.bornAt ?? "");
+  const [size, setSize] = useState<DogSize | "">(initial?.size ?? "");
+  const [activity, setActivity] = useState<ActivityLevel | "">(initial?.activity ?? "");
+  const [sensitivities, setSensitivities] = useState<Sensitivity[]>(initial?.sensitivities ?? []);
+  const [photo, setPhoto] = useState(initial?.photo ?? "");
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -86,15 +97,29 @@ export default function DogForm() {
     setError("");
     try {
       const res = await fetch("/api/account/dogs", {
-        method: "POST",
+        method: editing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, breed, bornAt, size, activity, sensitivities, photo }),
+        body: JSON.stringify({
+          ...(editing ? { id: initial!.id } : {}),
+          name,
+          breed,
+          bornAt,
+          size,
+          activity,
+          sensitivities,
+          photo,
+        }),
       });
       const data = await res.json();
       // Surface the failure. The product form shipped without this and a failed save
       // looked identical to a successful one.
       if (!res.ok || !data.ok) {
         setError((data.errors ?? ["Save failed."]).join(" "));
+        return;
+      }
+      if (editing) {
+        // The list owns the refresh when editing, because it also has to close the form.
+        onDone?.();
         return;
       }
       setName("");
@@ -114,7 +139,7 @@ export default function DogForm() {
 
   return (
     <form className="panel" onSubmit={submit}>
-      <p className="panel__title">Add a dog</p>
+      <p className="panel__title">{editing ? `Editing ${initial!.name}` : "Add a dog"}</p>
 
       <div className="form-grid form-grid--2">
         <label className="field">
@@ -225,10 +250,20 @@ export default function DogForm() {
         </p>
       )}
 
-      <p style={{ marginTop: "1.4rem" }}>
-        <button className="btn btn--solid-ink btn--block" type="submit" disabled={busy}>
-          {busy ? "Saving..." : "Add this dog"}
+      <p style={{ marginTop: "1.4rem", display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
+        <button
+          className="btn btn--solid-ink"
+          type="submit"
+          disabled={busy}
+          style={{ flex: 1, justifyContent: "center" }}
+        >
+          {busy ? "Saving..." : editing ? "Save changes" : "Add this dog"}
         </button>
+        {editing && (
+          <button className="btn" type="button" onClick={onCancel} disabled={busy}>
+            Cancel
+          </button>
+        )}
       </p>
     </form>
   );

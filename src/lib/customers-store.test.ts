@@ -21,6 +21,13 @@ describe("docToStoredCustomer", () => {
     });
   });
 
+  it("carries the Stripe customer id when the webhook has stored one", () => {
+    expect(
+      docToStoredCustomer("u1", { email: "a@b.com", stripeCustomerId: "cus_9" }).stripeCustomerId,
+    ).toBe("cus_9");
+    expect(docToStoredCustomer("u1", { email: "a@b.com" }).stripeCustomerId).toBeUndefined();
+  });
+
   it("reads a legacy doc, keeping lastPostcode as the only address it has", () => {
     // Every customer doc in Firestore today is this shape. Losing lastPostcode would
     // throw away the one piece of address information the site ever collected.
