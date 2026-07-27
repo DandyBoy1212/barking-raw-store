@@ -8,6 +8,7 @@ import { getStoredProducts, splitByMembersOnly, toCatalogue } from "@/lib/produc
 import { postFreshMs, postParagraphs, type Post } from "@/lib/posts";
 import { ProductCard } from "@/components/ProductCard";
 import { PawTrail } from "@/components/PawTrail";
+import { DogsOfTheDayStrip } from "@/components/DogsOfTheDayStrip";
 
 export const dynamic = "force-dynamic";
 
@@ -123,8 +124,10 @@ export default async function MembersPage() {
 
           <p className="notice" style={{ marginTop: "1.6rem" }}>
             Your points balance will show here, in points and in pounds, once points switch
-            on. Dogs of the day arrives with the stall.
+            on.
           </p>
+
+          <DogsOfTheDayStrip />
         </div>
       </section>
     </main>
