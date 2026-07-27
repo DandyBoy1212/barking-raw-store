@@ -41,6 +41,7 @@ export function Header() {
         ))}
         <Link href="/shop">Shop</Link>
         <Link href="/about">About us</Link>
+        <Link href="/members">Members</Link>
       </nav>
     </header>
   );
