@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
+  DEFAULT_EARN_RATE,
   REDEEM_POINTS_PER_POUND,
+  earnRateFor,
+  earnedPoints,
   pointsToPounds,
   customerPoints,
   buildPointsReport,
@@ -69,5 +72,29 @@ describe("buildPointsReport", () => {
     const report = buildPointsReport([{ uid: "x", data: { pointsBalance: 50 } }]);
     expect(report.rows).toEqual([{ uid: "x", name: "", email: "", points: 50, pounds: 0.5 }]);
     expect(report.totalPoints).toBe(50);
+  });
+});
+
+describe("the earn rate", () => {
+  it("defaults to ten points per pound, stage 5's economy", () => {
+    expect(DEFAULT_EARN_RATE).toBe(10);
+    expect(earnRateFor({})).toBe(10);
+  });
+
+  it("honours a per-product override, including a zero-point promotion", () => {
+    expect(earnRateFor({ pointsPerPound: 25 })).toBe(25);
+    expect(earnRateFor({ pointsPerPound: 0 })).toBe(0);
+  });
+
+  it("falls back on a junk override rather than inventing a rate", () => {
+    expect(earnRateFor({ pointsPerPound: -3 })).toBe(DEFAULT_EARN_RATE);
+    expect(earnRateFor({ pointsPerPound: Number.NaN })).toBe(DEFAULT_EARN_RATE);
+  });
+
+  it("floors earned points to whole ones and never goes negative", () => {
+    expect(earnedPoints(7.5, 10)).toBe(75);
+    expect(earnedPoints(0.99, 10)).toBe(9);
+    expect(earnedPoints(-4, 10)).toBe(0);
+    expect(earnedPoints(3, 0)).toBe(0);
   });
 });
