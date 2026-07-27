@@ -14,6 +14,7 @@
 // under section 6.1 without anyone touching this file.
 
 import type { FulfilmentPath, Pillar } from "@/data/products";
+import { isMembersOnly } from "@/lib/product-fields";
 import type { DeliveryProduct } from "@/lib/shipping";
 import { priceToPence } from "@/lib/stripe-sync";
 
@@ -148,4 +149,65 @@ export function bundleDeliveryProduct(
     fulfilment: "own-stock",
     leadTimeDays: 0,
   };
+}
+
+/**
+ * Shape-check a bundle from a request body. Nothing here is trusted: size
+ * must be a recognised size, items must be a list of non-empty strings.
+ */
+export function parseBundle(v: unknown): BundleSelection | null {
+  if (!v || typeof v !== "object") return null;
+  const raw = v as Record<string, unknown>;
+  if (!isBundleSize(raw.size)) return null;
+  if (!Array.isArray(raw.items)) return null;
+  const items: string[] = [];
+  for (const entry of raw.items) {
+    if (typeof entry !== "string" || !entry) return null;
+    items.push(entry);
+  }
+  return { size: raw.size, items };
+}
+
+export type BundleVerdict = { ok: true } | { ok: false; status: 400 | 403; error: string };
+
+/**
+ * The server's answer to a tampered bundle: every item must be in the live
+ * catalogue, own stock, Good Food, zero lead time, and outside its members
+ * only window unless the buyer is a member (403, mirroring the single-line
+ * rule in the checkout route). The whole checkout is refused rather than the
+ * line dropped, because silently repricing a surprise bag is worse than
+ * asking the customer to draw again.
+ */
+export function validateBundle(
+  sel: BundleSelection,
+  catalogue: Array<{
+    slug: string;
+    pillar: Pillar;
+    fulfilment: FulfilmentPath;
+    leadTimeDays?: number;
+    membersOnlyUntil?: string;
+  }>,
+  opts: { isMember: boolean; now: Date },
+): BundleVerdict {
+  const tampered: BundleVerdict = {
+    ok: false,
+    status: 400,
+    error: "That Pick & Mix bundle does not match what we offer. Please draw a fresh one.",
+  };
+  if (sel.items.length !== sel.size) return tampered;
+  const bySlug = new Map(catalogue.map((p) => [p.slug, p]));
+  const pool = new Set(bundlePool(catalogue).map((p) => p.slug));
+  for (const slug of sel.items) {
+    const p = bySlug.get(slug);
+    if (!p) return tampered;
+    if (!opts.isMember && isMembersOnly(p, opts.now)) {
+      return {
+        ok: false,
+        status: 403,
+        error: "That Pick & Mix bundle includes an item that is members only just now.",
+      };
+    }
+    if (!pool.has(slug)) return tampered;
+  }
+  return { ok: true };
 }

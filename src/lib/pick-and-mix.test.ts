@@ -8,8 +8,10 @@ import {
   drawBundle,
   isBundleSize,
   mulberry32,
+  parseBundle,
   priceBundle,
   summariseBundleContents,
+  validateBundle,
 } from "@/lib/pick-and-mix";
 
 const mk = (slug: string, over: Record<string, unknown> = {}) => ({
@@ -157,6 +159,85 @@ describe("labels and summaries", () => {
 
   it("falls back to the slug for a name it cannot resolve", () => {
     expect(summariseBundleContents(["ghost"], new Map())).toBe("1 x ghost");
+  });
+});
+
+describe("parseBundle", () => {
+  it("accepts a well-shaped bundle", () => {
+    expect(parseBundle({ size: 5, items: ["a", "b", "c", "d", "e"] })).toEqual({
+      size: 5,
+      items: ["a", "b", "c", "d", "e"],
+    });
+  });
+
+  it.each([
+    [null],
+    ["ten"],
+    [{ size: 15, items: [] }],
+    [{ size: "10", items: [] }],
+    [{ size: 5 }],
+    [{ size: 5, items: "abcde" }],
+    [{ size: 5, items: [1, 2, 3, 4, 5] }],
+    [{ size: 5, items: ["a", "", "c", "d", "e"] }],
+  ])("rejects %j", (raw) => {
+    expect(parseBundle(raw)).toBeNull();
+  });
+});
+
+describe("validateBundle", () => {
+  const catalogue = [
+    mk("sprats"),
+    mk("chicken-feet"),
+    mk("supplier-chew", { fulfilment: "supplier-posted" }),
+    mk("shampoo", { pillar: "healthy-body" }),
+    mk("big-kibble", { leadTimeDays: 14 }),
+    mk("members-treat", { membersOnlyUntil: "2999-01-01" }),
+  ];
+  const now = new Date("2026-07-26T12:00:00Z");
+  const opts = { isMember: false, now };
+  const five = (slug: string) => ({
+    size: 5 as const,
+    items: [slug, "sprats", "sprats", "chicken-feet", "chicken-feet"],
+  });
+
+  it("accepts a bundle drawn from the honest pool", () => {
+    expect(validateBundle(five("sprats"), catalogue, opts)).toEqual({ ok: true });
+  });
+
+  it("rejects an item count that does not match the size", () => {
+    const verdict = validateBundle({ size: 10, items: ["sprats"] }, catalogue, opts);
+    expect(verdict.ok).toBe(false);
+    if (!verdict.ok) expect(verdict.status).toBe(400);
+  });
+
+  it.each([
+    ["a slug the catalogue does not carry", "ghost"],
+    ["a supplier-posted product", "supplier-chew"],
+    ["a product from another pillar", "shampoo"],
+    ["a product with a lead time", "big-kibble"],
+  ])("rejects %s with a 400", (_desc, slug) => {
+    const verdict = validateBundle(five(slug), catalogue, opts);
+    expect(verdict.ok).toBe(false);
+    if (!verdict.ok) expect(verdict.status).toBe(400);
+  });
+
+  it("refuses a members-only item to a non-member with a 403", () => {
+    const verdict = validateBundle(five("members-treat"), catalogue, opts);
+    expect(verdict.ok).toBe(false);
+    if (!verdict.ok) expect(verdict.status).toBe(403);
+  });
+
+  it("allows the same item to a member while the window holds", () => {
+    expect(validateBundle(five("members-treat"), catalogue, { isMember: true, now })).toEqual({
+      ok: true,
+    });
+  });
+
+  it("allows everyone the item once the window has passed", () => {
+    const later = new Date("2999-06-01T00:00:00Z");
+    expect(
+      validateBundle(five("members-treat"), catalogue, { isMember: false, now: later }),
+    ).toEqual({ ok: true });
   });
 });
 
