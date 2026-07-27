@@ -8,7 +8,7 @@ import { getStoredProducts, splitByMembersOnly, toCatalogue } from "@/lib/produc
 import { postFreshMs, postParagraphs, type Post } from "@/lib/posts";
 import { ProductCard } from "@/components/ProductCard";
 import { PawTrail } from "@/components/PawTrail";
-import { DogsOfTheDayStrip } from "@/components/DogsOfTheDayStrip";
+import DogsOfTheDayStrip from "@/components/DogsOfTheDayStrip";
 
 export const dynamic = "force-dynamic";
 
