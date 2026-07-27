@@ -102,6 +102,8 @@ export async function ensureCustomer(input: {
   email: string;
   name?: string;
   postcode?: string;
+  /** Set by webhook fulfilment when Stripe told us its customer id; the billing portal needs it. */
+  stripeCustomerId?: string;
 }): Promise<void> {
   const auth = getAuthAdmin();
   const db = getDb();
@@ -118,6 +120,7 @@ export async function ensureCustomer(input: {
     .set(
       {
         ...buildCustomerDoc(input),
+        ...(input.stripeCustomerId ? { stripeCustomerId: input.stripeCustomerId } : {}),
         member: true,
         updatedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
