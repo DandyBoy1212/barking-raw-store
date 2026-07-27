@@ -34,10 +34,9 @@ export const BUSINESS = {
    * before it will let an account trade properly. It does not have to be a shop, a
    * home address is lawful, but it cannot be absent and it cannot be a PO box alone.
    *
-   * Given by Liam on 2026-07-25. Still missing its postcode, which is why the
-   * "not ready to publish" notice has not cleared: see hasPostcode below.
+   * Given by Liam on 2026-07-25; postcode supplied 2026-07-27.
    */
-  address: "12 Brown Constable Pend, Dundee" as string | Pending,
+  address: "12 Brown Constable Pend, Dundee, DD4 6QU" as string | Pending,
 
   /** The address customers write to. Often the same as above. */
   contactEmail: PENDING as string | Pending,

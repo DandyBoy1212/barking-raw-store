@@ -152,6 +152,22 @@ has nothing to grant and exists for the case where real orders predate the flag 
   never stacks with other discounts; `BUNDLE_PERCENT` in `src/lib/pick-and-mix.ts`.
 - Subscription price changes grandfather existing subscribers deliberately (spec 6.1).
 
+### First live test-mode run, 2026-07-27 afternoon
+
+Michaela's test keys went into `.env.local` and the whole money path was exercised for real:
+all nine products synced to Stripe through the actual admin PATCH route (products and prices
+confirmed on both sides), a checkout session created, **paid in the browser on Stripe's hosted
+sandbox page with the 4242 test card**, and the signed `checkout.session.completed` event
+delivered locally. The order doc landed with the right totals (EH postcode, GBP 3.95 shipping),
+190 points on the paid amounts, stock 10 to 8 on the tracked product, `member: true` granted,
+and a redelivery of the same event changed nothing. The earn/stock work is no longer
+review-only.
+
+**Local-only caveat:** Stripe cannot reach localhost, so `STRIPE_WEBHOOK_SECRET` in
+`.env.local` is a locally minted value used to sign test events by hand. On Vercel it must be
+the real signing secret from the Stripe dashboard's webhook endpoint, or every live event will
+fail signature verification.
+
 ### Stripe configuration Michaela's dashboard still owes
 
 - Enable the Customer Portal (Settings > Billing > Customer portal), allowing cancellation and
