@@ -3,6 +3,11 @@
 // trivially unit-testable (mirrors customer-fields.ts).
 
 import { normaliseAddress, validateDogInput } from "@/lib/customer-fields";
+import {
+  applySubscription,
+  normaliseSubscriberEmail,
+  type Subscriber,
+} from "@/lib/subscribers";
 import type { CustomerAddress, Dog, StoredCustomer } from "@/data/customers";
 
 /** One dog as captured at the stall: the A.2 fields plus an optional inline photo. */
@@ -31,6 +36,11 @@ export type StallRecord = {
 // has to be unique and unguessable enough to key a marker doc.
 const CLIENT_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
 
+/** Whether a value can key an idempotency marker. Shared with the sale vocabulary. */
+export function isUsableClientId(value: string): boolean {
+  return CLIENT_ID_PATTERN.test(value);
+}
+
 // A downscaled 1280px JPEG is a few hundred KB; base64 inflates by a third. This cap
 // keeps the whole record safely inside a serverless request body.
 const PHOTO_DATA_PATTERN = /^data:image\/(jpeg|png|webp);base64,/;
@@ -54,7 +64,7 @@ export function validateStallRecord(
   const raw = input as Record<string, unknown>;
 
   const clientId = String(raw.clientId ?? "").trim();
-  if (!CLIENT_ID_PATTERN.test(clientId)) {
+  if (!isUsableClientId(clientId)) {
     return { ok: false, errors: ["A record needs its client id."] };
   }
 
@@ -167,6 +177,23 @@ export function buildStallCustomerPatch(
   patch.stallSignupAt = record.capturedAt;
 
   return patch;
+}
+
+/**
+ * Whether a synced stall record joins the marketing list, and how.
+ *
+ * store_customers records what was agreed at the table; store_subscribers decides
+ * what is SENT, and this is the only bridge between them. No marketing consent or
+ * no usable email means no bridge. Routed through applySubscription so a re-synced
+ * record can never reset a sequence position or re-issue a code.
+ */
+export function stallMarketingSubscription(
+  record: StallRecord,
+  existing: Subscriber | null,
+): ReturnType<typeof applySubscription> | null {
+  if (!record.consent.marketing) return null;
+  if (!normaliseSubscriberEmail(record.email)) return null;
+  return applySubscription(existing, { source: "stall", consent: true });
 }
 
 /** Escape the characters that matter for safe HTML text interpolation. */

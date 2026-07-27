@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   EMPTY_QUEUE,
+  emptyQueue,
   enqueueRecord,
   normaliseQueueState,
   queueSummary,
@@ -146,5 +147,26 @@ describe("normaliseQueueState", () => {
     });
     expect(state.records).toEqual([{ record: record("id-0000-1"), attempts: 2, failed: false }]);
     expect(state.syncedCount).toBe(3);
+  });
+});
+
+describe("a second record type", () => {
+  type Note = { clientId: string; note: string };
+
+  it("queues, replaces and syncs any record carrying a clientId", async () => {
+    let state = enqueueRecord(emptyQueue<Note>(), { clientId: "id-0000-9", note: "first" });
+    state = enqueueRecord(state, { clientId: "id-0000-9", note: "second" });
+    expect(state.records).toHaveLength(1);
+    expect(state.records[0].record.note).toBe("second");
+    const after = await syncQueue(state, async () => "synced" as const);
+    expect(after.records).toHaveLength(0);
+    expect(after.syncedCount).toBe(1);
+  });
+
+  it("summarises and normalises the second type through the same machine", () => {
+    const state = enqueueRecord(emptyQueue<Note>(), { clientId: "id-0000-9", note: "n" });
+    expect(queueSummary(state).waiting).toBe(1);
+    const revived = normaliseQueueState<Note>(JSON.parse(JSON.stringify(state)));
+    expect(revived.records[0].record.note).toBe("n");
   });
 });

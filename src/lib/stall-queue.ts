@@ -1,22 +1,38 @@
-// The offline queue as a pure state machine. Storage (IndexedDB) and network (the
-// sync route) sit behind the two interfaces below, so every rule here is tested
-// with fakes, the way shipping.ts is tested (spec 10.1.1 calls offline-first the
-// requirement most likely to sink the stall form, which is why it gets a module).
+// The offline queue as a pure state machine, generic over anything carrying a
+// clientId so signups and sales share one set of rules. Storage (IndexedDB) and
+// network (a sync route) sit behind the two interfaces below, so every rule here
+// is tested with fakes, the way shipping.ts is tested (spec 10.1.1 calls
+// offline-first the requirement most likely to sink the stall form, which is why
+// it gets a module).
 
 import type { StallRecord } from "@/lib/stall-record";
 
-export type QueuedStallRecord = { record: StallRecord; attempts: number; failed: boolean };
+/** The one thing a queueable record must carry: its idempotency key. */
+export type QueueRecord = { clientId: string };
 
-export type StallQueueState = { records: QueuedStallRecord[]; syncedCount: number };
+export type Queued<T extends QueueRecord> = { record: T; attempts: number; failed: boolean };
+
+export type QueueState<T extends QueueRecord> = { records: Queued<T>[]; syncedCount: number };
+
+// The signup aliases, kept so the stage 11 callers read unchanged.
+export type QueuedStallRecord = Queued<StallRecord>;
+export type StallQueueState = QueueState<StallRecord>;
 
 export const EMPTY_QUEUE: StallQueueState = { records: [], syncedCount: 0 };
 
-/** Where the queue lives between page loads. The browser adapter uses IndexedDB. */
-export interface StallQueueStorage {
-  load(): Promise<StallQueueState>;
-  save(state: StallQueueState): Promise<void>;
+/** A fresh, correctly typed queue for any record type. */
+export function emptyQueue<T extends QueueRecord>(): QueueState<T> {
+  return { records: [], syncedCount: 0 };
+}
+
+/** Where a queue lives between page loads. The browser adapter uses IndexedDB. */
+export interface QueueStorage<T extends QueueRecord> {
+  load(): Promise<QueueState<T>>;
+  save(state: QueueState<T>): Promise<void>;
   wipe(): Promise<void>;
 }
+
+export type StallQueueStorage = QueueStorage<StallRecord>;
 
 /**
  * What one sync attempt came to. "synced" removes the record, "retry" keeps it for
@@ -26,33 +42,45 @@ export interface StallQueueStorage {
  */
 export type StallSyncOutcome = "synced" | "retry" | "rejected";
 
-export type StallSyncSender = (record: StallRecord) => Promise<StallSyncOutcome>;
+export type SyncSender<T extends QueueRecord> = (record: T) => Promise<StallSyncOutcome>;
+
+export type StallSyncSender = SyncSender<StallRecord>;
 
 /** Rebuild a queue from whatever storage returned, dropping only what is unreadable. */
-export function normaliseQueueState(raw: unknown): StallQueueState {
+export function normaliseQueueState<T extends QueueRecord>(raw: unknown): QueueState<T> {
   if (!raw || typeof raw !== "object") return { records: [], syncedCount: 0 };
   const data = raw as Record<string, unknown>;
-  const records: QueuedStallRecord[] = Array.isArray(data.records)
+  const records: Queued<T>[] = Array.isArray(data.records)
     ? (data.records as unknown[])
-        .filter((entry): entry is QueuedStallRecord => {
+        .filter((entry): entry is Queued<T> => {
           if (!entry || typeof entry !== "object") return false;
-          const q = entry as Partial<QueuedStallRecord>;
+          const q = entry as Partial<Queued<T>>;
           return Boolean(q.record && typeof q.record === "object" && q.record.clientId);
         })
-        .map((q) => ({ record: q.record, attempts: Number(q.attempts) || 0, failed: q.failed === true }))
+        .map((q) => ({
+          record: q.record,
+          attempts: Number(q.attempts) || 0,
+          failed: q.failed === true,
+        }))
     : [];
   const syncedCount = Number(data.syncedCount);
-  return { records, syncedCount: Number.isFinite(syncedCount) && syncedCount > 0 ? syncedCount : 0 };
+  return {
+    records,
+    syncedCount: Number.isFinite(syncedCount) && syncedCount > 0 ? syncedCount : 0,
+  };
 }
 
 /** Add a record, replacing any queued record with the same clientId. Never mutates. */
-export function enqueueRecord(state: StallQueueState, record: StallRecord): StallQueueState {
+export function enqueueRecord<T extends QueueRecord>(
+  state: QueueState<T>,
+  record: T,
+): QueueState<T> {
   const kept = state.records.filter((q) => q.record.clientId !== record.clientId);
   return { ...state, records: [...kept, { record, attempts: 0, failed: false }] };
 }
 
 /** The line Michaela reads at the table. Derived, so it can never drift from the truth. */
-export function queueSummary(state: StallQueueState): {
+export function queueSummary<T extends QueueRecord>(state: QueueState<T>): {
   waiting: number;
   failed: number;
   synced: number;
@@ -77,13 +105,13 @@ export function queueSummary(state: StallQueueState): {
  * once. Failed records only go again when includeFailed is set (the manual button).
  * A thrown sender counts as retry: losing signal mid-request must never lose data.
  */
-export async function syncQueue(
-  state: StallQueueState,
-  sender: StallSyncSender,
+export async function syncQueue<T extends QueueRecord>(
+  state: QueueState<T>,
+  sender: SyncSender<T>,
   includeFailed = false,
-): Promise<StallQueueState> {
+): Promise<QueueState<T>> {
   let syncedCount = state.syncedCount;
-  const remaining: QueuedStallRecord[] = [];
+  const remaining: Queued<T>[] = [];
 
   for (const queued of state.records) {
     if (queued.failed && !includeFailed) {
@@ -97,7 +125,8 @@ export async function syncQueue(
       outcome = "retry";
     }
     if (outcome === "synced") syncedCount += 1;
-    else remaining.push({ ...queued, attempts: queued.attempts + 1, failed: outcome === "rejected" });
+    else
+      remaining.push({ ...queued, attempts: queued.attempts + 1, failed: outcome === "rejected" });
   }
 
   return { records: remaining, syncedCount };

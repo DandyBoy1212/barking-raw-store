@@ -1,17 +1,21 @@
-// IndexedDB adapter for the stall queue. IndexedDB rather than localStorage because
+// IndexedDB adapter for the stall queues. IndexedDB rather than localStorage because
 // queued records carry a downscaled dog photo as a data URL, and a handful of those
 // would blow through localStorage's ~5MB quota on exactly the busy Sunday when the
 // queue must not fail. All rules live in stall-queue.ts; this file is plumbing.
+//
+// Every queue (signups under "state", sales under "sales") lives in ONE database on
+// purpose: wipe() deletes the whole database, so one end-of-day tap clears every
+// record type from the borrowed iPad, including any queue added later.
 
 import {
   normaliseQueueState,
-  type StallQueueState,
-  type StallQueueStorage,
+  type QueueRecord,
+  type QueueState,
+  type QueueStorage,
 } from "@/lib/stall-queue";
 
 const DB_NAME = "br-stall";
 const STORE = "queue";
-const KEY = "state";
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -33,16 +37,18 @@ function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
-export function createBrowserQueueStorage(): StallQueueStorage {
+export function createBrowserQueueStorage<T extends QueueRecord>(
+  key = "state",
+): QueueStorage<T> {
   return {
-    async load(): Promise<StallQueueState> {
+    async load(): Promise<QueueState<T>> {
       try {
         const db = await openDb();
         try {
           const raw = await requestToPromise(
-            db.transaction(STORE, "readonly").objectStore(STORE).get(KEY),
+            db.transaction(STORE, "readonly").objectStore(STORE).get(key),
           );
-          return normaliseQueueState(raw);
+          return normaliseQueueState<T>(raw);
         } finally {
           db.close();
         }
@@ -51,11 +57,11 @@ export function createBrowserQueueStorage(): StallQueueStorage {
       }
     },
 
-    async save(state: StallQueueState): Promise<void> {
+    async save(state: QueueState<T>): Promise<void> {
       const db = await openDb();
       try {
         await requestToPromise(
-          db.transaction(STORE, "readwrite").objectStore(STORE).put(state, KEY),
+          db.transaction(STORE, "readwrite").objectStore(STORE).put(state, key),
         );
       } finally {
         db.close();
@@ -64,7 +70,8 @@ export function createBrowserQueueStorage(): StallQueueStorage {
 
     /**
      * End of day: clear the store, then delete the whole database, belt and braces,
-     * because the iPad is borrowed and nothing personal may remain on it.
+     * because the iPad is borrowed and nothing personal may remain on it. Deleting
+     * the database wipes EVERY queue, whichever key this storage was made with.
      */
     async wipe(): Promise<void> {
       try {

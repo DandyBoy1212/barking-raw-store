@@ -8,6 +8,31 @@
 /** Spec section 9: redemption is a flat 100 points to GBP 1. */
 export const REDEEM_POINTS_PER_POUND = 100;
 
+/**
+ * The earn side, spec section 9: the rate is per product so promotions are
+ * possible, and this default (stage 5's economy, 10 points per GBP, so a pound
+ * spent earns a tenth of a pound back at the redemption rate) applies wherever
+ * a product does not say otherwise.
+ */
+export const DEFAULT_EARN_RATE = 10;
+
+/**
+ * A product's earn rate: its own pointsPerPound when it is a usable number
+ * (zero is a deliberate no-points setting, so it is honoured), else the
+ * default. Junk never invents a rate.
+ */
+export function earnRateFor(p: { pointsPerPound?: number }): number {
+  const rate = p.pointsPerPound;
+  return typeof rate === "number" && Number.isFinite(rate) && rate >= 0
+    ? rate
+    : DEFAULT_EARN_RATE;
+}
+
+/** Whole points earned on an amount in pounds: floored, never negative. */
+export function earnedPoints(amount: number, rate: number): number {
+  return Math.max(0, Math.floor(amount * rate));
+}
+
 /** What a points balance is worth in pounds at the redemption rate. */
 export function pointsToPounds(points: number): number {
   return Math.max(0, points) / REDEEM_POINTS_PER_POUND;

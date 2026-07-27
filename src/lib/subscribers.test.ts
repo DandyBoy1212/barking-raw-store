@@ -194,3 +194,37 @@ describe("nextWelcomeAction", () => {
     expect(WELCOME_OFFSETS_DAYS).toEqual([0, 4, 9, 14]);
   });
 });
+
+describe("the stall source", () => {
+  it("has its own consent wording, matching the consent screen verbatim", () => {
+    expect(CONSENT_TEXT.stall).toBe(
+      "Email me the new stuff and the member offers. Unsubscribe any time.",
+    );
+  });
+
+  it("is refused by the public capture vocabulary", () => {
+    expect(CAPTURE_SOURCES).not.toContain("stall");
+  });
+
+  it("creates a consented stall subscriber through applySubscription", () => {
+    const change = applySubscription(null, { source: "stall", consent: true });
+    expect(change.create).toBe(true);
+    expect(change.consentTurnedOn).toBe(true);
+    expect(change.fields.source).toBe("stall");
+    expect(change.fields.consentText).toBe(CONSENT_TEXT.stall);
+  });
+
+  it("gives a consented stall contact the code email first, like shop", () => {
+    const s = existing({
+      source: "stall",
+      consent: true,
+      consentAt: { toMillis: () => 0 },
+    });
+    expect(nextWelcomeAction(s, 0)).toEqual({ type: "code" });
+    expect(nextWelcomeAction({ ...s, codeEmailSentAtMs: 1 }, 0)).toEqual({
+      type: "pillar",
+      index: 0,
+    });
+    expect(nextWelcomeAction({ ...s, unsubscribed: true }, 0)).toBeNull();
+  });
+});
