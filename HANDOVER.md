@@ -192,6 +192,13 @@ checkout.session.completed and invoice.paid, pointed at the vercel.app URL). The
 still carries the locally minted whsec, which is correct for local hand-signed webhook tests and
 must never be confused with the endpoint's real secret.
 
+**The loop is closed (later that evening):** a purchase was made on the deployed site itself,
+Stripe's hosted page, 4242 card, and Stripe delivered the webhook to Vercel unassisted. The order
+landed (GBP 19.50, free local delivery for a DD4 address), 195 points credited. Sign-in works on
+production too: the vercel.app domain (and barkingraw.dog, for the future) are in Firebase Auth's
+authorised domains, which was the last invisible blocker, surfaced as a 503 whose server log said
+auth/unauthorized-continue-uri.
+
 ### Stripe configuration Michaela's dashboard still owes
 
 - Enable the Customer Portal (Settings > Billing > Customer portal), allowing cancellation and
