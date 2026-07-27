@@ -56,3 +56,23 @@ days of getting the goods back. Avasam's supplier inspection and refund process 
 that, and when it does pay out it pays into her Avasam balance rather than her bank. So she will
 sometimes refund a customer out of her own pocket and be reimbursed later. Budget for it rather than
 discover it.
+
+## 5. Her terms document arrived, and what happened to it (added 2026-07-27)
+
+Liam supplied `Barking_Raw_Terms_RA_TCS_01.pdf`. Its substance is now folded into the site's terms
+and returns pages: the complementary pet food designation, the natural variation wording, the
+repackaging-under-ABP-hygiene-rules line, acceptance at dispatch rather than at the confirmation
+email, risk passing on delivery, and the 48 hour damaged-parcel report.
+
+Three things it did NOT settle, so the red "not ready to publish" notices are still up:
+
+- **The four missing details** (legal trading name, postcode, contact email, phone). The document
+  names no person, no address and no contact route.
+- **Governing law.** The document says "Laws of England & Wales / Scotland", which is two legal
+  systems at once. The site says Scotland, because she trades from Dundee. If a solicitor drafted
+  the document for England and Wales deliberately, that is a conversation, not a find-and-replace.
+- **Two clauses were softened rather than adopted**, deliberately: the 48 hour damage report is
+  presented as a request that helps a courier claim, because framed as a deadline it would cut
+  across the 30 day short-term right to reject, which no term can. And "proven defective" is not
+  used, because in the first six months the burden runs the other way: goods that fail are
+  presumed faulty unless the trader shows otherwise.

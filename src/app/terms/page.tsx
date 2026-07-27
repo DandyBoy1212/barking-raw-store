@@ -33,10 +33,11 @@ export default function TermsPage() {
 
         <h2 style={{ marginTop: "2rem" }}>2. How an order is made</h2>
         <p>
-          Adding something to your basket is not an order. Your order is made when you pay, and it is
-          accepted when we email you to confirm it. If we cannot fulfil it, because something has
-          sold out or a price was listed wrongly, we will tell you and refund you in full. We do not
-          send a substitute without asking you first.
+          Adding something to your basket is not an order. Your order is made when you pay, and our
+          confirmation email is an acknowledgement: the contract is accepted when we dispatch your
+          goods. If we cannot fulfil an order, because something has sold out or a price was listed
+          wrongly, we will tell you and refund you in full. We do not send a substitute without
+          asking you first.
         </p>
 
         <h2 style={{ marginTop: "2rem" }}>3. Prices and payment</h2>
@@ -54,7 +55,14 @@ export default function TermsPage() {
         <p>
           Set out on our <Link href="/delivery">delivery page</Link>, which forms part of these terms.
           Some orders arrive in more than one parcel, because a few items post direct from the
-          supplier who stocks them. Goods are our responsibility until they reach you.
+          supplier who stocks them. Goods are our responsibility until they are delivered to the
+          address you gave, and from that point the risk in them passes to you.
+        </p>
+        <p style={{ marginTop: "1rem" }}>
+          If a parcel arrives visibly damaged or unsealed, please tell us within 48 hours with a
+          photo where you can. That is a request that helps us claim against the courier, not a
+          limit on your rights: your statutory remedies for faulty goods are unaffected and are set
+          out on the returns page.
         </p>
 
         <h2 style={{ marginTop: "2rem" }}>5. Cancelling and returning</h2>
@@ -67,6 +75,13 @@ export default function TermsPage() {
 
         <h2 style={{ marginTop: "2rem" }}>6. Feeding your dog is your decision</h2>
         <p>
+          Our treats are sold as complementary pet food: they sit alongside your dog&apos;s main
+          diet rather than replacing it. They are natural dehydrated products, weighed and
+          repackaged by us under the hygiene rules that govern animal by-products, and because they
+          are natural, individual pieces vary a little in size, colour and texture. Stated weights
+          are minimums.
+        </p>
+        <p style={{ marginTop: "1rem" }}>
           We describe what is in our products honestly and we say what they are good for. We are not
           your vet, and nothing on this site is veterinary advice. If your dog is unwell, on a
           prescription diet, pregnant, very young or very old, ask your vet before you change what
@@ -117,6 +132,10 @@ export default function TermsPage() {
           These terms are governed by the law of {BUSINESS.jurisdiction}, and disputes can be brought
           in the Scottish courts. If you live elsewhere in the UK you keep the protection of your own
           local consumer law and can bring a claim in your own courts.
+        </p>
+
+        <p style={{ marginTop: "2rem", opacity: 0.6, fontSize: ".85rem" }}>
+          Document reference RA-TCS-01, effective July 2026, reviewed annually.
         </p>
 
         <p style={{ marginTop: "2rem" }}>
