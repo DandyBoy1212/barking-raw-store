@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ALL_SENSITIVITIES,
@@ -395,6 +396,11 @@ export default function StallForm() {
           >
             New signup
           </button>
+          <p style={{ marginTop: "1rem" }}>
+            <Link className="btn btn--block" href="/stall/sale" style={bigBtn}>
+              Record a sale
+            </Link>
+          </p>
           <div style={{ display: "flex", gap: "0.7rem", marginTop: "1rem" }}>
             <button className="btn" type="button" style={bigBtn} onClick={() => void runSync(true)}>
               Sync now
