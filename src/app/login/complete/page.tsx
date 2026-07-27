@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
-import { clientAuth } from "@/lib/firebase-client";
+import { getClientAuth } from "@/lib/firebase-client";
 
 export default function CompleteSignInPage() {
   const router = useRouter();
@@ -11,6 +11,15 @@ export default function CompleteSignInPage() {
 
   useEffect(() => {
     async function run() {
+      // Lazy: initialising here, in the browser, is what lets a build without the
+      // NEXT_PUBLIC_FIREBASE_* variables prerender this page instead of dying.
+      let clientAuth;
+      try {
+        clientAuth = getClientAuth();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Sign-in is not configured.");
+        return;
+      }
       if (!isSignInWithEmailLink(clientAuth, window.location.href)) {
         setError("This sign-in link is invalid or has expired.");
         return;
