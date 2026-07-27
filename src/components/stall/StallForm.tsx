@@ -141,7 +141,7 @@ async function fileToPhotoData(file: File): Promise<string> {
  * allows, wiped at end of day because the iPad is borrowed.
  */
 export default function StallForm() {
-  const storageRef = useRef(createBrowserQueueStorage());
+  const storageRef = useRef(createBrowserQueueStorage<StallRecord>());
   const syncingRef = useRef(false);
   const queueRef = useRef<StallQueueState>(EMPTY_QUEUE);
   const [queue, setQueueState] = useState<StallQueueState>(EMPTY_QUEUE);
