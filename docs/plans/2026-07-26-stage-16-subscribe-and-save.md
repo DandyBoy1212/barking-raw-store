@@ -101,11 +101,11 @@ A "Repeat this order?" block between the discount code field and the totals: a r
 **Interfaces:**
 - Produces: `SUBSCRIBE_PERCENT: 10`, `type FrequencyWeeks = 2 | 4 | 8`, `SUBSCRIBE_FREQUENCIES: { weeks: FrequencyWeeks; label: string }[]`, `parseFrequencyWeeks(v: unknown): FrequencyWeeks | null`, `splitSubscribable<T extends { fulfilment: FulfilmentPath }>(items: { product: T; qty: number }[]): { eligible: typeof items; ineligible: typeof items }`, `discounted(amount: number): number`
 
-- [ ] **Step 1: Write the failing tests** in `src/lib/subscriptions.test.ts`: parseFrequencyWeeks accepts 2/4/8 (number or numeric string) and rejects 0, 3, "weekly", null; SUBSCRIBE_FREQUENCIES has three entries with British labels ("Every 2 weeks" etc.); splitSubscribable puts own-stock lines in eligible, supplier-posted in ineligible, preserves qty; discounted(6) is 5.4, discounted(11.11) is 10 (the spec 6.1 round trip), discounted(0.1) has no float drift.
-- [ ] **Step 2: Run** `npm test -- subscriptions` and confirm it fails (module not found).
-- [ ] **Step 3: Implement** the module with a header comment naming the design decisions (own-stock only per spec 4.4, 10% reserved per section 6). `discounted` uses `priceToPence` from `stripe-sync`.
-- [ ] **Step 4: Run** `npm test -- subscriptions`, expect pass; run the full suite.
-- [ ] **Step 5: Commit** `feat: the subscribe and save vocabulary, eligibility and arithmetic`.
+- [x] **Step 1: Write the failing tests** in `src/lib/subscriptions.test.ts`: parseFrequencyWeeks accepts 2/4/8 (number or numeric string) and rejects 0, 3, "weekly", null; SUBSCRIBE_FREQUENCIES has three entries with British labels ("Every 2 weeks" etc.); splitSubscribable puts own-stock lines in eligible, supplier-posted in ineligible, preserves qty; discounted(6) is 5.4, discounted(11.11) is 10 (the spec 6.1 round trip), discounted(0.1) has no float drift.
+- [x] **Step 2: Run** `npm test -- subscriptions` and confirm it fails (module not found).
+- [x] **Step 3: Implement** the module with a header comment naming the design decisions (own-stock only per spec 4.4, 10% reserved per section 6). `discounted` uses `priceToPence` from `stripe-sync`.
+- [x] **Step 4: Run** `npm test -- subscriptions`, expect pass; run the full suite.
+- [x] **Step 5: Commit** `feat: the subscribe and save vocabulary, eligibility and arithmetic`.
 
 ### Task 2: Stripe builders: recurring line items, postage line, coupon, subscription metadata
 
@@ -117,11 +117,11 @@ A "Repeat this order?" block between the discount code field and the totals: a r
 - Consumes: `priceToPence`, `StoredProduct`
 - Produces: `SUBSCRIBE_COUPON_ID = "subscribe-and-save-10"`, `ensureSubscribeCoupon(stripe): Promise<string>`, `buildSubscriptionLineItem(sp, qty, weeks, recurringPriceId?): Stripe.Checkout.SessionCreateParams.LineItem`, `POSTAGE_LINE_NAME = "UK postage"`, `buildPostageLineItem(cost, weeks): LineItem | null`, `subscriptionMetadata(input: { weeks; postcode; itemSummary; postagePence }): Record<string, string>` (keys `br_frequency_weeks`, `br_postcode`, `br_item_summary` capped at 480 chars, `br_postage_pence`)
 
-- [ ] **Step 1: Failing tests:** line item uses `{ price: id, quantity }` when a recurring price id is given, else inline `price_data` with `recurring: { interval: "week", interval_count: weeks }` and the pence amount; quantity clamped 1..50; postage line null at cost 0, correct pence and name at 3.95; `ensureSubscribeCoupon` returns the id without creating when retrieve succeeds (fake counts calls), creates with `{ id, percent_off: 10, duration: "forever", name }` when retrieve throws; metadata builder stringifies and caps.
-- [ ] **Step 2: Run, confirm fail.**
-- [ ] **Step 3: Implement** (fakes as in `stripe-sync.test.ts`, `as unknown as import("stripe").default`).
-- [ ] **Step 4: Full suite green.**
-- [ ] **Step 5: Commit** `feat: the Stripe builders for recurring lines, postage and the 10% coupon`.
+- [x] **Step 1: Failing tests:** line item uses `{ price: id, quantity }` when a recurring price id is given, else inline `price_data` with `recurring: { interval: "week", interval_count: weeks }` and the pence amount; quantity clamped 1..50; postage line null at cost 0, correct pence and name at 3.95; `ensureSubscribeCoupon` returns the id without creating when retrieve succeeds (fake counts calls), creates with `{ id, percent_off: 10, duration: "forever", name }` when retrieve throws; metadata builder stringifies and caps.
+- [x] **Step 2: Run, confirm fail.**
+- [x] **Step 3: Implement** (fakes as in `stripe-sync.test.ts`, `as unknown as import("stripe").default`).
+- [x] **Step 4: Full suite green.**
+- [x] **Step 5: Commit** `feat: the Stripe builders for recurring lines, postage and the 10% coupon`.
 
 ### Task 3: Invoice-to-order mapping (pure)
 
@@ -132,9 +132,9 @@ A "Repeat this order?" block between the discount code field and the totals: a r
 **Interfaces:**
 - Produces: `interface SubscriptionInvoiceLike` (structural: `id`, `parent`, `lines.data[]` with `description/quantity/amount`, `customer` (string or `{ id }`), `customer_name/email/address/shipping`, `subtotal`, `total`) and `invoiceToOrder(inv: SubscriptionInvoiceLike): SubscriptionOrder | null` where `SubscriptionOrder = { invoiceId; subscriptionId; stripeCustomerId; frequencyWeeks; items: { name; qty; amount }[]; customer: { name; email; address; postcode }; subtotal; shipping; total; itemSummary }`
 
-- [ ] **Step 1: Failing tests:** returns null when `parent` is null or not subscription type; maps a two-line invoice plus a "UK postage" line: postage excluded from items, `shipping` = `br_postage_pence`/100, `subtotal` = (invoice.subtotal - postagePence)/100, `total` = invoice.total/100; postcode prefers `customer_shipping.address.postal_code`, then `customer_address`, then `br_postcode` metadata; address joined comma-style like the webhook does; itemSummary prefers `br_item_summary` metadata, falls back to "qty x name" join; subscription id accepted as string or expanded object; frequencyWeeks parsed from metadata, null-safe.
-- [ ] **Step 2: Run, confirm fail.** **Step 3: Implement.** **Step 4: Full suite green.**
-- [ ] **Step 5: Commit** `feat: a recurring invoice maps to the same order shape as a one-off`.
+- [x] **Step 1: Failing tests:** returns null when `parent` is null or not subscription type; maps a two-line invoice plus a "UK postage" line: postage excluded from items, `shipping` = `br_postage_pence`/100, `subtotal` = (invoice.subtotal - postagePence)/100, `total` = invoice.total/100; postcode prefers `customer_shipping.address.postal_code`, then `customer_address`, then `br_postcode` metadata; address joined comma-style like the webhook does; itemSummary prefers `br_item_summary` metadata, falls back to "qty x name" join; subscription id accepted as string or expanded object; frequencyWeeks parsed from metadata, null-safe.
+- [x] **Step 2: Run, confirm fail.** **Step 3: Implement.** **Step 4: Full suite green.**
+- [x] **Step 5: Commit** `feat: a recurring invoice maps to the same order shape as a one-off`.
 
 ### Task 4: stripe-sync and products-store: recurring prices on the product
 
@@ -146,9 +146,9 @@ A "Repeat this order?" block between the discount code field and the totals: a r
 - Produces: `StoredProduct.stripeRecurringPriceIds?: Record<string, string>`; `buildRecurringPriceParams(sp, weeks)`; `ensureRecurringPrice(stripe, sp, weeks): Promise<string | null>` (stored id if present, null when no `stripeProductId`, else creates and returns); `applyStripeProductUpdate` return gains `stripeRecurringPriceIds: Record<string, string>` (cleared `{}` on price change after deactivating each old id, otherwise passed through); `saveRecurringPriceId(slug, weeks, priceId): Promise<void>` in products-store (merge-set `stripeRecurringPriceIds.<weeks>`).
 - Also modify `src/app/api/admin/products/[slug]/route.ts` to persist the returned `stripeRecurringPriceIds` alongside the existing ids (fold into the existing `set`).
 
-- [ ] **Step 1: Failing tests:** `docToStoredProduct` parses a string map and drops non-string values; `ensureRecurringPrice` returns the stored id without calling Stripe, creates with recurring params when missing, returns null without a product id; `applyStripeProductUpdate` deactivates recurring ids on price change and clears the map, leaves them untouched when the price is unchanged.
-- [ ] **Step 2: Run, confirm fail.** **Step 3: Implement, including the admin route persist.** **Step 4: Full suite, tsc, lint.**
-- [ ] **Step 5: Commit** `feat: recurring prices live beside the one-off price and die with it`.
+- [x] **Step 1: Failing tests:** `docToStoredProduct` parses a string map and drops non-string values; `ensureRecurringPrice` returns the stored id without calling Stripe, creates with recurring params when missing, returns null without a product id; `applyStripeProductUpdate` deactivates recurring ids on price change and clears the map, leaves them untouched when the price is unchanged.
+- [x] **Step 2: Run, confirm fail.** **Step 3: Implement, including the admin route persist.** **Step 4: Full suite, tsc, lint.**
+- [x] **Step 5: Commit** `feat: recurring prices live beside the one-off price and die with it`.
 
 ### Task 5: Checkout route: the subscription branch
 
@@ -162,7 +162,7 @@ Body gains optional `frequencyWeeks`. After the existing line-item loop (which s
 - `ensureSubscribeCoupon`, session `mode: "subscription"`, `discounts: [{ coupon }]`, `shipping_address_collection`, `subscription_data: { metadata: subscriptionMetadata(...) }`, session metadata keeps `cartId`, same success/cancel URLs. No `allow_promotion_codes` (the 10% is the deal; stacking a welcome code on top of the reserved discount is exactly what section 6 forbids).
 - The members-only 403 and server-side pricing paths are shared and unchanged. The cart doc records `subscribeWeeks` for abandoned-cart context.
 
-- [ ] **Step 1: Implement.** **Step 2:** Full suite, tsc, lint (3). **Step 3: Commit** `feat: the basket can check out as a Stripe subscription at 10% off`.
+- [x] **Step 1: Implement.** **Step 2:** Full suite, tsc, lint (3). **Step 3: Commit** `feat: the basket can check out as a Stripe subscription at 10% off`.
 
 ### Task 6: Webhook: every cycle writes an order
 
@@ -173,7 +173,7 @@ Body gains optional `frequencyWeeks`. After the existing line-item loop (which s
 - In `fulfil`: if `full.mode === "subscription"`, mark the cart converted and `ensureCustomer({ email, name, postcode, stripeCustomerId: full.customer as string })`, then return before the order write and sheet append (D7).
 - New `event.type === "invoice.paid"` branch calling `fulfilRecurring(stripe, invoice)`: map with `invoiceToOrder` (return early on null); idempotency guard on `store_orders` doc id = invoice id; write `{ stripeInvoiceId, stripeSubscriptionId, subscription: true, frequencyWeeks, items, customer, subtotal, shipping, total, local, createdAt }`; `ensureCustomer` with the invoice's email, name, postcode and `stripeCustomerId`; append the same 11-column sheet row (id = invoice id slice(-8)). Errors caught and logged, 200 returned, same policy as the session handler.
 
-- [ ] **Step 1: Implement.** **Step 2:** Full suite, tsc, lint. **Step 3: Commit** `feat: every subscription cycle lands in store_orders and the sheet`.
+- [x] **Step 1: Implement.** **Step 2:** Full suite, tsc, lint. **Step 3: Commit** `feat: every subscription cycle lands in store_orders and the sheet`.
 
 ### Task 7: Billing portal route and the account page link
 
@@ -185,7 +185,7 @@ Body gains optional `frequencyWeeks`. After the existing line-item loop (which s
 Route: POST, `runtime = "nodejs"`, `dynamic = "force-dynamic"`; 503 without `STRIPE_SECRET_KEY` or db; `getSessionUser()` (401 if none, do not redirect from an API route); read `stripeCustomerId` from the customer doc; 404 "No repeating order on this account yet." when absent; `stripe.billingPortal.sessions.create({ customer, return_url: origin + "/account" })`; return `{ url }`; catch Stripe errors with a friendly 502 mentioning the portal may not be switched on yet.
 Button: small client component that POSTs and follows `url`, with busy/error states, styled like existing buttons. Rendered from the server page only when the customer doc has a `stripeCustomerId`, under a "Your repeating order" panel line.
 
-- [ ] **Step 1: Implement.** **Step 2:** Full suite, tsc, lint. **Step 3: Commit** `feat: manage the repeating order through Stripe's own portal`.
+- [x] **Step 1: Implement.** **Step 2:** Full suite, tsc, lint. **Step 3: Commit** `feat: manage the repeating order through Stripe's own portal`.
 
 ### Task 8: The basket drawer block
 
@@ -194,12 +194,12 @@ Button: small client component that POSTs and follows `url`, with busy/error sta
 
 State `frequencyWeeks: FrequencyWeeks | null` (default null = one-off). Eligibility from the catalogue lines via `splitSubscribable`. All-eligible baskets render the block (radio list: one-off default plus the three frequencies with `discounted(subtotal)` shown); mixed or supplier-only baskets render one static line: "Repeat orders are not available for items that post separately from a supplier." When a frequency is chosen: subtotal row shows the discounted goods figure with the saving, total recomputed, button reads "Subscribe securely", and the fetch body includes `frequencyWeeks`. When null, the body is exactly today's. No new lint errors: hooks stay top-level, no conditional hooks.
 
-- [ ] **Step 1: Implement.** **Step 2:** Full suite, tsc, lint stays at 3. **Step 3: Commit** `feat: the basket offers the repeat order without touching the one-off flow`.
+- [x] **Step 1: Implement.** **Step 2:** Full suite, tsc, lint stays at 3. **Step 3: Commit** `feat: the basket offers the repeat order without touching the one-off flow`.
 
 ### Task 9: Verification and plan tick-through
 
-- [ ] Full `npm test` (271 + new), `npx tsc --noEmit`, `npm run lint` (exactly 3 errors), `git status` clean.
-- [ ] Tick the checkboxes in this plan, commit `docs: tick the stage 16 plan through`.
+- [x] Full `npm test` (271 + new), `npx tsc --noEmit`, `npm run lint` (exactly 3 errors), `git status` clean.
+- [x] Tick the checkboxes in this plan, commit `docs: tick the stage 16 plan through`.
 
 ---
 
