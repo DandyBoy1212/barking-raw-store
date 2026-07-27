@@ -49,6 +49,23 @@ describe("docToStoredProduct", () => {
     expect(sp.safetyNote).toBe("care");
   });
 
+  it("parses the recurring price map, keeping only string values", () => {
+    const sp = docToStoredProduct("x", {
+      name: "X",
+      price: 1,
+      stripeRecurringPriceIds: { "2": "price_r2", "4": 7, "8": "price_r8", junk: null },
+    });
+    expect(sp.stripeRecurringPriceIds).toEqual({ "2": "price_r2", "8": "price_r8" });
+  });
+
+  it("leaves the recurring price map undefined when absent or malformed", () => {
+    expect(docToStoredProduct("x", { name: "X", price: 1 }).stripeRecurringPriceIds).toBeUndefined();
+    expect(
+      docToStoredProduct("x", { name: "X", price: 1, stripeRecurringPriceIds: "nope" })
+        .stripeRecurringPriceIds,
+    ).toBeUndefined();
+  });
+
   it("guards a non-finite price to 0 instead of yielding NaN", () => {
     const sp = docToStoredProduct("bad-price", {
       name: "Bad Price",

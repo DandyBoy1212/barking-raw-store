@@ -41,7 +41,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
   const stripe = new Stripe(secret);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://barkingraw.dog";
 
-  let ids: { stripeProductId: string; stripePriceId: string };
+  let ids: {
+    stripeProductId: string;
+    stripePriceId: string;
+    stripeRecurringPriceIds: Record<string, string>;
+  };
   try {
     ids = await applyStripeProductUpdate(stripe, existing, next, siteUrl);
   } catch (err) {
@@ -83,6 +87,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
           : { packPieceCount: FieldValue.delete() }),
         stripeProductId: ids.stripeProductId,
         stripePriceId: ids.stripePriceId,
+        // A merge set cannot empty a nested map, so a cleared map (price change
+        // deactivated the recurring prices) becomes an explicit delete.
+        ...(Object.keys(ids.stripeRecurringPriceIds).length
+          ? { stripeRecurringPriceIds: ids.stripeRecurringPriceIds }
+          : { stripeRecurringPriceIds: FieldValue.delete() }),
         updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
