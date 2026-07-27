@@ -20,6 +20,7 @@ const BUILT = [
     title: "Points owed",
     blurb: "See the total loyalty points customers have not spent yet.",
   },
+  { href: "/admin/dogs", title: "Dogs of the day", blurb: "Feature a consented stall dog on the public page." },
 ];
 
 const COMING = [
