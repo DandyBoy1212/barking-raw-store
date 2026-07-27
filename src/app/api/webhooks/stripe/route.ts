@@ -110,8 +110,18 @@ async function fulfil(stripe: Stripe, session: Stripe.Checkout.Session) {
     const existing = await orderRef.get();
     if (existing.exists) return;
 
+    // Each Pick & Mix bundle's full contents, one metadata key per bundle
+    // (numeric order, so bundle_10 never sorts before bundle_2). This is the
+    // durable record of what was in the bag: the sheet's item summary lists it
+    // too, but that value is capped and a very long basket could truncate it.
+    const bundles = Object.keys(full.metadata || {})
+      .filter((k) => /^bundle_\d+$/.test(k))
+      .sort((a, b) => Number(a.slice(7)) - Number(b.slice(7)))
+      .map((k) => full.metadata![k]);
+
     await orderRef.set({
       stripeSessionId: full.id,
+      ...(bundles.length ? { bundles } : {}),
       items,
       customer: { name: customerName, email: customerEmail, address, postcode },
       subtotal,
