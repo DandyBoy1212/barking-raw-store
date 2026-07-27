@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { gbp } from "@/lib/format";
+import { bundleLabel, priceBundle, summariseBundleContents } from "@/lib/pick-and-mix";
 import { leadTimeNote, supplierArrivalNote } from "@/lib/product-fields";
 import {
   SUBSCRIBE_FREQUENCIES,
@@ -28,6 +29,8 @@ export function BasketDrawer() {
   // A line whose product has vanished from the catalogue (archived, or now inside a
   // members only window) is skipped rather than crashing the drawer.
   const detail = (slug: string) => catalogue.find((p) => p.slug === slug);
+  const bySlug = new Map(catalogue.map((p) => [p.slug, p]));
+  const hasBundle = lines.some((l) => Boolean(l.bundle));
 
   // Subscribe and save is offered only when every line is own stock (spec 4.4):
   // supplier-posted items post on the supplier's terms and cannot repeat. Rather
@@ -40,7 +43,11 @@ export function BasketDrawer() {
       Boolean(i.product),
     );
   const { ineligible } = splitSubscribable(basketItems);
-  const canSubscribe = basketItems.length > 0 && ineligible.length === 0;
+  // A bundle is a one-off order, so its presence deactivates subscribe the same
+  // way a supplier-posted line does. basketItems already excludes bundle lines
+  // (detail() cannot resolve their minted slug); hasBundle makes the intent
+  // explicit rather than relying on that accident.
+  const canSubscribe = basketItems.length > 0 && ineligible.length === 0 && !hasBundle;
   const activeFrequency = canSubscribe ? frequencyWeeks : null;
 
   const goodsShown = activeFrequency ? discounted(subtotal) : subtotal;
@@ -95,6 +102,29 @@ export function BasketDrawer() {
           <>
             <div className="drawer__body">
               {lines.map((l) => {
+                if (l.bundle) {
+                  const priced = priceBundle(l.bundle.items, bySlug);
+                  return (
+                    <div className="line-item" key={l.slug}>
+                      <div style={{ flex: 1 }}>
+                        <div className="line-item__name">{bundleLabel(l.bundle.size)}</div>
+                        <div className="line-item__meta">
+                          {priced ? gbp(priced.price) : ""}
+                          {priced && priced.saving > 0 && ` (saves ${gbp(priced.saving)})`}
+                          <button
+                            onClick={() => remove(l.slug)}
+                            style={{ background: "none", border: "none", cursor: "pointer", textDecoration: "underline", marginLeft: 8 }}
+                          >
+                            remove
+                          </button>
+                        </div>
+                        <div className="line-item__meta" style={{ fontStyle: "italic" }}>
+                          {summariseBundleContents(l.bundle.items, bySlug)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
                 const p = detail(l.slug);
                 if (!p) return null;
                 return (
@@ -184,6 +214,11 @@ export function BasketDrawer() {
                     Change or cancel any time from your account.
                   </p>
                 </fieldset>
+              ) : hasBundle ? (
+                <p className="notice">
+                  A Pick &amp; Mix bundle is a one-off order, so repeat orders and discount codes
+                  do not apply while one is in the basket. The saving is already in its price.
+                </p>
               ) : ineligible.length > 0 ? (
                 <p className="notice">
                   Repeat orders are not available for items that post separately from a supplier.
