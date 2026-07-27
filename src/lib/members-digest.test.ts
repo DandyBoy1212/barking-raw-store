@@ -88,16 +88,26 @@ describe("selectDigestContent", () => {
 describe("digestRecipients", () => {
   it("normalises, deduplicates and drops the opted out and the email-less", () => {
     const customers = [
-      { email: "Sam@Example.com" },
-      { email: "sam@example.com " },
-      { email: "gone@example.com" },
-      { name: "No email at all" },
-      { email: "not-an-email" },
-      { email: "kim@example.com" },
+      { email: "Sam@Example.com", member: true },
+      { email: "sam@example.com ", member: true },
+      { email: "gone@example.com", member: true },
+      { name: "No email at all", member: true },
+      { email: "not-an-email", member: true },
+      { email: "kim@example.com", member: true },
     ];
     expect(digestRecipients(customers, new Set(["gone@example.com"]))).toEqual([
       "sam@example.com",
       "kim@example.com",
+    ]);
+  });
+
+  it("skips the doc the account page creates: a customer record is not a member", () => {
+    // Same escalation the membership fix closed, from the email side: adding a
+    // dog must not subscribe anybody to members-only mailings.
+    const accountCreated = { email: "dog@example.com", name: "Sam", dogs: [{ id: "dog-1", name: "Loki" }] };
+    const paidOrder = { email: "member@example.com", member: true };
+    expect(digestRecipients([accountCreated, paidOrder], new Set())).toEqual([
+      "member@example.com",
     ]);
   });
 });

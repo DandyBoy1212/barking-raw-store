@@ -5,6 +5,7 @@
 
 import { unsubscribeUrl } from "./unsubscribe-links";
 import { normaliseSubscriberEmail } from "./subscribers";
+import { isMemberDoc } from "./customer-fields";
 import { isMembersOnly } from "./product-fields";
 import { postFreshMs, postSnippet, sortNewestFirst, type Post } from "./posts";
 
@@ -60,9 +61,12 @@ export function selectDigestContent(
 }
 
 /**
- * Who gets the digest: every customer doc carrying a usable email, once each,
+ * Who gets the digest: every MEMBER doc carrying a usable email, once each,
  * minus anyone in the opted-out set (emails whose subscriber record shows an
- * explicit unsubscribe). Membership emails stop the moment somebody clicks
+ * explicit unsubscribe). Membership is decided by the same isMemberDoc
+ * predicate the gate uses, never by the doc existing: the account page
+ * creates customer docs freely, and adding a dog must not subscribe anybody
+ * to members-only mailings. Emails stop the moment somebody clicks
  * unsubscribe, whichever of our emails carried the link.
  */
 export function digestRecipients(
@@ -72,6 +76,7 @@ export function digestRecipients(
   const out: string[] = [];
   const seen = new Set<string>();
   for (const c of customers) {
+    if (!isMemberDoc(c)) continue;
     const email = normaliseSubscriberEmail(c.email);
     if (!email || seen.has(email) || optedOut.has(email)) continue;
     seen.add(email);
