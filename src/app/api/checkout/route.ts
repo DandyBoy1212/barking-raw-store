@@ -3,8 +3,16 @@ import Stripe from "stripe";
 import { computeBasketDelivery } from "@/lib/shipping";
 import { isMembersOnly } from "@/lib/product-fields";
 import { currentUserIsMember } from "@/lib/membership";
-import { getStoredProducts, type StoredProduct } from "@/lib/products-store";
-import { buildCheckoutLineItem } from "@/lib/stripe-sync";
+import { getStoredProducts, saveRecurringPriceId, type StoredProduct } from "@/lib/products-store";
+import { buildCheckoutLineItem, ensureRecurringPrice } from "@/lib/stripe-sync";
+import {
+  buildPostageLineItem,
+  buildSubscriptionLineItem,
+  ensureSubscribeCoupon,
+  parseFrequencyWeeks,
+  splitSubscribable,
+  subscriptionMetadata,
+} from "@/lib/subscriptions";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -23,7 +31,14 @@ export async function POST(req: NextRequest) {
   }
   const stripe = new Stripe(secret);
 
-  let body: { lines?: Line[]; name?: string; email?: string; postcode?: string; discountCode?: string };
+  let body: {
+    lines?: Line[];
+    name?: string;
+    email?: string;
+    postcode?: string;
+    discountCode?: string;
+    frequencyWeeks?: unknown;
+  };
   try {
     body = await req.json();
   } catch {
@@ -31,6 +46,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { lines = [], name = "", email = "", postcode = "", discountCode = "" } = body;
+  const frequencyWeeks = parseFrequencyWeeks(body.frequencyWeeks);
   if (!Array.isArray(lines) || lines.length === 0) {
     return NextResponse.json({ error: "Your basket is empty." }, { status: 400 });
   }
@@ -68,12 +84,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Your basket is empty." }, { status: 400 });
   }
 
+  // A repeating order covers own stock only (spec 4.4): supplier-posted lines
+  // carry the supplier's price, postage and availability, so an automatic
+  // recurring charge for them is a promise we cannot keep. The UI says the same
+  // thing, but a hand-built request must hit the same wall.
+  if (frequencyWeeks && splitSubscribable(deliveryItems).ineligible.length > 0) {
+    return NextResponse.json(
+      {
+        error:
+          "Repeat orders cover items posted from Barking Raw only. Remove the items that post separately, or choose a one-off order.",
+      },
+      { status: 400 },
+    );
+  }
+
   const delivery = computeBasketDelivery(deliveryItems, postcode);
 
   // Optional recovery discount code (validated server-side against Firestore).
+  // Never on a subscription: the reserved 10% is the deal, and section 6 exists
+  // precisely so discounts do not stack.
   const db = getDb();
   const discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
-  if (discountCode && db) {
+  if (discountCode && db && !frequencyWeeks) {
     const snap = await db.collection(COLLECTIONS.discountCodes).doc(discountCode.toUpperCase()).get();
     const data = snap.data();
     const valid =
@@ -98,10 +130,67 @@ export async function POST(req: NextRequest) {
       postcode,
       subtotal,
       status: "open",
+      ...(frequencyWeeks ? { subscribeWeeks: frequencyWeeks } : {}),
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
     cartId = ref.id;
+  }
+
+  if (frequencyWeeks) {
+    // Subscription checkout: recurring Prices at full list price, one visible
+    // 10% coupon (never 90% prices, so Michaela's dashboard shows the discount),
+    // and postage as a recurring line because subscription mode cannot repeat a
+    // one-off shipping rate every cycle.
+    const sub_line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+    for (const { product, qty } of deliveryItems) {
+      let recurringPriceId: string | undefined;
+      try {
+        const ensured = await ensureRecurringPrice(stripe, product, frequencyWeeks);
+        if (ensured) {
+          recurringPriceId = ensured;
+          if (product.stripeRecurringPriceIds?.[String(frequencyWeeks)] !== ensured) {
+            // Persist so the next subscriber reuses it; losing the write only
+            // costs a duplicate Price later, never the checkout.
+            await saveRecurringPriceId(product.slug, frequencyWeeks, ensured).catch((err) =>
+              console.error("[checkout] saveRecurringPriceId failed:", err),
+            );
+          }
+        }
+      } catch (err) {
+        console.error("[checkout] ensureRecurringPrice failed, using inline price_data:", err);
+      }
+      sub_line_items.push(buildSubscriptionLineItem(product, qty, frequencyWeeks, recurringPriceId));
+    }
+    const postagePence = Math.round(delivery.total * 100);
+    const postageLine = buildPostageLineItem(delivery.total, frequencyWeeks);
+    if (postageLine) sub_line_items.push(postageLine);
+
+    const coupon = await ensureSubscribeCoupon(stripe);
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: sub_line_items,
+      customer_email: email || undefined,
+      shipping_address_collection: { allowed_countries: ["GB"] },
+      discounts: [{ coupon }],
+      subscription_data: {
+        metadata: subscriptionMetadata({
+          weeks: frequencyWeeks,
+          postcode,
+          itemSummary: summary.join(", "),
+          postagePence,
+        }),
+      },
+      metadata: {
+        cartId,
+        postcode,
+        itemSummary: summary.join(", ").slice(0, 480),
+        subscribeWeeks: String(frequencyWeeks),
+      },
+      success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/#products`,
+    });
+    return NextResponse.json({ url: session.url });
   }
 
   const session = await stripe.checkout.sessions.create({
