@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PILLAR_META } from "@/lib/pillars";
 import { PILLAR_LINES } from "@/data/products";
 import { PillarProducts } from "@/components/PillarProducts";
+import { PickAndMixBuilder } from "@/components/PickAndMixBuilder";
 import { PawTrail } from "@/components/PawTrail";
 
 export const dynamic = "force-dynamic";
@@ -91,6 +92,22 @@ export default function GoodFoodPage() {
             </div>
           </div>
           <PillarProducts pillar="good-food" />
+        </div>
+      </section>
+
+      <section className="band band--paper" id="pick-and-mix">
+        <div className="wrap wrap--tight">
+          <div className="section-head">
+            <p className="eyebrow">Pick &amp; Mix</p>
+            <h2 className="display">Let us surprise your dog.</h2>
+            <p>
+              Choose 5, 10 or 20 items and we pick the assortment: a randomised
+              spread of the good food above, packed by hand from our own shelf.
+              You see exactly what was drawn, and what it saves, before you add
+              it. Do not like the draw? Draw again.
+            </p>
+          </div>
+          <PickAndMixBuilder />
         </div>
       </section>
     </main>
