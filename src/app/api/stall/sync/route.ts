@@ -1,9 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isBrowserSameOrigin, buildActionCodeSettings } from "@/lib/auth-helpers";
-import { getAuthAdmin } from "@/lib/firebase-admin";
-import { sendEmail } from "@/lib/email";
-import { validateStallRecord, stallWelcomeEmailHtml } from "@/lib/stall-record";
-import { applyStallRecord } from "@/lib/stall-store";
+import { isBrowserSameOrigin } from "@/lib/auth-helpers";
+import { validateStallRecord } from "@/lib/stall-record";
+import { applyStallRecord, sendStallWelcomeEmail } from "@/lib/stall-store";
 import { hasStallAccess } from "@/lib/stall-auth";
 
 export const runtime = "nodejs";
@@ -39,29 +37,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Could not save just now." }, { status: 503 });
   }
 
-  // The welcome email, spec 10.1.1: the magic link goes out afterwards, so the
-  // first sign-in lands on this record. Best effort only, a send failure logs and
-  // never blocks the sync, and only a freshly created signup gets one, so a
-  // retried record cannot email twice.
-  if (result.created && parsed.record.email) {
-    const auth = getAuthAdmin();
-    if (auth) {
-      try {
-        const link = await auth.generateSignInWithEmailLink(
-          parsed.record.email,
-          buildActionCodeSettings(siteUrl),
-        );
-        const sent = await sendEmail(
-          parsed.record.email,
-          "Welcome to Barking Raw",
-          stallWelcomeEmailHtml(link, parsed.record.name || undefined),
-        );
-        if (!sent) console.error("[stall/sync] welcome email did not send:", parsed.record.email);
-      } catch (err) {
-        console.error("[stall/sync] welcome email failed:", err);
-      }
-    }
-  }
+  // Only a freshly created signup gets the magic-link welcome, so a retried
+  // record cannot email twice. Best effort, inside the shared helper, which
+  // /api/join uses too (both routes write the same record).
+  if (result.created) await sendStallWelcomeEmail(parsed.record, siteUrl);
 
   return NextResponse.json({ ok: true });
 }

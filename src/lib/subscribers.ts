@@ -15,11 +15,14 @@ export type CaptureSource = (typeof CAPTURE_SOURCES)[number];
 /**
  * The exact sentence shown beside the unticked checkbox, stored on the record
  * so we always know what was consented to. Defined server-side so a tampered
- * client cannot rewrite what somebody agreed to.
+ * client cannot rewrite what somebody agreed to. The stall wording is the
+ * consent screen's chip, verbatim; it reaches this module only through the
+ * server-side stall sync, never through the public capture route.
  */
-export const CONSENT_TEXT: Record<CaptureSource, string> = {
+export const CONSENT_TEXT: Record<SubscriberSource, string> = {
   home: "Email me free hints and tips from each pillar. Unsubscribe any time.",
   shop: "Email me my 10% first order code and hints and tips from each pillar. Unsubscribe any time.",
+  stall: "Email me the new stuff and the member offers. Unsubscribe any time.",
 };
 
 /** Trimmed and lower-cased, or null unless it looks like an email address. */
@@ -57,7 +60,7 @@ export type Subscriber = {
  */
 export function applySubscription(
   existing: Subscriber | null,
-  input: { source: CaptureSource; consent: boolean },
+  input: { source: SubscriberSource; consent: boolean },
 ): {
   create: boolean;
   consentTurnedOn: boolean;
@@ -96,13 +99,16 @@ export type WelcomeAction = { type: "code" } | { type: "pillar"; index: 0 | 1 | 
  *
  * No consent, no marketing sequence, and the code email counts as marketing
  * (the shop form says the ticked box is how the code arrives). Shop contacts
- * get "your code is waiting" before pillar one. The cron sends at most one
- * email per contact per run, so the code email lands a run ahead of pillar one
- * rather than in the same inbox minute.
+ * get "your code is waiting" before pillar one, and so do stall contacts,
+ * because the table offer is 10% now and 10% off the first online order. The
+ * cron sends at most one email per contact per run, so the code email lands a
+ * run ahead of pillar one rather than in the same inbox minute.
  */
 export function nextWelcomeAction(s: Subscriber, nowMs: number): WelcomeAction {
   if (!s.consent || s.unsubscribed || s.consentAtMs === null) return null;
-  if (s.source === "shop" && s.codeEmailSentAtMs === null) return { type: "code" };
+  if ((s.source === "shop" || s.source === "stall") && s.codeEmailSentAtMs === null) {
+    return { type: "code" };
+  }
   const index = s.sequencePosition;
   if (index >= WELCOME_SEQUENCE_LENGTH) return null;
   if (nowMs >= s.consentAtMs + WELCOME_OFFSETS_DAYS[index] * DAY_MS) {

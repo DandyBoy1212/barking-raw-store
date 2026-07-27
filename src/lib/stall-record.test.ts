@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { buildStallCustomerPatch, stallWelcomeEmailHtml, validateStallRecord } from "./stall-record";
+import {
+  buildStallCustomerPatch,
+  stallMarketingSubscription,
+  stallWelcomeEmailHtml,
+  validateStallRecord,
+} from "./stall-record";
 import type { StoredCustomer } from "@/data/customers";
+import type { Subscriber } from "@/lib/subscribers";
 
 const CLIENT_ID = "3f2c9b1e-8a4d-4f6b-9c1e-2b7a8d3e5f60";
 const RECEIVED = "2026-07-26T09:00:00.000Z";
@@ -279,5 +285,51 @@ describe("stallWelcomeEmailHtml", () => {
     const html = stallWelcomeEmailHtml("https://example.com/link", "<script>");
     expect(html).not.toContain("<script>");
     expect(html).toContain("&lt;script&gt;");
+  });
+});
+
+describe("stallMarketingSubscription", () => {
+  it("joins the list with source stall when consent and an email are both there", () => {
+    const change = stallMarketingSubscription(
+      record({
+        name: "Sam",
+        email: "sam@example.com",
+        consent: { marketing: true, photo: false },
+      }),
+      null,
+    );
+    expect(change).not.toBeNull();
+    expect(change?.create).toBe(true);
+    expect(change?.consentTurnedOn).toBe(true);
+    expect(change?.fields.source).toBe("stall");
+  });
+
+  it("does nothing without marketing consent, however complete the record", () => {
+    const r = record({ name: "Sam", email: "sam@example.com" });
+    expect(stallMarketingSubscription(r, null)).toBeNull();
+  });
+
+  it("does nothing without a usable email, however enthusiastic the consent", () => {
+    const r = record({ name: "Sam", consent: { marketing: true, photo: true } });
+    expect(stallMarketingSubscription(r, null)).toBeNull();
+  });
+
+  it("is a no-op on a repeat sync, never resetting position or code", () => {
+    const existing: Subscriber = {
+      email: "sam@example.com",
+      source: "stall",
+      consent: true,
+      consentText: "",
+      consentAtMs: 5,
+      discountCode: "SAVED10",
+      codeEmailSentAtMs: 6,
+      sequencePosition: 2,
+      unsubscribed: false,
+    };
+    const change = stallMarketingSubscription(
+      record({ email: "sam@example.com", consent: { marketing: true, photo: false } }),
+      existing,
+    );
+    expect(change).toEqual({ create: false, consentTurnedOn: false, fields: {} });
   });
 });
