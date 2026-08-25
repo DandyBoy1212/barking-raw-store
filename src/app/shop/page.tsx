@@ -1,42 +1,42 @@
 import type { Metadata } from "next";
-import { getPublicProducts, toCatalogue } from "@/lib/products-store";
-import { getViewerDogs } from "@/lib/viewer-dogs";
-import { ProductCard } from "@/components/ProductCard";
+import Link from "next/link";
+import { ALL_SHOP_CATEGORIES, CATEGORY_LABELS } from "@/data/products";
+import { CATEGORY_IMAGES } from "@/lib/categories";
 import { EmailCapture } from "@/components/EmailCapture";
-
-export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Shop | Barking Raw",
   description:
-    "Everything we sell, in one place: honest single-ingredient natural dog treats, named in full and posted to your door. Free local delivery, free over £35.",
+    "Natural dog treats, hand packed boxes, pick and mix, and toys. Named in full and posted to your door. Free local delivery, free over GBP 35.",
 };
 
 /**
- * The flat shop: everything, a plain grid, for people who arrived ready to buy
- * (spec section 3). The teaching lives on the pillar pages; none of it is
- * repeated here on purpose.
+ * The shop landing page: four circles, one per category. Replaces the flat
+ * everything-grid, because a flat grid and four categories are two answers to
+ * the same question and the categories are the one the customer asked for.
  */
-export default async function ShopPage() {
-  const [products, dogs] = await Promise.all([
-    getPublicProducts().then((list) => list.map(toCatalogue)),
-    getViewerDogs(),
-  ]);
+export default function ShopPage() {
   return (
     <main>
       <section className="band band--paper">
         <div className="wrap wrap--tight">
-          <div className="products__head">
-            <div className="section-head">
-              <p className="eyebrow">The shop</p>
-              <h1 className="display" style={{ fontSize: "clamp(2rem, 5vw, 3.4rem)" }}>
-                Everything, in one place.
-              </h1>
-            </div>
+          <div className="section-head">
+            <p className="eyebrow">The shop</p>
+            <h1 className="display" style={{ fontSize: "clamp(2rem, 5vw, 3.4rem)" }}>
+              What are you after?
+            </h1>
           </div>
-          <div className="grid">
-            {products.map((p) => (
-              <ProductCard key={p.slug} product={p} dogs={dogs} />
+          <div className="ring">
+            {ALL_SHOP_CATEGORIES.map((category) => (
+              <Link
+                key={category}
+                href={`/shop/${category}`}
+                className={`ring__wedge ring__wedge--${category}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={CATEGORY_IMAGES[category]} alt="" />
+                <span className="ring__label">{CATEGORY_LABELS[category]}</span>
+              </Link>
             ))}
           </div>
         </div>

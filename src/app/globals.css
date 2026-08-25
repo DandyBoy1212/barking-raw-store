@@ -266,15 +266,15 @@ h1, h2, h3 { line-height: 1.02; letter-spacing: -0.02em; font-weight: 800; }
 @media (min-width: 720px) {
   .ring { display: block; position: relative; width: min(520px, 60vw); max-width: none; aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 4px solid rgba(255,255,255,0.14); margin: 0 auto; }
   .ring__wedge { position: absolute; width: 50%; height: 50%; border-radius: 0; }
-  .ring__wedge--good-food { top: 0; left: 0; }
-  .ring__wedge--comfy-walks { top: 0; right: 0; }
-  .ring__wedge--fun-and-games { bottom: 0; left: 0; }
-  .ring__wedge--cosy-sleep { bottom: 0; right: 0; }
+  .ring__wedge--treats { top: 0; left: 0; }
+  .ring__wedge--boxes { top: 0; right: 0; }
+  .ring__wedge--pick-and-mix { bottom: 0; left: 0; }
+  .ring__wedge--toys { bottom: 0; right: 0; }
   /* Push each label out of the hub's way, toward its wedge's outer half. */
-  .ring__wedge--good-food .ring__label,
-  .ring__wedge--comfy-walks .ring__label { top: 42%; }
-  .ring__wedge--fun-and-games .ring__label,
-  .ring__wedge--cosy-sleep .ring__label { top: 58%; }
+  .ring__wedge--treats .ring__label,
+  .ring__wedge--boxes .ring__label { top: 42%; }
+  .ring__wedge--pick-and-mix .ring__label,
+  .ring__wedge--toys .ring__label { top: 58%; }
   .ring__hub { display: flex; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 34%; aspect-ratio: 1; border-radius: 50%; background: #000; border: 4px solid rgba(255,255,255,0.14); z-index: 3; align-items: center; justify-content: center; overflow: hidden; }
   .ring__hub img { width: 78%; height: 78%; object-fit: contain; }
 }
