@@ -387,7 +387,34 @@ packet shot, a box shot and a pick and mix shot).
 A public blog at `/blog` with its own editor supporting images, headings and search metadata. The
 members posts system in `posts.ts` and on `/members` is left exactly as it is.
 
-## 12. Done means
+## 12. Build record, 2026-08-26
+
+All four phases are built and committed on `feat/shop-taxonomy-foundations`. `npm test` is green
+(539 tests, 34 files), `npm run build` is clean, and `npx eslint .` reports only the three errors
+that were already on the branch before this work (`thank-you/page.tsx`, `CartProvider.tsx`).
+
+Two things were deliberately not done, both because they change the live shop and neither was
+safe to do unattended:
+
+1. **The migration has not been applied.** `node scripts/backfill-product-categories.mjs` is
+   written, unit tested and ready, but has only ever been run as a dry run. It is not urgent:
+   `docToStoredProduct` defaults a doc with no category to `treats`, which was verified against
+   live Firestore on 2026-08-26, and the nine live products render correctly on `/shop/treats`
+   without it.
+2. **The new products are seed only.** The four toys, the Mega Mystery Box and the Mystery
+   Bargain Box exist in `src/data/products.ts` but have not been pushed to Firestore, so
+   `/shop/boxes` and `/shop/toys` currently show their empty shelf notice. Making a product
+   buyable on a live shop is a commercial decision, and two of the four boxes do not exist yet.
+
+Still owed before the relaunch in section 11.2:
+
+- Prices for **Large Treats for Large Dogs** and the **Ears Box**. Neither is seeded.
+- A **was price** for each box. The field, its validation and its struck through rendering are
+  all built; no value was invented, because section 6.4 is the reason not to.
+- Photographs for the four toys and the three category circles. Every circle currently shows a
+  placeholder product shot, listed in one place in `src/lib/categories.ts`.
+
+## 13. Done means
 
 1. `npm test` green and `npm run build` clean.
 2. No occurrence of `pillar`, `fulfilment`, `supplierPostage`, `supplierArrival` or `leadTime` left
