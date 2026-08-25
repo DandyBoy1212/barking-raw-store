@@ -63,4 +63,5 @@ export const COLLECTIONS = {
   staff: "store_staff",
   posts: "store_posts",
   membersDigest: "store_members_digest",
+  articles: "store_articles",
 } as const;

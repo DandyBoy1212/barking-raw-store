@@ -21,6 +21,11 @@ const BUILT = [
     blurb: "Write the weekly post for the members area.",
   },
   {
+    href: "/admin/articles",
+    title: "Blog",
+    blurb: "Write a public article for the blog. Saves as a draft so you can read it back first.",
+  },
+  {
     href: "/admin/points",
     title: "Points owed",
     blurb: "See the total loyalty points customers have not spent yet.",

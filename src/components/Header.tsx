@@ -37,6 +37,7 @@ export function Header() {
         <Link href="/about">About us</Link>
         <Link href="/shop">Shop</Link>
         <Link href="/delivery">Delivery</Link>
+        <Link href="/blog">Blog</Link>
         <Link href="/contact">Contact</Link>
         <Link href="/members">Members</Link>
       </nav>
