@@ -150,11 +150,9 @@ and must be read before being touched. The files that genuinely carry the suppli
 - `src/lib/product-admin.ts`, validation of the supplier fields
 - `src/lib/shipping.ts`, `DeliveryProduct` and the per line supplier postage
 - `src/lib/products-store.ts`, read and write mapping
-- `src/lib/stripe-sync.ts`, whatever it passes through
-- `src/lib/subscriptions.ts` and `src/lib/pick-and-mix.ts`, eligibility rules
-- `src/app/api/checkout/route.ts`, added postage lines
-- `src/app/api/webhooks/stripe/route.ts`, order records
-- `src/app/api/cron/daily-digest/route.ts`, the ordered in section
+- `src/lib/subscriptions.ts`, `splitSubscribable`, which exists only to keep supplier
+  posted lines out of a subscription and has nothing left to split afterwards
+- `src/lib/pick-and-mix.ts`, the draw pool and `bundleDeliveryProduct`
 - `src/app/api/admin/products/route.ts` and `src/app/api/admin/products/[slug]/route.ts`
 - `src/app/api/dev/seed-products/route.ts`
 - `src/components/admin/ProductForm.tsx`, the form fields
@@ -166,6 +164,13 @@ and must be read before being touched. The files that genuinely carry the suppli
 GBP 3.95 elsewhere, free over GBP 35. Removal deletes the supplier postage that was added on top of
 it per line, and shrinks `DeliveryProduct` to `slug`, `name` and `price`. `isLocalPostcode`,
 `FREE_OVER`, `FLAT_RATE` and `amountToFreePostage` are unchanged.
+
+`computeBasketDelivery` collapses with it. It exists to split a basket into several parcels, and
+after the change there is only ever one, so its `parcels` array, `DeliveryParcel` type and
+`ownStockSubtotal` go and it returns `{ cost, free, reason, amountToFreePostage }`. Its two
+consumers, `src/app/api/checkout/route.ts` and `src/components/BasketDrawer.tsx`, reference the
+fields only through this shape, which is why neither appears in the list above. Both lose their
+"this order arrives in N separate parcels" copy, which can no longer happen.
 
 ### 4.4 Live data
 

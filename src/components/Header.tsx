@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ALL_PILLARS, PILLAR_LABELS } from "@/data/products";
 import { useCart } from "./CartProvider";
 
 export function Header() {
@@ -31,16 +30,14 @@ export function Header() {
           <span className="basket-btn__count">{count}</span>
         </button>
       </div>
-      {/* The four pillar pages and the flat shop, reachable from every page
-          (spec section 3). Scrolls sideways on phones rather than wrapping. */}
-      <nav className="header__nav" aria-label="Shop by pillar">
-        {ALL_PILLARS.map((pillar) => (
-          <Link key={pillar} href={`/${pillar}`}>
-            {PILLAR_LABELS[pillar]}
-          </Link>
-        ))}
-        <Link href="/shop">Shop</Link>
+      {/* The five pages plus Members, reachable from every page. Scrolls sideways
+          on phones rather than wrapping. */}
+      <nav className="header__nav" aria-label="Main">
+        <Link href="/">Home</Link>
         <Link href="/about">About us</Link>
+        <Link href="/shop">Shop</Link>
+        <Link href="/delivery">Delivery</Link>
+        <Link href="/contact">Contact</Link>
         <Link href="/members">Members</Link>
       </nav>
     </header>
