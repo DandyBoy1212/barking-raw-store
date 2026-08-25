@@ -19,6 +19,7 @@ export function slugify(name: string): string {
 export type ProductInput = {
   name: string;
   price: number;
+  wasPrice?: number;
   hook: string;
   description: string;
   badges: Badge[];
@@ -93,6 +94,22 @@ export function validateProductInput(
   if (!description) errors.push("Description is required.");
   if (images.length === 0) errors.push("At least one photo is required.");
 
+  // Blank means no sale, which is the common case, so an empty box is valid. A
+  // was price at or below the real price is not a sale, it is a mistake that
+  // would render as a strike through the same number.
+  let wasPrice: number | undefined;
+  const rawWas = input.wasPrice;
+  if (!(rawWas === undefined || rawWas === null || String(rawWas).trim() === "")) {
+    const n = Number(rawWas);
+    if (!(Number.isFinite(n) && n > 0)) {
+      errors.push("The was price must be a number, or left blank.");
+    } else if (!(n > price)) {
+      errors.push("The was price has to be higher than the price you are charging.");
+    } else {
+      wasPrice = n;
+    }
+  }
+
   // A product on no shelf appears nowhere, which looks exactly like the site
   // working while the product is invisible. Required, never defaulted, on the way in.
   const rawCategory = String(input.category ?? "");
@@ -147,6 +164,7 @@ export function validateProductInput(
     value: {
       name,
       price,
+      wasPrice,
       hook,
       description,
       badges,

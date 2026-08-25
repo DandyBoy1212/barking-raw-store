@@ -304,3 +304,50 @@ describe("validateProductInput category", () => {
     expect(validateProductInput({ ...good, category: "pick-and-mix" }).ok).toBe(false);
   });
 });
+
+describe("validateProductInput wasPrice", () => {
+  const good = {
+    name: "Mega Mystery Box",
+    price: 15,
+    hook: "a big box of surprises",
+    description: "hand packed for your dog",
+    badges: [],
+    image: "/products/mystery-box.png",
+    category: "boxes" as const,
+  };
+
+  it("accepts a was price above the real price", () => {
+    const res = validateProductInput({ ...good, wasPrice: 24 });
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.value.wasPrice).toBe(24);
+  });
+
+  it("treats a blank was price as no sale", () => {
+    const res = validateProductInput({ ...good, wasPrice: "" as unknown as number });
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.value.wasPrice).toBeUndefined();
+  });
+
+  it("treats an absent was price as no sale", () => {
+    const res = validateProductInput(good);
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.value.wasPrice).toBeUndefined();
+  });
+
+  it("rejects a was price equal to the real price", () => {
+    const res = validateProductInput({ ...good, wasPrice: 15 });
+    expect(res.ok).toBe(false);
+    if (!res.ok)
+      expect(res.errors).toContain("The was price has to be higher than the price you are charging.");
+  });
+
+  it("rejects a was price below the real price", () => {
+    expect(validateProductInput({ ...good, wasPrice: 9 }).ok).toBe(false);
+  });
+
+  it("rejects a was price that is not a number", () => {
+    const res = validateProductInput({ ...good, wasPrice: "lots" as unknown as number });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.errors).toContain("The was price must be a number, or left blank.");
+  });
+});

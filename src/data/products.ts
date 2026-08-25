@@ -54,6 +54,8 @@ export interface Product {
   slug: string;
   name: string;
   price: number; // GBP
+  /** GBP. The price shown struck through beside the real price. Absent means no sale. */
+  wasPrice?: number;
   hook: string;
   description: string;
   badges: Badge[];

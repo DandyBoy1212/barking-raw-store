@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
     await db.collection(COLLECTIONS.products).doc(slug).create({
       name: draft.name,
       price: draft.price,
+      ...(draft.wasPrice !== undefined ? { wasPrice: draft.wasPrice } : {}),
       hook: draft.hook,
       description: draft.description,
       badges: draft.badges,

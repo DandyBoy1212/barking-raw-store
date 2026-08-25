@@ -40,6 +40,9 @@ export function ProductForm({
   const router = useRouter();
   const [name, setName] = useState(initial?.name ?? "");
   const [price, setPrice] = useState(String(initial?.price ?? ""));
+  const [wasPrice, setWasPrice] = useState(
+    initial?.wasPrice === undefined ? "" : String(initial.wasPrice),
+  );
   const [hook, setHook] = useState(initial?.hook ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [safetyNote, setSafetyNote] = useState(initial?.safetyNote ?? "");
@@ -103,6 +106,7 @@ export function ProductForm({
     const payload = {
       name,
       price: Number(price),
+      wasPrice: wasPrice === "" ? undefined : Number(wasPrice),
       hook,
       description,
       safetyNote,
@@ -163,6 +167,20 @@ export function ProductForm({
             onChange={(e) => setPrice(e.target.value)}
             required
           />
+        </label>
+        <label className="field">
+          <span>Was price in pounds</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={wasPrice}
+            onChange={(e) => setWasPrice(e.target.value)}
+          />
+          <span className="field__hint">
+            Leave blank unless this is on sale. Shown struck through beside the real price,
+            so it has to be a price you genuinely charged.
+          </span>
         </label>
         <label className="field">
           <span>Hook</span>

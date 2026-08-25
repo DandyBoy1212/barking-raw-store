@@ -65,6 +65,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
         image: next.image,
         ...(next.safetyNote ? { safetyNote: next.safetyNote } : { safetyNote: FieldValue.delete() }),
         category: next.category,
+        ...(next.wasPrice !== undefined
+          ? { wasPrice: next.wasPrice }
+          : { wasPrice: FieldValue.delete() }),
         ...(next.membersOnlyUntil
           ? { membersOnlyUntil: next.membersOnlyUntil }
           : { membersOnlyUntil: FieldValue.delete() }),
