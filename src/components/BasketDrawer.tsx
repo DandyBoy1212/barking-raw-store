@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { gbp } from "@/lib/format";
+import { computeMultibuy, MULTIBUY_PRICE, MULTIBUY_QTY } from "@/lib/multibuy";
 import { bundleLabel, priceBundle, summariseBundleContents } from "@/lib/pick-and-mix";
 import {
   SUBSCRIBE_FREQUENCIES,
@@ -47,7 +48,14 @@ export function BasketDrawer() {
   const canSubscribe = basketItems.length > 0 && !hasBundle;
   const activeFrequency = canSubscribe ? frequencyWeeks : null;
 
-  const goodsShown = activeFrequency ? discounted(subtotal) : subtotal;
+  // The four for GBP 20 offer, shown here exactly as checkout will charge it.
+  // Deactivated by a subscription or a bundle, both of which carry their own
+  // saving, and the drawer must not promise a discount checkout will refuse.
+  const multibuy =
+    activeFrequency || hasBundle
+      ? { groups: 0, saving: 0, toNextGroup: 0 }
+      : computeMultibuy(basketItems);
+  const goodsShown = activeFrequency ? discounted(subtotal) : subtotal - multibuy.saving;
   const total = goodsShown + deliveryPlan.cost;
 
   async function checkout() {
@@ -153,6 +161,12 @@ export function BasketDrawer() {
                 <label htmlFor="pc">Delivery postcode</label>
                 <input id="pc" value={postcode} onChange={(e) => setPostcode(e.target.value)} placeholder="e.g. DD5 1AB" />
               </div>
+              {multibuy.toNextGroup > 0 && !activeFrequency && !hasBundle && (
+                <p className="notice">
+                  Add {multibuy.toNextGroup} more from the treat range for {MULTIBUY_QTY} for{" "}
+                  {gbp(MULTIBUY_PRICE)}.
+                </p>
+              )}
               {deliveryPlan.amountToFreePostage > 0 && (
                 <div className="nudge">
                   Add {gbp(deliveryPlan.amountToFreePostage)} more for free postage.
@@ -223,6 +237,15 @@ export function BasketDrawer() {
                 <div className="summary-row">
                   <span>Subscribe and save {SUBSCRIBE_PERCENT}%</span>
                   <span>-{gbp(subtotal - goodsShown)}</span>
+                </div>
+              )}
+              {multibuy.saving > 0 && (
+                <div className="summary-row">
+                  <span>
+                    {MULTIBUY_QTY} for {gbp(MULTIBUY_PRICE)} on the treat range
+                    {multibuy.groups > 1 && ` (x${multibuy.groups})`}
+                  </span>
+                  <span>-{gbp(multibuy.saving)}</span>
                 </div>
               )}
               <div className="summary-row">

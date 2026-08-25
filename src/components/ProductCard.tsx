@@ -85,6 +85,13 @@ export function ProductCard({ product, dogs = [] }: { product: Product; dogs?: D
         {product.safetyNote && <p className="card__safety">{product.safetyNote}</p>}
         <div className="card__foot">
           <span className="card__price">
+            {/* A was price only renders when it is genuinely higher, so a bad
+                number in the admin cannot draw a line through the same figure. */}
+            {product.wasPrice !== undefined && product.wasPrice > product.price && (
+              <span className="card__was">
+                <s>{gbp(product.wasPrice)}</s>
+              </span>
+            )}
             {gbp(product.price)}
             {packSizeLabel(product) && (
               <span className="card__pack"> / {packSizeLabel(product)}</span>

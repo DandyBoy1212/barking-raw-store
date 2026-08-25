@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Stripe from "stripe";
 import { computeBasketDelivery, type DeliveryProduct } from "@/lib/shipping";
+import { computeMultibuy, MULTIBUY_PRICE, MULTIBUY_QTY } from "@/lib/multibuy";
 import {
   bundleDeliveryProduct,
   bundleLabel,
@@ -158,12 +159,33 @@ export async function POST(req: NextRequest) {
 
   const delivery = computeBasketDelivery([...deliveryItems, ...bundleDeliveryItems], postcode);
 
+  // The four for GBP 20 offer on the treat range, applied automatically.
+  //
+  // Charged as an amount_off coupon rather than by repricing the lines, so the
+  // customer and Michaela's Stripe dashboard both see the deal named, and every
+  // line still shows what the product actually costs. Never on a subscription,
+  // where the reserved 10% is the deal, and never alongside a bundle, which
+  // carries its own saving: section 6 exists precisely so discounts do not stack.
+  const multibuy =
+    frequencyWeeks || hasBundle
+      ? { groups: 0, saving: 0, toNextGroup: 0 }
+      : computeMultibuy(deliveryItems);
+
   // Optional recovery discount code (validated server-side against Firestore).
   // Never on a subscription: the reserved 10% is the deal, and section 6 exists
   // precisely so discounts do not stack.
   const db = getDb();
   const discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
-  if (discountCode && db && !frequencyWeeks && !hasBundle) {
+  if (multibuy.saving > 0) {
+    const coupon = await stripe.coupons.create({
+      amount_off: priceToPence(multibuy.saving),
+      currency: "gbp",
+      duration: "once",
+      name: `${MULTIBUY_QTY} for GBP ${MULTIBUY_PRICE} on the treat range`,
+    });
+    discounts.push({ coupon: coupon.id });
+  }
+  if (discountCode && db && !frequencyWeeks && !hasBundle && multibuy.saving === 0) {
     const snap = await db.collection(COLLECTIONS.discountCodes).doc(discountCode.toUpperCase()).get();
     const data = snap.data();
     const valid =
@@ -275,6 +297,9 @@ export async function POST(req: NextRequest) {
       itemSummary: summary.join(", ").slice(0, 480),
       ...Object.fromEntries(bundleContents.map((c, i) => [`bundle_${i + 1}`, c.slice(0, 480)])),
       deliveryCost: delivery.cost.toFixed(2),
+      ...(multibuy.saving > 0
+        ? { multibuyGroups: String(multibuy.groups), multibuySaving: multibuy.saving.toFixed(2) }
+        : {}),
     },
     // Allergies at the point of payment, on every one-off order. We pack food
     // for a specific dog (the mystery box makes this explicit), so the safest

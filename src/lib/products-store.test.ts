@@ -81,12 +81,23 @@ describe("docToStoredProduct", () => {
 });
 
 describe("seedAsStoredProducts", () => {
-  it("maps all 10 seed products to active, non-archived stored products", () => {
-    // 9 originals + the International Dog Day mystery box (2026-08-25).
+  it("maps every seed product to an active, non-archived stored product", () => {
+    // 9 treats, the Dog Day mystery box, the two new mystery boxes, and 4 toys.
     const all = seedAsStoredProducts();
-    expect(all).toHaveLength(10);
+    expect(all).toHaveLength(16);
     expect(all.every((p) => p.active && !p.archived)).toBe(true);
     expect(all.every((p) => p.stripePriceId === undefined)).toBe(true);
+  });
+
+  it("puts every seed product on a shelf, so none of them is invisible", () => {
+    for (const p of seedAsStoredProducts()) {
+      expect(["treats", "boxes", "toys"]).toContain(p.category);
+    }
+  });
+
+  it("stocks all three shelves", () => {
+    const shelves = new Set(seedAsStoredProducts().map((p) => p.category));
+    expect([...shelves].sort()).toEqual(["boxes", "toys", "treats"]);
   });
 });
 
