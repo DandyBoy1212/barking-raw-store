@@ -127,9 +127,8 @@ export function summariseBundleContents(
 }
 
 /**
- * A bundle as the delivery rule sees it: own-stock goods in Michaela's one
- * parcel, priced at what the customer actually pays, so the free-over-35
- * threshold counts the real money.
+ * A bundle as the delivery rule sees it, priced at what the customer actually
+ * pays, so the free-over-35 threshold counts the real money.
  */
 export function bundleDeliveryProduct(
   lineSlug: string,
@@ -140,8 +139,6 @@ export function bundleDeliveryProduct(
     slug: lineSlug,
     name: bundleLabel(size),
     price,
-    fulfilment: "own-stock",
-    leadTimeDays: 0,
   };
 }
 

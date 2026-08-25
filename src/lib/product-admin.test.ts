@@ -78,24 +78,6 @@ const base = {
   category: "treats" as const,
 };
 
-describe("validateProductInput lead time", () => {
-  it("defaults to zero", () => {
-    const r = validateProductInput(base);
-    expect(r.ok && r.value.leadTimeDays).toBe(0);
-  });
-
-  it("rejects a negative lead time", () => {
-    const r = validateProductInput({ ...base, leadTimeDays: -1 });
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors).toContain("Lead time must be a whole number of days, 0 or more.");
-  });
-
-  it("rejects a fractional lead time", () => {
-    const r = validateProductInput({ ...base, leadTimeDays: 2.5 });
-    expect(r.ok).toBe(false);
-  });
-});
-
 describe("validateProductInput members only window", () => {
   it("accepts an ISO date", () => {
     const r = validateProductInput({ ...base, membersOnlyUntil: "2026-09-01" });
@@ -111,55 +93,6 @@ describe("validateProductInput members only window", () => {
   it("treats an empty string as no window", () => {
     const r = validateProductInput({ ...base, membersOnlyUntil: "" });
     expect(r.ok && r.value.membersOnlyUntil).toBeUndefined();
-  });
-});
-
-describe("validateProductInput fulfilment", () => {
-  it("defaults to her own stock", () => {
-    const r = validateProductInput(base);
-    expect(r.ok && r.value.fulfilment).toBe("own-stock");
-  });
-
-  it("requires postage on a supplier posted product, so nobody is shipped it for free by accident", () => {
-    const r = validateProductInput({ ...base, fulfilment: "supplier-posted" });
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors).toContain("Supplier posted products need their own postage amount.");
-  });
-
-  it("accepts a supplier posted product with postage and an arrival range", () => {
-    const r = validateProductInput({
-      ...base,
-      fulfilment: "supplier-posted",
-      supplierPostage: 4.5,
-      supplierArrivalMinDays: 3,
-      supplierArrivalMaxDays: 5,
-    });
-    expect(r.ok).toBe(true);
-    if (r.ok) {
-      expect(r.value.supplierPostage).toBe(4.5);
-      expect(r.value.supplierArrivalMaxDays).toBe(5);
-    }
-  });
-
-  it("rejects an arrival range that runs backwards", () => {
-    const r = validateProductInput({
-      ...base,
-      fulfilment: "supplier-posted",
-      supplierPostage: 4.5,
-      supplierArrivalMinDays: 7,
-      supplierArrivalMaxDays: 3,
-    });
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors).toContain("Arrival range must run from the shorter time to the longer.");
-  });
-
-  it("drops supplier fields when the path is her own stock", () => {
-    const r = validateProductInput({
-      ...base,
-      fulfilment: "own-stock",
-      supplierPostage: 4.5,
-    });
-    expect(r.ok && r.value.supplierPostage).toBeUndefined();
   });
 });
 

@@ -3,7 +3,6 @@ import {
   ALL_PRODUCT_CATEGORIES,
   type Badge,
   type ProductCategory,
-  type FulfilmentPath,
 } from "@/data/products";
 import { normaliseImages, primaryImageUrl, type ProductImage } from "@/lib/product-images";
 
@@ -29,12 +28,7 @@ export type ProductInput = {
   image: string;
   safetyNote?: string;
   category: ProductCategory;
-  leadTimeDays: number;
   membersOnlyUntil?: string;
-  fulfilment: FulfilmentPath;
-  supplierPostage?: number;
-  supplierArrivalMinDays?: number;
-  supplierArrivalMaxDays?: number;
   packWeightGrams?: number;
   packPieceCount?: number;
   /** Whole units on the shelf. Absent means untracked (stage 4's rule); 0 means sold out. */
@@ -106,16 +100,6 @@ export function validateProductInput(
   if (!categoryOk) errors.push("Choose which part of the shop this product belongs to.");
   const category = (categoryOk ? rawCategory : "treats") as ProductCategory;
 
-  const rawLead =
-    input.leadTimeDays === undefined ||
-    input.leadTimeDays === null ||
-    String(input.leadTimeDays) === ""
-      ? 0
-      : Number(input.leadTimeDays);
-  const leadOk = Number.isFinite(rawLead) && rawLead >= 0 && Number.isInteger(rawLead);
-  if (!leadOk) errors.push("Lead time must be a whole number of days, 0 or more.");
-  const leadTimeDays = leadOk ? rawLead : 0;
-
   const rawWindow = String(input.membersOnlyUntil ?? "").trim();
   let membersOnlyUntil: string | undefined;
   if (rawWindow) {
@@ -123,36 +107,6 @@ export function validateProductInput(
       errors.push("Members only date must be in the form YYYY-MM-DD.");
     } else {
       membersOnlyUntil = rawWindow;
-    }
-  }
-
-  const fulfilment: FulfilmentPath =
-    input.fulfilment === "supplier-posted" ? "supplier-posted" : "own-stock";
-
-  let supplierPostage: number | undefined;
-  let supplierArrivalMinDays: number | undefined;
-  let supplierArrivalMaxDays: number | undefined;
-
-  if (fulfilment === "supplier-posted") {
-    const postage = Number(input.supplierPostage ?? NaN);
-    if (!(Number.isFinite(postage) && postage >= 0)) {
-      errors.push("Supplier posted products need their own postage amount.");
-    } else {
-      supplierPostage = postage;
-    }
-    const min = Number(input.supplierArrivalMinDays ?? NaN);
-    const max = Number(input.supplierArrivalMaxDays ?? NaN);
-    const minOk = Number.isFinite(min) && min > 0 && Number.isInteger(min);
-    const maxOk = Number.isFinite(max) && max > 0 && Number.isInteger(max);
-    if (minOk !== maxOk) {
-      errors.push("Give both ends of the arrival range, or neither.");
-    } else if (minOk && maxOk) {
-      if (min > max) {
-        errors.push("Arrival range must run from the shorter time to the longer.");
-      } else {
-        supplierArrivalMinDays = min;
-        supplierArrivalMaxDays = max;
-      }
     }
   }
 
@@ -200,12 +154,7 @@ export function validateProductInput(
       image,
       safetyNote,
       category,
-      leadTimeDays,
       membersOnlyUntil,
-      fulfilment,
-      supplierPostage,
-      supplierArrivalMinDays,
-      supplierArrivalMaxDays,
       packWeightGrams,
       packPieceCount,
       stock,

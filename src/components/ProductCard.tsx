@@ -5,7 +5,7 @@ import type { Dog } from "@/data/customers";
 import type { Product } from "@/data/products";
 import { productRibbons } from "@/lib/dog-merchandising";
 import { gbp } from "@/lib/format";
-import { leadTimeNote, packSizeLabel, supplierArrivalNote } from "@/lib/product-fields";
+import { packSizeLabel } from "@/lib/product-fields";
 import { cycleIndex } from "@/lib/product-images";
 import { Badge } from "./Badge";
 import { useCart } from "./CartProvider";
@@ -83,9 +83,6 @@ export function ProductCard({ product, dogs = [] }: { product: Product; dogs?: D
         <p className="card__hook">{product.hook}</p>
         <p className="card__desc">{product.description}</p>
         {product.safetyNote && <p className="card__safety">{product.safetyNote}</p>}
-        {(supplierArrivalNote(product) ?? leadTimeNote(product)) && (
-          <p className="card__lead">{supplierArrivalNote(product) ?? leadTimeNote(product)}</p>
-        )}
         <div className="card__foot">
           <span className="card__price">
             {gbp(product.price)}

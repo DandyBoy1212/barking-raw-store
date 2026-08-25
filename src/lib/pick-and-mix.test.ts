@@ -19,8 +19,6 @@ const mk = (slug: string, over: Record<string, unknown> = {}) => ({
   name: slug.replace(/-/g, " "),
   price: 5,
   category: "treats" as const,
-  fulfilment: "own-stock" as const,
-  leadTimeDays: 0,
   ...over,
 });
 
@@ -245,13 +243,11 @@ describe("validateBundle", () => {
 });
 
 describe("bundleDeliveryProduct", () => {
-  it("is own-stock, zero lead, priced at what the customer pays", () => {
-    expect(bundleDeliveryProduct("pick-and-mix-x", 10, 16.15)).toEqual({
-      slug: "pick-and-mix-x",
+  it("is priced at what the customer actually pays", () => {
+    expect(bundleDeliveryProduct("pm-1", 10, 30.4)).toEqual({
+      slug: "pm-1",
       name: "Pick & Mix (10 items)",
-      price: 16.15,
-      fulfilment: "own-stock",
-      leadTimeDays: 0,
+      price: 30.4,
     });
   });
 });

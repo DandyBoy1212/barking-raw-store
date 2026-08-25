@@ -10,7 +10,6 @@
 // injected client in ensureSubscribeCoupon, no Firestore, no React.
 
 import type Stripe from "stripe";
-import type { FulfilmentPath } from "@/data/products";
 import type { StoredProduct } from "@/lib/products-store";
 import { priceToPence } from "@/lib/stripe-sync";
 
@@ -28,16 +27,6 @@ export const SUBSCRIBE_FREQUENCIES: { weeks: FrequencyWeeks; label: string }[] =
 export function parseFrequencyWeeks(v: unknown): FrequencyWeeks | null {
   const n = typeof v === "string" && v.trim() !== "" ? Number(v) : typeof v === "number" ? v : NaN;
   return n === 2 || n === 4 || n === 8 ? n : null;
-}
-
-/** Split basket lines into those that can repeat (own stock) and those that cannot. */
-export function splitSubscribable<T extends { fulfilment: FulfilmentPath }>(
-  items: { product: T; qty: number }[],
-): { eligible: { product: T; qty: number }[]; ineligible: { product: T; qty: number }[] } {
-  return {
-    eligible: items.filter((i) => i.product.fulfilment === "own-stock"),
-    ineligible: items.filter((i) => i.product.fulfilment !== "own-stock"),
-  };
 }
 
 /**

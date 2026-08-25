@@ -102,35 +102,14 @@ describe("toCatalogue", () => {
 });
 
 describe("docToStoredProduct new fields", () => {
-  it("defaults a legacy doc with no new fields to own stock", () => {
+  it("defaults a legacy doc with no members window to none", () => {
     const p = docToStoredProduct("chicken-feet", { name: "Chicken Feet", price: 6 });
-    expect(p.leadTimeDays).toBe(0);
-    expect(p.fulfilment).toBe("own-stock");
     expect(p.membersOnlyUntil).toBeUndefined();
   });
 
-  it("floors a fractional lead time and clamps a negative one to zero", () => {
-    expect(docToStoredProduct("x", { leadTimeDays: 2.7 }).leadTimeDays).toBe(2);
-    expect(docToStoredProduct("x", { leadTimeDays: -5 }).leadTimeDays).toBe(0);
-    expect(docToStoredProduct("x", { leadTimeDays: "soon" }).leadTimeDays).toBe(0);
-  });
-
-  it("reads the supplier posted fields", () => {
-    const p = docToStoredProduct("x", {
-      fulfilment: "supplier-posted",
-      supplierPostage: 4.5,
-      supplierArrivalMinDays: 3,
-      supplierArrivalMaxDays: 5,
-    });
-    expect(p.fulfilment).toBe("supplier-posted");
-    expect(p.supplierPostage).toBe(4.5);
-    expect(p.supplierArrivalMinDays).toBe(3);
-    expect(p.supplierArrivalMaxDays).toBe(5);
-  });
-
-  it("drops supplier fields when the path is her own stock", () => {
-    const p = docToStoredProduct("x", { fulfilment: "own-stock", supplierPostage: 4.5 });
-    expect(p.supplierPostage).toBeUndefined();
+  it("keeps a members only window", () => {
+    const p = docToStoredProduct("x", { name: "X", price: 1, membersOnlyUntil: "2026-09-01" });
+    expect(p.membersOnlyUntil).toBe("2026-09-01");
   });
 });
 
@@ -139,25 +118,12 @@ describe("toCatalogue new fields", () => {
     const stored = docToStoredProduct("x", {
       name: "X",
       price: 1,
-      leadTimeDays: 3,
+      category: "boxes",
       membersOnlyUntil: "2026-09-01",
-      fulfilment: "supplier-posted",
-      supplierPostage: 2.5,
-      supplierArrivalMinDays: 3,
-      supplierArrivalMaxDays: 5,
     });
     const c = toCatalogue(stored);
-    expect(c.leadTimeDays).toBe(3);
+    expect(c.category).toBe("boxes");
     expect(c.membersOnlyUntil).toBe("2026-09-01");
-    expect(c.fulfilment).toBe("supplier-posted");
-    expect(c.supplierPostage).toBe(2.5);
-    expect(c.supplierArrivalMinDays).toBe(3);
-    expect(c.supplierArrivalMaxDays).toBe(5);
-  });
-
-  it("does not leak the Stripe ids to the client", () => {
-    const stored = docToStoredProduct("x", { name: "X", price: 1, stripePriceId: "price_123" });
-    expect(toCatalogue(stored)).not.toHaveProperty("stripePriceId");
   });
 });
 

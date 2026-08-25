@@ -3,12 +3,10 @@
 import { useState } from "react";
 import { gbp } from "@/lib/format";
 import { bundleLabel, priceBundle, summariseBundleContents } from "@/lib/pick-and-mix";
-import { leadTimeNote, supplierArrivalNote } from "@/lib/product-fields";
 import {
   SUBSCRIBE_FREQUENCIES,
   SUBSCRIBE_PERCENT,
   discounted,
-  splitSubscribable,
   type FrequencyWeeks,
 } from "@/lib/subscriptions";
 import { useCart } from "./CartProvider";
@@ -34,7 +32,7 @@ export function BasketDrawer() {
 
   // Subscribe and save is offered only when every line is own stock (spec 4.4):
   // supplier-posted items post on the supplier's terms and cannot repeat. Rather
-  // than resetting state in an effect, an ineligible basket simply deactivates
+  // than resetting state in an effect, a basket that cannot repeat simply deactivates
   // the chosen frequency, so adding a supplier item can never smuggle one into
   // the request and the plain one-off flow is untouched.
   const basketItems = lines
@@ -42,16 +40,15 @@ export function BasketDrawer() {
     .filter((i): i is { product: NonNullable<ReturnType<typeof detail>>; qty: number } =>
       Boolean(i.product),
     );
-  const { ineligible } = splitSubscribable(basketItems);
-  // A bundle is a one-off order, so its presence deactivates subscribe the same
-  // way a supplier-posted line does. basketItems already excludes bundle lines
-  // (detail() cannot resolve their minted slug); hasBundle makes the intent
-  // explicit rather than relying on that accident.
-  const canSubscribe = basketItems.length > 0 && ineligible.length === 0 && !hasBundle;
+  // A bundle is a one-off order, so its presence deactivates subscribe.
+  // basketItems already excludes bundle lines (detail() cannot resolve their
+  // minted slug); hasBundle makes the intent explicit rather than relying on
+  // that accident.
+  const canSubscribe = basketItems.length > 0 && !hasBundle;
   const activeFrequency = canSubscribe ? frequencyWeeks : null;
 
   const goodsShown = activeFrequency ? discounted(subtotal) : subtotal;
-  const total = goodsShown + deliveryPlan.total;
+  const total = goodsShown + deliveryPlan.cost;
 
   async function checkout() {
     setError(null);
@@ -142,11 +139,6 @@ export function BasketDrawer() {
                           remove
                         </button>
                       </div>
-                      {(leadTimeNote(p) || supplierArrivalNote(p)) && (
-                        <div className="line-item__meta" style={{ fontStyle: "italic" }}>
-                          {supplierArrivalNote(p) ?? leadTimeNote(p)}
-                        </div>
-                      )}
                     </div>
                     <div className="qty">
                       <button onClick={() => setQty(l.slug, l.qty - 1)} aria-label="Decrease">−</button>
@@ -219,10 +211,6 @@ export function BasketDrawer() {
                   A Pick &amp; Mix bundle is a one-off order, so repeat orders and discount codes
                   do not apply while one is in the basket. The saving is already in its price.
                 </p>
-              ) : ineligible.length > 0 ? (
-                <p className="notice">
-                  Repeat orders are not available for items that post separately from a supplier.
-                </p>
               ) : null}
             </div>
 
@@ -237,23 +225,10 @@ export function BasketDrawer() {
                   <span>-{gbp(subtotal - goodsShown)}</span>
                 </div>
               )}
-              {deliveryPlan.parcels.map((parcel) => (
-                <div className="summary-row" key={parcel.key}>
-                  <span>
-                    Delivery: {parcel.label}
-                    {parcel.note && (
-                      <em style={{ display: "block", fontSize: "0.8em" }}>{parcel.note}</em>
-                    )}
-                  </span>
-                  <span>{parcel.cost === 0 ? "Free" : gbp(parcel.cost)}</span>
-                </div>
-              ))}
-              {deliveryPlan.parcels.length > 1 && (
-                <p className="notice">
-                  This order arrives in {deliveryPlan.parcels.length} separate parcels, so they may
-                  not turn up on the same day.
-                </p>
-              )}
+              <div className="summary-row">
+                <span>Delivery</span>
+                <span>{deliveryPlan.cost === 0 ? "Free" : gbp(deliveryPlan.cost)}</span>
+              </div>
               <div className="summary-row summary-row--total">
                 <span>{activeFrequency ? "Total each delivery" : "Total"}</span>
                 <span>{gbp(total)}</span>

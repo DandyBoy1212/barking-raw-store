@@ -63,16 +63,7 @@ export async function POST(req: NextRequest) {
       image: draft.image,
       ...(draft.safetyNote ? { safetyNote: draft.safetyNote } : {}),
       category: draft.category,
-      leadTimeDays: draft.leadTimeDays,
       ...(draft.membersOnlyUntil ? { membersOnlyUntil: draft.membersOnlyUntil } : {}),
-      fulfilment: draft.fulfilment,
-      ...(draft.supplierPostage !== undefined ? { supplierPostage: draft.supplierPostage } : {}),
-      ...(draft.supplierArrivalMinDays !== undefined
-        ? { supplierArrivalMinDays: draft.supplierArrivalMinDays }
-        : {}),
-      ...(draft.supplierArrivalMaxDays !== undefined
-        ? { supplierArrivalMaxDays: draft.supplierArrivalMaxDays }
-        : {}),
       ...(draft.packWeightGrams !== undefined ? { packWeightGrams: draft.packWeightGrams } : {}),
       ...(draft.packPieceCount !== undefined ? { packPieceCount: draft.packPieceCount } : {}),
       ...(draft.stock !== undefined ? { stock: draft.stock } : {}),

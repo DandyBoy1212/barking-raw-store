@@ -3,11 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ALL_FULFILMENT_PATHS,
   ALL_PRODUCT_CATEGORIES,
   CATEGORY_LABELS,
 } from "@/data/products";
-import type { Badge, Product, ProductCategory, FulfilmentPath } from "@/data/products";
+import type { Badge, Product, ProductCategory } from "@/data/products";
 import {
   normaliseImages,
   setPrimary,
@@ -50,18 +49,7 @@ export function ProductForm({
   const [uploading, setUploading] = useState(false);
   const [badges, setBadges] = useState<Badge[]>(initial?.badges ?? []);
   const [category, setCategory] = useState<ProductCategory | "">(initial?.category ?? "");
-  const [leadTimeDays, setLeadTimeDays] = useState(String(initial?.leadTimeDays ?? 0));
   const [membersOnlyUntil, setMembersOnlyUntil] = useState(initial?.membersOnlyUntil ?? "");
-  const [fulfilment, setFulfilment] = useState<FulfilmentPath>(initial?.fulfilment ?? "own-stock");
-  const [supplierPostage, setSupplierPostage] = useState(
-    initial?.supplierPostage === undefined ? "" : String(initial.supplierPostage),
-  );
-  const [supplierArrivalMinDays, setSupplierArrivalMinDays] = useState(
-    initial?.supplierArrivalMinDays === undefined ? "" : String(initial.supplierArrivalMinDays),
-  );
-  const [supplierArrivalMaxDays, setSupplierArrivalMaxDays] = useState(
-    initial?.supplierArrivalMaxDays === undefined ? "" : String(initial.supplierArrivalMaxDays),
-  );
   const [packWeightGrams, setPackWeightGrams] = useState(
     initial?.packWeightGrams === undefined ? "" : String(initial.packWeightGrams),
   );
@@ -121,14 +109,7 @@ export function ProductForm({
       images,
       badges,
       category,
-      leadTimeDays: Number(leadTimeDays || 0),
       membersOnlyUntil,
-      fulfilment,
-      supplierPostage: supplierPostage === "" ? undefined : Number(supplierPostage),
-      supplierArrivalMinDays:
-        supplierArrivalMinDays === "" ? undefined : Number(supplierArrivalMinDays),
-      supplierArrivalMaxDays:
-        supplierArrivalMaxDays === "" ? undefined : Number(supplierArrivalMaxDays),
       packWeightGrams: packWeightGrams === "" ? undefined : Number(packWeightGrams),
       packPieceCount: packPieceCount === "" ? undefined : Number(packPieceCount),
       stock: stock === "" ? undefined : Number(stock),
@@ -306,19 +287,8 @@ export function ProductForm({
       </div>
 
       <div className="panel">
-        <p className="panel__title">Stock and timing</p>
+        <p className="panel__title">Availability</p>
         <div className="form-grid form-grid--2">
-          <label className="field">
-            <span>Lead time in days</span>
-            <input
-              type="number"
-              step="1"
-              min="0"
-              value={leadTimeDays}
-              onChange={(e) => setLeadTimeDays(e.target.value)}
-            />
-            <span className="field__hint">0 if it is on the shelf and posts straight away.</span>
-          </label>
           <label className="field">
             <span>Members only until</span>
             <input
@@ -365,64 +335,6 @@ export function ProductForm({
             </span>
           </label>
         </div>
-      </div>
-
-      <div className="panel">
-        <p className="panel__title">Who posts it</p>
-        <div className="chips">
-          {ALL_FULFILMENT_PATHS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              className="chip"
-              aria-pressed={fulfilment === f}
-              onClick={() => setFulfilment(f)}
-            >
-              {f === "own-stock" ? "From my own stock" : "Posted by the supplier"}
-            </button>
-          ))}
-        </div>
-
-        {fulfilment === "supplier-posted" && (
-          <>
-            <p className="field__hint" style={{ margin: "1.1rem 0 0.6rem" }}>
-              The customer sees this as a separate delivery line, for example &quot;Posts
-              separately, arrives in 3 to 5 days&quot;.
-            </p>
-            <label className="field">
-              <span>Postage charged for this item</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={supplierPostage}
-                onChange={(e) => setSupplierPostage(e.target.value)}
-              />
-            </label>
-            <div className="form-grid form-grid--2">
-              <label className="field">
-                <span>Arrives in, from (days)</span>
-                <input
-                  type="number"
-                  step="1"
-                  min="1"
-                  value={supplierArrivalMinDays}
-                  onChange={(e) => setSupplierArrivalMinDays(e.target.value)}
-                />
-              </label>
-              <label className="field">
-                <span>Arrives in, to (days)</span>
-                <input
-                  type="number"
-                  step="1"
-                  min="1"
-                  value={supplierArrivalMaxDays}
-                  onChange={(e) => setSupplierArrivalMaxDays(e.target.value)}
-                />
-              </label>
-            </div>
-          </>
-        )}
       </div>
 
       <div className="panel">

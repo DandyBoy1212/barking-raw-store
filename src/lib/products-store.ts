@@ -6,7 +6,6 @@ import {
   type Product,
   type Badge,
   type ProductCategory,
-  type FulfilmentPath,
 } from "@/data/products";
 import { isMembersOnly } from "@/lib/product-fields";
 import { normaliseImages, primaryImageUrl } from "@/lib/product-images";
@@ -42,12 +41,6 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     ? (rawCategory as ProductCategory)
     : "treats";
 
-  const rawLead = Number(data.leadTimeDays ?? 0);
-  const leadTimeDays = Number.isFinite(rawLead) ? Math.max(0, Math.floor(rawLead)) : 0;
-
-  const fulfilment: FulfilmentPath =
-    data.fulfilment === "supplier-posted" ? "supplier-posted" : "own-stock";
-  const supplier = fulfilment === "supplier-posted";
   const num = (v: unknown): number | undefined => {
     const n = Number(v);
     return Number.isFinite(n) && n >= 0 ? n : undefined;
@@ -68,12 +61,7 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     image: primaryImageUrl(images),
     safetyNote: data.safetyNote ? String(data.safetyNote) : undefined,
     category,
-    leadTimeDays,
     membersOnlyUntil: data.membersOnlyUntil ? String(data.membersOnlyUntil) : undefined,
-    fulfilment,
-    supplierPostage: supplier ? num(data.supplierPostage) : undefined,
-    supplierArrivalMinDays: supplier ? num(data.supplierArrivalMinDays) : undefined,
-    supplierArrivalMaxDays: supplier ? num(data.supplierArrivalMaxDays) : undefined,
     packWeightGrams: num(data.packWeightGrams),
     packPieceCount: num(data.packPieceCount),
     stock: num(data.stock),
@@ -132,12 +120,7 @@ export function toCatalogue(sp: StoredProduct): Product {
     image: sp.image,
     safetyNote: sp.safetyNote,
     category: sp.category,
-    leadTimeDays: sp.leadTimeDays,
     membersOnlyUntil: sp.membersOnlyUntil,
-    fulfilment: sp.fulfilment,
-    supplierPostage: sp.supplierPostage,
-    supplierArrivalMinDays: sp.supplierArrivalMinDays,
-    supplierArrivalMaxDays: sp.supplierArrivalMaxDays,
     packWeightGrams: sp.packWeightGrams,
     packPieceCount: sp.packPieceCount,
   };

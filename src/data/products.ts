@@ -50,16 +50,6 @@ export const CATEGORY_LABELS: Record<ShopCategory, string> = {
   toys: "Toys",
 };
 
-/**
- * Where a product posts from. "own-stock" is Michaela's own shelf and the site's
- * postage rule. "supplier-posted" leaves the supplier directly and carries its own
- * postage and timing. Named internally for what it is; the customer is only ever
- * told the part that affects them (see supplierArrivalNote).
- */
-export type FulfilmentPath = "own-stock" | "supplier-posted";
-
-export const ALL_FULFILMENT_PATHS: FulfilmentPath[] = ["own-stock", "supplier-posted"];
-
 export interface Product {
   slug: string;
   name: string;
@@ -81,15 +71,8 @@ export interface Product {
   safetyNote?: string;
   /** Which shelf this product sits on. Required: a product with no shelf is invisible. */
   category: ProductCategory;
-  /** Days before dispatch. 0 means it goes out with everything else. */
-  leadTimeDays: number;
   /** ISO date "YYYY-MM-DD". Before this date the product is buyable by members only. */
   membersOnlyUntil?: string;
-  fulfilment: FulfilmentPath;
-  /** GBP, charged once per line. Supplier posted products only. */
-  supplierPostage?: number;
-  supplierArrivalMinDays?: number;
-  supplierArrivalMaxDays?: number;
   /**
    * Pack size. Optional, because the nine originals were sold without one, but
    * a price cannot be compared against a competitor without it. See packSizeLabel.
@@ -117,8 +100,6 @@ const seedProducts: SeedProduct[] = [
     badges: ["Single Ingredient"],
     image: "/products/mystery-box.png",
     category: "boxes",
-    leadTimeDays: 1,
-    fulfilment: "own-stock",
     safetyNote:
       "Contents vary by box. Always tell us about allergies at checkout so we never pack what your dog can't have.",
   },
@@ -132,8 +113,6 @@ const seedProducts: SeedProduct[] = [
     badges: ["Natural Joint Support", "Single Ingredient"],
     image: "/products/beef-trachea-rings.png",
     category: "treats",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
     safetyNote:
       "Supervise while chewing, and choose a ring size that suits enthusiastic gulpers.",
   },
@@ -147,8 +126,6 @@ const seedProducts: SeedProduct[] = [
     badges: ["Natural Joint Support", "Single Ingredient"],
     image: "/products/chicken-feet.png",
     category: "treats",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
     safetyNote:
       "Only ever dehydrated or raw, never cooked, and supervise while your dog chews.",
   },
@@ -162,8 +139,6 @@ const seedProducts: SeedProduct[] = [
     badges: ["Novel Protein", "Gentle on Dodgy Tummies"],
     image: "/products/rabbit-ears.png",
     category: "treats",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
     safetyNote:
       "A treat, not a wormer, and never a substitute for your dog's worming programme. Supervise while chewing.",
   },
@@ -177,8 +152,6 @@ const seedProducts: SeedProduct[] = [
     badges: ["Novel Protein", "Single Ingredient"],
     image: "/products/rabbit-feet.png",
     category: "treats",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
     safetyNote:
       "Contains small bones, so always supervise and pick the right size for your dog.",
   },
@@ -192,8 +165,6 @@ const seedProducts: SeedProduct[] = [
     badges: ["Best for Big Dogs", "Natural Joint Support"],
     image: "/products/duck-wings.png",
     category: "treats",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
     safetyNote:
       "Feed raw or air-dried only, never cooked, as cooked bones can splinter. Always supervise.",
   },
@@ -207,8 +178,6 @@ const seedProducts: SeedProduct[] = [
     badges: ["Gentle on Dodgy Tummies", "Single Ingredient"],
     image: "/products/tripe-sticks.png",
     category: "treats",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
     safetyNote:
       "Store sealed in a cool, dry place, and supervise as with any chew.",
   },
@@ -222,8 +191,6 @@ const seedProducts: SeedProduct[] = [
     badges: ["Most Popular", "Best for Skin & Coat"],
     image: "/products/whole-sprats.png",
     category: "treats",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
     safetyNote:
       "Oily and calorie-dense, so feed in moderation as part of the daily treat allowance.",
   },
@@ -237,8 +204,6 @@ const seedProducts: SeedProduct[] = [
     badges: ["Best for Skin & Coat", "Great for Training"],
     image: "/products/salmon-bites.png",
     category: "treats",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
     safetyNote:
       "Salmon must always be cooked or dried, never raw, as raw salmon can carry a serious illness in dogs.",
   },
@@ -252,8 +217,6 @@ const seedProducts: SeedProduct[] = [
     badges: ["Great for Training", "Single Ingredient"],
     image: "/products/pure-meat-tit-bits.png",
     category: "treats",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
     safetyNote:
       "Keep treats to roughly 10% of daily calories, and go easy if the meat is organ or liver.",
   },
