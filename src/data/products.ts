@@ -111,7 +111,7 @@ const seedProducts: SeedProduct[] = [
     price: 15,
     hook: "A £15 surprise box of natural treats, packed for YOUR dog.",
     description:
-      "A hand-packed mystery box of our natural, single-ingredient treats — chosen for your dog, not pulled off a shelf. Tell us at checkout about any allergies and we pack accordingly: novel proteins for the itchy ones, gentler chews for the dodgy tummies, proper big pieces for the big dogs. Launched for International Dog Day with our friends at Scoop Patrol.",
+      "A hand-packed mystery box, chosen for your dog — not pulled off a shelf. Tell us at checkout whether yours is a treats dog or a toys dog and about any allergies, and we pack accordingly: natural single-ingredient treats, toys for the players, novel proteins for the itchy ones, gentler chews for the dodgy tummies. Launched for International Dog Day with our friends at Scoop Patrol.",
     badges: ["Single Ingredient"],
     image: "/products/mystery-box.png",
     pillar: "good-food",

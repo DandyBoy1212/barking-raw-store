@@ -313,6 +313,19 @@ export async function POST(req: NextRequest) {
         type: "text",
         optional: true,
       },
+      {
+        key: "treat_preference",
+        label: { type: "custom", custom: "More of a toys dog or a treats dog?" },
+        type: "dropdown",
+        dropdown: {
+          options: [
+            { label: "Treats, every time", value: "treats" },
+            { label: "Toys all the way", value: "toys" },
+            { label: "A bit of both", value: "both" },
+          ],
+        },
+        optional: true,
+      },
     ],
     success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/#products`,
