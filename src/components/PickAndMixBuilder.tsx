@@ -27,7 +27,6 @@ export function PickAndMixBuilder() {
   const [added, setAdded] = useState(false);
 
   const pool = bundlePool(catalogue);
-  if (pool.length === 0) return null;
 
   const bySlug = new Map(catalogue.map((p) => [p.slug, p]));
   const priced = items ? priceBundle(items, bySlug) : null;
@@ -48,6 +47,20 @@ export function PickAndMixBuilder() {
 
   return (
     <div className="pickmix">
+      <div className="section-head">
+        <p className="eyebrow">Pick &amp; Mix</p>
+        <h2 className="display">Let us surprise your dog.</h2>
+        <p>
+          Choose 5, 10 or 20 items and we pick the assortment: a randomised spread of
+          the treat range, packed by hand from our own shelf. You see exactly what was
+          drawn, and what it saves, before you add it. Do not like the draw? Draw again.
+        </p>
+      </div>
+
+      {pool.length === 0 ? (
+        <p className="notice">Back in stock soon. The treat range is being restocked.</p>
+      ) : (
+        <>
       <div className="pickmix__sizes" style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
         {BUNDLE_SIZES.map((s) => (
           <button
@@ -89,6 +102,8 @@ export function PickAndMixBuilder() {
         <p className="notice" style={{ marginTop: "1rem" }}>
           In the basket. Fancy another? Every draw is different.
         </p>
+      )}
+        </>
       )}
     </div>
   );
