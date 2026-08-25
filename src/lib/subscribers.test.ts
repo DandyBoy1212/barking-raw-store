@@ -163,24 +163,24 @@ describe("nextWelcomeAction", () => {
   it("gives a consented shop contact the code email first", () => {
     expect(nextWelcomeAction(existing({ ...base, source: "shop" }), 0)).toEqual({ type: "code" });
   });
-  it("home contacts go straight into the pillar sequence on day 0", () => {
+  it("home contacts go straight into the story sequence on day 0", () => {
     expect(nextWelcomeAction(existing({ ...base, source: "home" }), 0)).toEqual({
-      type: "pillar",
+      type: "story",
       index: 0,
     });
   });
-  it("a shop contact whose code email went out moves on to the pillars", () => {
+  it("a shop contact whose code email went out moves on to the story", () => {
     expect(
       nextWelcomeAction(
         existing({ ...base, source: "shop", codeEmailSentAt: { toMillis: () => 0 } }),
         1,
       ),
-    ).toEqual({ type: "pillar", index: 0 });
+    ).toEqual({ type: "story", index: 0 });
   });
-  it("holds each pillar email until its day", () => {
+  it("holds each story email until its day", () => {
     const s = existing({ ...base, sequencePosition: 1 });
     expect(nextWelcomeAction(s, 3 * DAY)).toBeNull();
-    expect(nextWelcomeAction(s, 4 * DAY)).toEqual({ type: "pillar", index: 1 });
+    expect(nextWelcomeAction(s, 4 * DAY)).toEqual({ type: "story", index: 1 });
   });
   it("finishes after the fourth email", () => {
     expect(nextWelcomeAction(existing({ ...base, sequencePosition: 4 }), 99 * DAY)).toBeNull();
@@ -188,7 +188,7 @@ describe("nextWelcomeAction", () => {
   it("anchors the fortnight on the consent moment", () => {
     const s = existing({ ...base, consentAt: { toMillis: () => 10 * DAY }, sequencePosition: 3 });
     expect(nextWelcomeAction(s, 23 * DAY)).toBeNull();
-    expect(nextWelcomeAction(s, 24 * DAY)).toEqual({ type: "pillar", index: 3 });
+    expect(nextWelcomeAction(s, 24 * DAY)).toEqual({ type: "story", index: 3 });
   });
   it("spreads over the first fortnight", () => {
     expect(WELCOME_OFFSETS_DAYS).toEqual([0, 4, 9, 14]);
@@ -222,7 +222,7 @@ describe("the stall source", () => {
     });
     expect(nextWelcomeAction(s, 0)).toEqual({ type: "code" });
     expect(nextWelcomeAction({ ...s, codeEmailSentAtMs: 1 }, 0)).toEqual({
-      type: "pillar",
+      type: "story",
       index: 0,
     });
     expect(nextWelcomeAction({ ...s, unsubscribed: true }, 0)).toBeNull();

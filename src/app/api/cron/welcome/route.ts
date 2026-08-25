@@ -3,7 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import { sendEmail } from "@/lib/email";
 import { docToSubscriber, nextWelcomeAction } from "@/lib/subscribers";
-import { codeWaitingEmail, pillarEmail, PILLARS } from "@/lib/welcome-emails";
+import { codeWaitingEmail, storyEmail, STORY_TARGETS } from "@/lib/welcome-emails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   const secret = process.env.UNSUBSCRIBE_SECRET || process.env.CRON_SECRET || "";
   const now = Date.now();
   let codes = 0;
-  let pillars = 0;
+  let stories = 0;
   let failures = 0;
 
   const snap = await db
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
       continue;
     }
 
-    const { subject, html } = pillarEmail(action.index, emailArgs);
+    const { subject, html } = storyEmail(action.index, emailArgs);
     if (await sendEmail(s.email, subject, html)) {
       await doc.ref.set(
         {
@@ -94,12 +94,12 @@ export async function GET(req: NextRequest) {
         },
         { merge: true },
       );
-      pillars++;
+      stories++;
     } else {
-      console.error("[cron/welcome] pillar email failed:", s.email, PILLARS[action.index].name);
+      console.error("[cron/welcome] story email failed:", s.email, STORY_TARGETS[action.index].name);
       failures++;
     }
   }
 
-  return NextResponse.json({ scanned: snap.size, codes, pillars, failures });
+  return NextResponse.json({ scanned: snap.size, codes, stories, failures });
 }

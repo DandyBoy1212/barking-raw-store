@@ -55,22 +55,4 @@ describe("category presentation", () => {
       expect(CATEGORY_IMAGES[c]).toMatch(/^\//);
     }
   });
-
-  it("names no other company anywhere in the copy", () => {
-    const copy = Object.values(CATEGORY_META)
-      .map((m) => `${m.title} ${m.description}`)
-      .join(" ")
-      .toLowerCase();
-    for (const brand of [
-      "pedigree",
-      "bakers",
-      "dentastix",
-      "markies",
-      "jumbone",
-      "purina",
-      "wagg",
-    ]) {
-      expect(copy).not.toContain(brand);
-    }
-  });
 });

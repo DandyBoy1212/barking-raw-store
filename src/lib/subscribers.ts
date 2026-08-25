@@ -20,8 +20,8 @@ export type CaptureSource = (typeof CAPTURE_SOURCES)[number];
  * server-side stall sync, never through the public capture route.
  */
 export const CONSENT_TEXT: Record<SubscriberSource, string> = {
-  home: "Email me free hints and tips from each pillar. Unsubscribe any time.",
-  shop: "Email me my 10% first order code and hints and tips from each pillar. Unsubscribe any time.",
+  home: "Email me free hints and tips. Unsubscribe any time.",
+  shop: "Email me my 10% first order code and hints and tips. Unsubscribe any time.",
   stall: "Email me the new stuff and the member offers. Unsubscribe any time.",
 };
 
@@ -87,22 +87,22 @@ export function applySubscription(
   return { create: false, consentTurnedOn: false, fields: {} };
 }
 
-/** Day offsets from consent for the four pillar emails: the first fortnight. */
+/** Day offsets from consent for the four story emails: the first fortnight. */
 export const WELCOME_OFFSETS_DAYS = [0, 4, 9, 14] as const;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export type WelcomeAction = { type: "code" } | { type: "pillar"; index: 0 | 1 | 2 | 3 } | null;
+export type WelcomeAction = { type: "code" } | { type: "story"; index: 0 | 1 | 2 | 3 } | null;
 
 /**
  * The one email this contact is due right now, or null.
  *
  * No consent, no marketing sequence, and the code email counts as marketing
  * (the shop form says the ticked box is how the code arrives). Shop contacts
- * get "your code is waiting" before pillar one, and so do stall contacts,
+ * get "your code is waiting" before story one, and so do stall contacts,
  * because the table offer is 10% now and 10% off the first online order. The
  * cron sends at most one email per contact per run, so the code email lands a
- * run ahead of pillar one rather than in the same inbox minute.
+ * run ahead of story one rather than in the same inbox minute.
  */
 export function nextWelcomeAction(s: Subscriber, nowMs: number): WelcomeAction {
   if (!s.consent || s.unsubscribed || s.consentAtMs === null) return null;
@@ -112,7 +112,7 @@ export function nextWelcomeAction(s: Subscriber, nowMs: number): WelcomeAction {
   const index = s.sequencePosition;
   if (index >= WELCOME_SEQUENCE_LENGTH) return null;
   if (nowMs >= s.consentAtMs + WELCOME_OFFSETS_DAYS[index] * DAY_MS) {
-    return { type: "pillar", index: index as 0 | 1 | 2 | 3 };
+    return { type: "story", index: index as 0 | 1 | 2 | 3 };
   }
   return null;
 }

@@ -52,9 +52,8 @@ export default function TermsPage() {
         <h2 style={{ marginTop: "2rem" }}>4. Delivery</h2>
         <p>
           Set out on our <Link href="/delivery">delivery page</Link>, which forms part of these terms.
-          Some orders arrive in more than one parcel, because a few items post direct from the
-          supplier who stocks them. Goods are our responsibility until they are delivered to the
-          address you gave, and from that point the risk in them passes to you.
+          Goods are our responsibility until they are delivered to the address you gave, and from
+          that point the risk in them passes to you.
         </p>
         <p style={{ marginTop: "1rem" }}>
           If a parcel arrives visibly damaged or unsealed, please tell us within 48 hours with a

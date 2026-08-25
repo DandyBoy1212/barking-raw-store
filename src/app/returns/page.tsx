@@ -21,9 +21,8 @@ export default function ReturnsPage() {
         <PendingDetails />
 
         <p>
-          You buy from Barking Raw, so if something is wrong it is ours to put right. That stays
-          true when an item was posted to you direct by one of our suppliers: your rights are
-          against us, and we will not send you off to deal with somebody else.
+          You buy from Barking Raw, so if something is wrong it is ours to put right. Your rights
+          are against us, and we will not send you off to deal with somebody else.
         </p>
 
         <h2 style={{ marginTop: "2rem" }}>Changing your mind</h2>
@@ -83,10 +82,8 @@ export default function ReturnsPage() {
         <h2 style={{ marginTop: "2rem" }}>How to start a return</h2>
         <p>
           <b>Contact us first and we will send you the return address.</b> Please do not post
-          anything back before you have it. Items we stock ourselves come back to us, and items
-          posted by a supplier go back to that supplier, so there is no single address that works
-          for every return. Sending one to the wrong place delays your refund and sometimes loses
-          the parcel.
+          anything back before you have it. Sending one to the wrong place delays your refund and
+          sometimes loses the parcel.
         </p>
         <p style={{ marginTop: "1rem" }}>
           Email {detail("contactEmail")} with your order number and what you would like to do, and

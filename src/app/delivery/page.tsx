@@ -6,7 +6,7 @@ import { PendingDetails } from "@/components/legal/PendingDetails";
 export const metadata: Metadata = {
   title: "Delivery | Barking Raw",
   description:
-    "How and when Barking Raw posts your order. Free local delivery to DD1 to DD6, free over £35, and what happens when an item posts direct from our supplier.",
+    "How and when Barking Raw posts your order. Free local delivery to DD1 to DD6, free over £35, and a flat £3.95 anywhere else in mainland UK.",
 };
 
 export default function DeliveryPage() {
@@ -37,23 +37,18 @@ export default function DeliveryPage() {
           checkout you have not already seen.
         </p>
 
-        <h2 style={{ marginTop: "2rem" }}>Orders that arrive in more than one parcel</h2>
+        <h2 style={{ marginTop: "2rem" }}>One order, one parcel</h2>
         <p>
-          Most of what we sell is on our own shelves and goes out as one parcel. A few items post
-          direct from the supplier who stocks them. When your order mixes the two, it arrives as
-          more than one parcel, on more than one day.
-        </p>
-        <p style={{ marginTop: "1rem" }}>
-          Each of those items carries its own postage and its own arrival window, both shown on the
-          product and itemised in your basket before you pay. The free postage threshold of £
-          {FREE_OVER} applies to the part of your order we post ourselves.
+          Everything we sell is on our own shelves and packed by hand here, so your order arrives as
+          one parcel rather than turning up in pieces over a week. Sealed, dried and dropped
+          straight through the letterbox where it fits.
         </p>
 
         <h2 style={{ marginTop: "2rem" }}>When it arrives</h2>
         <p>
-          Orders placed before we pack for the day usually go out the same or the next working day.
-          Anything with a longer lead time says so on the product page, and anything posted by a
-          supplier shows its own arrival range, typically two to five working days.
+          Orders placed before we pack for the day usually go out the same or the next working day,
+          and then it is down to Royal Mail. If something is going to take longer than that, we tell
+          you rather than letting you wonder.
         </p>
         <p style={{ marginTop: "1rem" }}>
           We post within mainland UK. If you are outside that and want an order, get in touch before
