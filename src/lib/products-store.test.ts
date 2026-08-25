@@ -81,9 +81,10 @@ describe("docToStoredProduct", () => {
 });
 
 describe("seedAsStoredProducts", () => {
-  it("maps all 9 seed products to active, non-archived stored products", () => {
+  it("maps all 10 seed products to active, non-archived stored products", () => {
+    // 9 originals + the International Dog Day mystery box (2026-08-25).
     const all = seedAsStoredProducts();
-    expect(all).toHaveLength(9);
+    expect(all).toHaveLength(10);
     expect(all.every((p) => p.active && !p.archived)).toBe(true);
     expect(all.every((p) => p.stripePriceId === undefined)).toBe(true);
   });
