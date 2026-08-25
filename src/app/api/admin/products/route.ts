@@ -62,7 +62,6 @@ export async function POST(req: NextRequest) {
       images: draft.images,
       image: draft.image,
       ...(draft.safetyNote ? { safetyNote: draft.safetyNote } : {}),
-      pillar: draft.pillar,
       category: draft.category,
       leadTimeDays: draft.leadTimeDays,
       ...(draft.membersOnlyUntil ? { membersOnlyUntil: draft.membersOnlyUntil } : {}),

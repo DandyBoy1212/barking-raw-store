@@ -8,7 +8,7 @@ const BUILT = [
   {
     href: "/admin/products",
     title: "Products",
-    blurb: "Add a product, change a price, set which pillar it belongs to, hide or archive it.",
+    blurb: "Add a product, change a price, set which part of the shop it belongs to, hide or archive it.",
   },
   {
     href: "/admin/badges",
@@ -18,7 +18,7 @@ const BUILT = [
   {
     href: "/admin/posts",
     title: "Posts",
-    blurb: "Write the weekly pillar post for the members area.",
+    blurb: "Write the weekly post for the members area.",
   },
   {
     href: "/admin/points",

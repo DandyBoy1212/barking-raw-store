@@ -27,27 +27,6 @@ export const ALL_BADGES: Badge[] = [
   "Novel Protein",
 ];
 
-/** The four pillars from docs/specs/2026-07-25-v1-launch-pillars-members-design.md section 2. */
-export type Pillar = "good-food" | "comfy-walks" | "fun-and-games" | "cosy-sleep";
-
-export const ALL_PILLARS: Pillar[] = ["good-food", "comfy-walks", "fun-and-games", "cosy-sleep"];
-
-export const PILLAR_LABELS: Record<Pillar, string> = {
-  "good-food": "Good Food",
-  "comfy-walks": "Comfy Walks",
-  "fun-and-games": "Fun & Games",
-  "cosy-sleep": "Cosy Sleep",
-};
-
-/** The line that sits under each pillar on the ring and at the top of its page. */
-export const PILLAR_LINES: Record<Pillar, string> = {
-  "good-food": "What goes in shows up in everything else",
-  "comfy-walks":
-    "A dog that's choking on a collar isn't enjoying the walk. You're just dragging it",
-  "fun-and-games": "A bored dog will find his own fun. You won't like it",
-  "cosy-sleep": "An overtired dog can't think straight",
-};
-
 /**
  * The shelf a product sits on. Every product has exactly one.
  *
@@ -100,8 +79,6 @@ export interface Product {
    */
   image: string;
   safetyNote?: string;
-  /** Exactly one pillar. A product with no pillar appears on no page, so this is required. */
-  pillar: Pillar;
   /** Which shelf this product sits on. Required: a product with no shelf is invisible. */
   category: ProductCategory;
   /** Days before dispatch. 0 means it goes out with everything else. */
@@ -139,7 +116,6 @@ const seedProducts: SeedProduct[] = [
       "A hand-packed mystery box, chosen for your dog — not pulled off a shelf. Tell us at checkout whether yours is a treats dog or a toys dog and about any allergies, and we pack accordingly: natural single-ingredient treats, toys for the players, novel proteins for the itchy ones, gentler chews for the dodgy tummies. Launched for International Dog Day with our friends at Scoop Patrol.",
     badges: ["Single Ingredient"],
     image: "/products/mystery-box.png",
-    pillar: "good-food",
     category: "boxes",
     leadTimeDays: 1,
     fulfilment: "own-stock",
@@ -155,7 +131,6 @@ const seedProducts: SeedProduct[] = [
       "A single-ingredient, air-dried chew that's high in protein, low in fat and satisfyingly chewy. Beef trachea is cartilage, which makes it a natural source of glucosamine and chondroitin, and it's genuinely digestible too. Ideal for dogs who love a longer chew and owners who want one honest ingredient with nothing else along for the ride.",
     badges: ["Natural Joint Support", "Single Ingredient"],
     image: "/products/beef-trachea-rings.png",
-    pillar: "good-food",
     category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
@@ -171,7 +146,6 @@ const seedProducts: SeedProduct[] = [
       "Little and moreish, chicken feet are naturally rich in collagen and a natural source of glucosamine, with a satisfying crunch dogs adore. Air-dried as a single ingredient, they're a great introduction to natural chews for dogs new to the good stuff, and a handy everyday reward for regulars. One honest ingredient, named in full.",
     badges: ["Natural Joint Support", "Single Ingredient"],
     image: "/products/chicken-feet.png",
-    pillar: "good-food",
     category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
@@ -187,7 +161,6 @@ const seedProducts: SeedProduct[] = [
       "Rabbit is a lean, novel-ish protein that suits dogs looking for something different from the usual chicken and beef. These fibrous, air-dried ears give a bit of natural roughage and a light, easy chew. A sensible pick for fussy eaters, rotation feeders, or dogs you're keeping to leaner treats without skimping on interest.",
     badges: ["Novel Protein", "Gentle on Dodgy Tummies"],
     image: "/products/rabbit-ears.png",
-    pillar: "good-food",
     category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
@@ -203,7 +176,6 @@ const seedProducts: SeedProduct[] = [
       "Fur-on rabbit feet are lean, low in fat and a genuinely novel protein, which makes them a thoughtful choice for dogs with sensitivities or those on an exclusion-style rotation. Small and crunchy, they're an easy natural treat with a single honest ingredient and no cereal filler hiding underneath.",
     badges: ["Novel Protein", "Single Ingredient"],
     image: "/products/rabbit-feet.png",
-    pillar: "good-food",
     category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
@@ -219,7 +191,6 @@ const seedProducts: SeedProduct[] = [
       "Duck wings are a raw, air-dried meaty bone that's softer than chicken bone, offering natural calcium, phosphorus and joint cartilage in one meaty package. Higher in fat and properly satisfying, they suit bigger dogs and confident chewers already used to raw meaty bones. Real food that gives a determined dog something worthwhile to work on.",
     badges: ["Best for Big Dogs", "Natural Joint Support"],
     image: "/products/duck-wings.png",
-    pillar: "good-food",
     category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
@@ -235,7 +206,6 @@ const seedProducts: SeedProduct[] = [
       "Dried tripe sticks are a high-protein, single-ingredient treat with a smell dogs find irresistible and owners find, well, memorable. That famous palatability makes them brilliant for tempting fussy eaters and rewarding gentler tummies with something simple and digestible. No fillers, no sugars, just honestly labelled tripe your dog will come running for.",
     badges: ["Gentle on Dodgy Tummies", "Single Ingredient"],
     image: "/products/tripe-sticks.png",
-    pillar: "good-food",
     category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
@@ -251,7 +221,6 @@ const seedProducts: SeedProduct[] = [
       "Our champion for skin and coat. Whole dried sprats are naturally packed with EPA and DHA omega-3, the same fats backed by real vet trials for skin, coat, joints and brain, plus the vitamins that come with eating the whole fish. Feed a few as a shining-coat top-up or a high-value treat. Oily, nutritious, and genuinely good stuff.",
     badges: ["Most Popular", "Best for Skin & Coat"],
     image: "/products/whole-sprats.png",
-    pillar: "good-food",
     category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
@@ -267,7 +236,6 @@ const seedProducts: SeedProduct[] = [
       "Lean, cooked salmon bites carry the same omega-3 benefits for skin, coat and joints, in a small, high-value morsel perfect for training. Soft enough to hand out quickly and tempting enough that your dog will actually work for them. Cooked and dried, never raw, so all the appeal with none of the risk.",
     badges: ["Best for Skin & Coat", "Great for Training"],
     image: "/products/salmon-bites.png",
-    pillar: "good-food",
     category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
@@ -283,7 +251,6 @@ const seedProducts: SeedProduct[] = [
       "The training treat you'll reach for constantly. Single-ingredient, nutrient-dense pure meat, low in calories and high in value, so you can reward often without piling on the extras. Small, honest and irresistible, they're ideal for recall, tricks and everyday good-dog moments. Just meat, named in full, nothing else.",
     badges: ["Great for Training", "Single Ingredient"],
     image: "/products/pure-meat-tit-bits.png",
-    pillar: "good-food",
     category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",

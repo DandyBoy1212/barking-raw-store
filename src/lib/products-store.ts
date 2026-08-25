@@ -2,11 +2,9 @@ import "server-only";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import {
   products as seed,
-  ALL_PILLARS,
   ALL_PRODUCT_CATEGORIES,
   type Product,
   type Badge,
-  type Pillar,
   type ProductCategory,
   type FulfilmentPath,
 } from "@/data/products";
@@ -34,14 +32,6 @@ export type StoredProduct = Product & {
 /** Normalise a raw Firestore doc into a StoredProduct, applying defaults. */
 export function docToStoredProduct(id: string, data: Record<string, unknown>): StoredProduct {
   const rawPrice = Number(data.price ?? 0);
-
-  const rawPillar = String(data.pillar ?? "");
-  // A legacy doc predates the pillar field. All nine originals are food, and a
-  // product with no pillar would appear on no page at all, which looks like the
-  // site working while the product is invisible. Default rather than drop.
-  const pillar: Pillar = ALL_PILLARS.includes(rawPillar as Pillar)
-    ? (rawPillar as Pillar)
-    : "good-food";
 
   const rawCategory = String(data.category ?? "");
   // A doc written before the category migration has no shelf. Everything on the
@@ -77,7 +67,6 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     images,
     image: primaryImageUrl(images),
     safetyNote: data.safetyNote ? String(data.safetyNote) : undefined,
-    pillar,
     category,
     leadTimeDays,
     membersOnlyUntil: data.membersOnlyUntil ? String(data.membersOnlyUntil) : undefined,
@@ -142,7 +131,6 @@ export function toCatalogue(sp: StoredProduct): Product {
     images: sp.images,
     image: sp.image,
     safetyNote: sp.safetyNote,
-    pillar: sp.pillar,
     category: sp.category,
     leadTimeDays: sp.leadTimeDays,
     membersOnlyUntil: sp.membersOnlyUntil,

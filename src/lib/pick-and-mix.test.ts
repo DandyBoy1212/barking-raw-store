@@ -18,7 +18,6 @@ const mk = (slug: string, over: Record<string, unknown> = {}) => ({
   slug,
   name: slug.replace(/-/g, " "),
   price: 5,
-  pillar: "good-food" as const,
   category: "treats" as const,
   fulfilment: "own-stock" as const,
   leadTimeDays: 0,

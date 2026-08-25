@@ -102,22 +102,11 @@ describe("toCatalogue", () => {
 });
 
 describe("docToStoredProduct new fields", () => {
-  it("defaults a legacy doc with no new fields to good-food, no wait, own stock", () => {
+  it("defaults a legacy doc with no new fields to own stock", () => {
     const p = docToStoredProduct("chicken-feet", { name: "Chicken Feet", price: 6 });
-    expect(p.pillar).toBe("good-food");
     expect(p.leadTimeDays).toBe(0);
     expect(p.fulfilment).toBe("own-stock");
     expect(p.membersOnlyUntil).toBeUndefined();
-  });
-
-  it("rejects a pillar that is not one of the four", () => {
-    const p = docToStoredProduct("x", { name: "X", price: 1, pillar: "out-and-about" });
-    expect(p.pillar).toBe("good-food");
-  });
-
-  it("keeps a valid pillar", () => {
-    const p = docToStoredProduct("x", { name: "X", price: 1, pillar: "cosy-sleep" });
-    expect(p.pillar).toBe("cosy-sleep");
   });
 
   it("floors a fractional lead time and clamps a negative one to zero", () => {
@@ -150,7 +139,6 @@ describe("toCatalogue new fields", () => {
     const stored = docToStoredProduct("x", {
       name: "X",
       price: 1,
-      pillar: "fun-and-games",
       leadTimeDays: 3,
       membersOnlyUntil: "2026-09-01",
       fulfilment: "supplier-posted",
@@ -159,7 +147,6 @@ describe("toCatalogue new fields", () => {
       supplierArrivalMaxDays: 5,
     });
     const c = toCatalogue(stored);
-    expect(c.pillar).toBe("fun-and-games");
     expect(c.leadTimeDays).toBe(3);
     expect(c.membersOnlyUntil).toBe("2026-09-01");
     expect(c.fulfilment).toBe("supplier-posted");

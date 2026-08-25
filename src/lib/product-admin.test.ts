@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { slugify, validateProductInput as validate } from "./product-admin";
-import { ALL_BADGES, type Pillar } from "@/data/products";
+import { ALL_BADGES } from "@/data/products";
 
 /**
  * B.6 gave validateProductInput a second argument: the badge labels currently in the
@@ -27,7 +27,6 @@ describe("validateProductInput", () => {
     description: "single ingredient",
     badges: [],
     image: "/products/chicken-feet.png",
-    pillar: "good-food" as const,
     category: "treats" as const,
   };
 
@@ -79,69 +78,50 @@ const base = {
   category: "treats" as const,
 };
 
-describe("validateProductInput pillar", () => {
-  it("rejects a product with no pillar, because it would appear on no page", () => {
-    const r = validateProductInput(base);
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors).toContain("Choose which pillar this product belongs to.");
-  });
-
-  it("rejects a pillar that is not one of the four", () => {
-    const r = validateProductInput({ ...base, pillar: "out-and-about" as unknown as Pillar });
-    expect(r.ok).toBe(false);
-  });
-
-  it("accepts one of the four", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food" });
-    expect(r.ok).toBe(true);
-    if (r.ok) expect(r.value.pillar).toBe("good-food");
-  });
-});
-
 describe("validateProductInput lead time", () => {
   it("defaults to zero", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food" });
+    const r = validateProductInput(base);
     expect(r.ok && r.value.leadTimeDays).toBe(0);
   });
 
   it("rejects a negative lead time", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food", leadTimeDays: -1 });
+    const r = validateProductInput({ ...base, leadTimeDays: -1 });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors).toContain("Lead time must be a whole number of days, 0 or more.");
   });
 
   it("rejects a fractional lead time", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food", leadTimeDays: 2.5 });
+    const r = validateProductInput({ ...base, leadTimeDays: 2.5 });
     expect(r.ok).toBe(false);
   });
 });
 
 describe("validateProductInput members only window", () => {
   it("accepts an ISO date", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food", membersOnlyUntil: "2026-09-01" });
+    const r = validateProductInput({ ...base, membersOnlyUntil: "2026-09-01" });
     expect(r.ok && r.value.membersOnlyUntil).toBe("2026-09-01");
   });
 
   it("rejects anything that is not YYYY-MM-DD", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food", membersOnlyUntil: "01/09/2026" });
+    const r = validateProductInput({ ...base, membersOnlyUntil: "01/09/2026" });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors).toContain("Members only date must be in the form YYYY-MM-DD.");
   });
 
   it("treats an empty string as no window", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food", membersOnlyUntil: "" });
+    const r = validateProductInput({ ...base, membersOnlyUntil: "" });
     expect(r.ok && r.value.membersOnlyUntil).toBeUndefined();
   });
 });
 
 describe("validateProductInput fulfilment", () => {
   it("defaults to her own stock", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food" });
+    const r = validateProductInput(base);
     expect(r.ok && r.value.fulfilment).toBe("own-stock");
   });
 
   it("requires postage on a supplier posted product, so nobody is shipped it for free by accident", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food", fulfilment: "supplier-posted" });
+    const r = validateProductInput({ ...base, fulfilment: "supplier-posted" });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors).toContain("Supplier posted products need their own postage amount.");
   });
@@ -149,7 +129,6 @@ describe("validateProductInput fulfilment", () => {
   it("accepts a supplier posted product with postage and an arrival range", () => {
     const r = validateProductInput({
       ...base,
-      pillar: "good-food",
       fulfilment: "supplier-posted",
       supplierPostage: 4.5,
       supplierArrivalMinDays: 3,
@@ -165,7 +144,6 @@ describe("validateProductInput fulfilment", () => {
   it("rejects an arrival range that runs backwards", () => {
     const r = validateProductInput({
       ...base,
-      pillar: "good-food",
       fulfilment: "supplier-posted",
       supplierPostage: 4.5,
       supplierArrivalMinDays: 7,
@@ -178,7 +156,6 @@ describe("validateProductInput fulfilment", () => {
   it("drops supplier fields when the path is her own stock", () => {
     const r = validateProductInput({
       ...base,
-      pillar: "good-food",
       fulfilment: "own-stock",
       supplierPostage: 4.5,
     });
@@ -187,7 +164,7 @@ describe("validateProductInput fulfilment", () => {
 });
 
 describe("validateProductInput images", () => {
-  const withPillar = { ...base, pillar: "good-food" as const };
+  const withPillar = { ...base };
 
   it("accepts an images list and derives the primary image", () => {
     const r = validateProductInput({
@@ -223,7 +200,7 @@ describe("validateProductInput images", () => {
 
 describe("validateProductInput pack size", () => {
   it("leaves both undefined when neither is given, since the nine originals have none", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food" });
+    const r = validateProductInput(base);
     expect(r.ok && r.value.packWeightGrams).toBeUndefined();
     expect(r.ok && r.value.packPieceCount).toBeUndefined();
   });
@@ -231,7 +208,6 @@ describe("validateProductInput pack size", () => {
   it("accepts a weight and a piece count", () => {
     const r = validateProductInput({
       ...base,
-      pillar: "good-food",
       packWeightGrams: 150,
       packPieceCount: 3,
     });
@@ -245,20 +221,19 @@ describe("validateProductInput pack size", () => {
   it("treats an empty string as not known rather than as zero", () => {
     const r = validateProductInput({
       ...base,
-      pillar: "good-food",
       packWeightGrams: "" as unknown as number,
     });
     expect(r.ok && r.value.packWeightGrams).toBeUndefined();
   });
 
   it("rejects a zero or negative weight rather than storing a nonsense pack", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food", packWeightGrams: 0 });
+    const r = validateProductInput({ ...base, packWeightGrams: 0 });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors).toContain("Pack weight must be a whole number above 0, or left blank.");
   });
 
   it("rejects a fractional piece count", () => {
-    const r = validateProductInput({ ...base, pillar: "good-food", packPieceCount: 2.5 });
+    const r = validateProductInput({ ...base, packPieceCount: 2.5 });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors).toContain("Piece count must be a whole number above 0, or left blank.");
   });
@@ -272,7 +247,6 @@ describe("validateProductInput badges", () => {
     hook: "One ingredient",
     description: "Beef trachea, dried.",
     images: [{ url: "https://storage.googleapis.com/x/a.png", primary: true }],
-    pillar: "good-food" as const,
     category: "treats" as const,
     badges,
   });
@@ -306,7 +280,7 @@ describe("validateProductInput badges", () => {
 });
 
 describe("validateProductInput stock and points rate", () => {
-  const withPillar = { ...base, pillar: "good-food" as const };
+  const withPillar = { ...base };
 
   it("accepts blank as untracked stock and default rate", () => {
     const r = validateProductInput(withPillar);
@@ -350,7 +324,7 @@ describe("validateProductInput stock and points rate", () => {
 });
 
 describe("validateProductInput sort order", () => {
-  const withPillar = { ...base, pillar: "good-food" as const };
+  const withPillar = { ...base };
 
   it("accepts blank as unordered and a position from 1 up", () => {
     const blank = validateProductInput(withPillar);
@@ -374,7 +348,6 @@ describe("validateProductInput category", () => {
     description: "different ears in one box",
     badges: [],
     image: "/products/mystery-box.png",
-    pillar: "good-food" as const,
   };
 
   it("accepts a valid category", () => {

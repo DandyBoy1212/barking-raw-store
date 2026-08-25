@@ -50,7 +50,6 @@ export async function POST(req: NextRequest) {
         image: seedSp.image,
         // The A.1 fields. Leaving them out meant every fresh seed needed the
         // backfill script run after it before the pillar pages showed anything.
-        pillar: seedSp.pillar,
         category: seedSp.category,
         leadTimeDays: seedSp.leadTimeDays,
         fulfilment: seedSp.fulfilment,

@@ -3,7 +3,6 @@ import { requireStaff } from "@/lib/auth";
 import { getAllStoredProducts } from "@/lib/products-store";
 import { gbp } from "@/lib/format";
 import { isMembersOnly, leadTimeNote, packSizeLabel } from "@/lib/product-fields";
-import { PILLAR_LABELS } from "@/data/products";
 import { ArchiveToggle } from "@/components/admin/ArchiveToggle";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +49,6 @@ export default async function AdminProductsPage() {
             <thead>
               <tr style={{ textAlign: "left" }}>
                 <th style={cell}>Name</th>
-                <th style={cell}>Pillar</th>
                 <th style={cell}>Price</th>
                 <th style={cell}>Pack</th>
                 <th style={cell}>Posting</th>
@@ -65,7 +63,6 @@ export default async function AdminProductsPage() {
                 return (
                   <tr key={p.slug} style={{ borderTop: "1px solid #ddd" }}>
                     <td style={cell}>{p.name}</td>
-                    <td style={cell}>{PILLAR_LABELS[p.pillar]}</td>
                     <td style={cell}>{gbp(p.price)}</td>
                     <td style={cell}>
                       {pack ?? <span style={{ color: "#a00" }}>Not set</span>}

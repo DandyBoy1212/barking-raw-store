@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ALL_PILLARS } from "@/lib/product-admin";
 import {
-  PILLAR_LABELS,
   ALL_FULFILMENT_PATHS,
   ALL_PRODUCT_CATEGORIES,
   CATEGORY_LABELS,
 } from "@/data/products";
-import type { Badge, Product, Pillar, ProductCategory, FulfilmentPath } from "@/data/products";
+import type { Badge, Product, ProductCategory, FulfilmentPath } from "@/data/products";
 import {
   normaliseImages,
   setPrimary,
@@ -51,7 +49,6 @@ export function ProductForm({
   );
   const [uploading, setUploading] = useState(false);
   const [badges, setBadges] = useState<Badge[]>(initial?.badges ?? []);
-  const [pillar, setPillar] = useState<Pillar | "">(initial?.pillar ?? "");
   const [category, setCategory] = useState<ProductCategory | "">(initial?.category ?? "");
   const [leadTimeDays, setLeadTimeDays] = useState(String(initial?.leadTimeDays ?? 0));
   const [membersOnlyUntil, setMembersOnlyUntil] = useState(initial?.membersOnlyUntil ?? "");
@@ -123,7 +120,6 @@ export function ProductForm({
       safetyNote,
       images,
       badges,
-      pillar,
       category,
       leadTimeDays: Number(leadTimeDays || 0),
       membersOnlyUntil,
@@ -211,21 +207,6 @@ export function ProductForm({
       <div className="panel">
         <p className="panel__title">Where it appears</p>
         <label className="field">
-          <span>Pillar</span>
-          <select value={pillar} onChange={(e) => setPillar(e.target.value as Pillar)} required>
-            <option value="">Choose a pillar...</option>
-            {ALL_PILLARS.map((p) => (
-              <option key={p} value={p}>
-                {PILLAR_LABELS[p]}
-              </option>
-            ))}
-          </select>
-          <span className="field__hint">
-            Which of the four pages this shows on. A product without one appears on none of them.
-          </span>
-        </label>
-
-        <label className="field">
           <span>Part of the shop</span>
           <select
             value={category}
@@ -254,7 +235,7 @@ export function ProductForm({
             onChange={(e) => setSortOrder(e.target.value)}
           />
           <span className="field__hint">
-            1 shows first on the shop and pillar pages. Blank sits after everything you have
+            1 shows first on the shop. Blank sits after everything you have
             placed, in alphabetical order.
           </span>
         </label>
