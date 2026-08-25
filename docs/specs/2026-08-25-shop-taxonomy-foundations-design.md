@@ -117,8 +117,13 @@ Deleted outright:
 
 This directly contradicts sections 2 and 3 of the 2026-07-25 spec, which made the pillars the
 positioning layer and the pillar pages the only indexable content on the site. That model is
-retired. The honest labelling argument it carried is not being thrown away, it moves to About in
-Phase 2.
+retired.
+
+To be precise about what survives, because it is not the whole of it. The four pillar framing, "get
+these four right and your dog will lap up training", is gone entirely and is not relocated anywhere.
+Michaela is not telling that story. What survives is the honest labelling argument that sat under
+Good Food, and it moves to About in Phase 2 as the spine of the page (section 11.1). Comfy Walks,
+Fun and Games and Cosy Sleep have no successor content and are simply deleted.
 
 `Ring.tsx` survives. Its four wedges are repointed at the four shop categories and its hub keeps
 the logo. Its imagery is a Phase 2 concern, so Phase 1 leaves the current photos in place and
@@ -178,13 +183,18 @@ a pillar page. `src/lib/subscribers.ts` schedules them over a fortnight and type
 Deleting the pillar pages does not break these sends, because the redirects in section 7 keep every
 link resolving. It does make them dishonest: an email promising a lesson would land on a shop.
 
-**Decision:** Phase 1 leaves the series sending and untouched, relying on the redirects, and Phase 2
-rewrites the four bodies to point at About and the shop categories once that copy exists. The
-alternative, cutting the series to one email in Phase 1, throws away a working fortnight of nurture
-before its replacement is written.
+**Decision:** Phase 1 leaves the series sending and untouched, relying on the redirects. Phase 2
+replaces it.
 
-This is the one decision in this spec taken on Liam's behalf rather than in the brainstorm. It is
-reversible: shortening the series later costs one edit to the schedule offsets in `subscribers.ts`.
+Replaces, not rewrites. Three of the four pillar emails teach Comfy Walks, Fun and Games and Cosy
+Sleep, and per section 3.4 that material is gone rather than moved, so there is nothing to repoint
+them at. Phase 2 writes a shorter sequence drawn from the new About narrative, which is the one
+argument Michaela is still making. The number of sends is a Phase 2 decision, not this one.
+
+Leaving them running in the meantime is the lesser of two wrongs: cutting the series in Phase 1
+would throw away a working fortnight of nurture weeks before its replacement exists, and the
+redirects mean every link still resolves. It is reversible either way, because the schedule is one
+array of day offsets in `subscribers.ts`.
 
 ## 6. Sale pricing: `wasPrice`
 
@@ -257,7 +267,12 @@ to an empty shop.
 
 ## 9. Pick and Mix after the change
 
-Two things break it, and both are fixed here.
+Confirmed live on 2026-08-25: the builder renders and works at `/good-food#pick-and-mix`, three size
+buttons above the footer. It is not broken, it is unfindable. Nothing links to it, there is no URL
+of its own, and it is the last section of a page nobody reaches the bottom of. Moving it to a
+category circle is the whole point of the change.
+
+Three things need doing, and all three are done here.
 
 **Its home.** The builder is mounted only on `/good-food`, which is being deleted. It moves to
 `/shop/pick-and-mix`, which is also the fourth category circle. Deleting the pillar page without
@@ -276,6 +291,13 @@ Callers already pass a catalogue filtered to active, unarchived and members wind
 products, so those conditions are not repeated. Boxes are excluded because a mystery box inside a
 pick and mix is a box inside a box, and toys are excluded because the bundle is priced and sold as
 treats. `BUNDLE_SIZES` and `BUNDLE_PERCENT` are unchanged.
+
+**Its headless heading.** `PickAndMixBuilder` returns `null` when the pool is empty, but the "Pick
+and Mix, let us surprise your dog" heading lives in the page around it, not in the component. An
+empty pool therefore renders a heading with nothing underneath and no error anywhere. The heading
+moves inside the component, so the section is one thing that either renders whole or not at all.
+On the new `/shop/pick-and-mix` page, an empty pool renders a plain "back in stock soon" line
+rather than a blank page.
 
 ## 10. Testing
 
@@ -302,13 +324,29 @@ Not designed here. Kept so the brainstorm is not lost.
 
 ### 11.1 Phase 2, the new site
 
-Home is the logo, a short explainer, the four category circles and a Dogs of the Day section.
-About carries the honest labelling argument that the pillar pages used to carry. Delivery and
-Contact are refreshed. Every reference to another company by name is removed: the current home page
-names Pedigree Jumbone, Pedigree Markies, Pedigree Dentastix and Bakers, quoting their declared
-percentages. The ingredient facts stay, attributed to "the big brands" and "supermarket treats"
-generically rather than to a named company. Phase 2 also rewrites the four welcome emails per
-section 5.
+Home is the logo, a short explainer, the four category circles and a Dogs of the Day section. It is
+deliberately short: the long form argument that lives there today moves wholesale to About.
+
+**About is the piece of writing this phase turns on.** It is not a company biography, it is the
+journey the reader is taken on, and it has a shape:
+
+1. Land them in it. What is actually going on in dog food, told plainly enough to be unsettling.
+2. Build the case. The additives, the sugar, the cereal, in ascending order of how bad it reads.
+3. Reach the climax. The point where the evidence stops being a list and becomes a realisation.
+4. Turn it on the reader. This is where we were blown away, and by now so are you.
+5. Land it. That is why we started this. The website is the answer to what you have just read.
+
+The reader should arrive at step 4 already feeling it, so the line does not announce the emotion,
+it names the one the reader is already having. Step 5 is the only place the shop is mentioned.
+
+**Absolute constraint from Michaela: no other company is named anywhere on the site.** Not once, not
+in passing, not in a caption. The current home page names Pedigree Jumbone, Pedigree Markies,
+Pedigree Dentastix and Bakers, and quotes their declared percentages. Every one of those goes. The
+ingredient facts stay, because they are true and they are the argument, attributed to "the popular
+brands", "the big brands" and "supermarket treats". A fact that cannot survive losing its brand
+name is cut rather than reworded into a recognisable hint.
+
+Delivery and Contact are refreshed. Phase 2 also replaces the welcome email series per section 5.
 
 ### 11.2 Phase 3, the shelf
 
@@ -326,8 +364,14 @@ Four toys, supplied by Liam on 2026-08-25:
 
 The two rope sizes are two products, because the variant model was ruled out in section 2.
 
-Four for GBP 20 across the treat range, as a real basket rule that repeats every four items and
-sends an adjusted total to Stripe.
+Four for GBP 20, as a real basket rule that repeats every four items and sends an adjusted total to
+Stripe.
+
+**It applies only to the pre-packaged treat range**, meaning the products already on the shelf
+today. Boxes are explicitly excluded, and so are toys. A Pick and Mix bundle is one basket line at
+its own bundle price, so it neither counts towards a group of four nor receives the offer. Stated
+here because "any four" is the obvious reading of the offer and it is the wrong one: a Mystery
+Bargain Box at GBP 7.50 falling into a four for GBP 20 group would sell it at GBP 5.
 
 Still owed by Michaela or Liam before Phase 3 can be specced: the contents and struck through price
 for each of the four boxes, photographs for the four toys, and the three category circle images (a
