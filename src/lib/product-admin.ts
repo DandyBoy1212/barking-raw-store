@@ -1,7 +1,15 @@
-import { ALL_BADGES, ALL_PILLARS, type Badge, type Pillar, type FulfilmentPath } from "@/data/products";
+import {
+  ALL_BADGES,
+  ALL_PILLARS,
+  ALL_PRODUCT_CATEGORIES,
+  type Badge,
+  type Pillar,
+  type ProductCategory,
+  type FulfilmentPath,
+} from "@/data/products";
 import { normaliseImages, primaryImageUrl, type ProductImage } from "@/lib/product-images";
 
-export { ALL_BADGES, ALL_PILLARS };
+export { ALL_BADGES, ALL_PILLARS, ALL_PRODUCT_CATEGORIES };
 
 export function slugify(name: string): string {
   return name
@@ -23,6 +31,7 @@ export type ProductInput = {
   image: string;
   safetyNote?: string;
   pillar: Pillar;
+  category: ProductCategory;
   leadTimeDays: number;
   membersOnlyUntil?: string;
   fulfilment: FulfilmentPath;
@@ -99,6 +108,14 @@ export function validateProductInput(
   const pillarOk = ALL_PILLARS.includes(rawPillar as Pillar);
   if (!pillarOk) errors.push("Choose which pillar this product belongs to.");
   const pillar = (pillarOk ? rawPillar : "good-food") as Pillar;
+
+  // Same reasoning as the pillar above: a product on no shelf appears nowhere,
+  // which looks exactly like the site working while the product is invisible.
+  // Required, never defaulted, on the way in.
+  const rawCategory = String(input.category ?? "");
+  const categoryOk = ALL_PRODUCT_CATEGORIES.includes(rawCategory as ProductCategory);
+  if (!categoryOk) errors.push("Choose which part of the shop this product belongs to.");
+  const category = (categoryOk ? rawCategory : "treats") as ProductCategory;
 
   const rawLead =
     input.leadTimeDays === undefined ||
@@ -194,6 +211,7 @@ export function validateProductInput(
       image,
       safetyNote,
       pillar,
+      category,
       leadTimeDays,
       membersOnlyUntil,
       fulfilment,

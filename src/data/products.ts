@@ -49,6 +49,29 @@ export const PILLAR_LINES: Record<Pillar, string> = {
 };
 
 /**
+ * The shelf a product sits on. Every product has exactly one.
+ *
+ * Deliberately smaller than what the shop navigates by: Pick and Mix is a builder
+ * that draws from the treat range, not a shelf, so making it a product category
+ * would mean inventing products that do not exist. See ShopCategory.
+ */
+export type ProductCategory = "treats" | "boxes" | "toys";
+
+export const ALL_PRODUCT_CATEGORIES: ProductCategory[] = ["treats", "boxes", "toys"];
+
+/** What the shop navigates by: the three shelves plus the builder. */
+export type ShopCategory = ProductCategory | "pick-and-mix";
+
+export const ALL_SHOP_CATEGORIES: ShopCategory[] = ["treats", "boxes", "pick-and-mix", "toys"];
+
+export const CATEGORY_LABELS: Record<ShopCategory, string> = {
+  treats: "Treat Range",
+  boxes: "Treat Boxes",
+  "pick-and-mix": "Pick & Mix",
+  toys: "Toys",
+};
+
+/**
  * Where a product posts from. "own-stock" is Michaela's own shelf and the site's
  * postage rule. "supplier-posted" leaves the supplier directly and carries its own
  * postage and timing. Named internally for what it is; the customer is only ever
@@ -79,6 +102,8 @@ export interface Product {
   safetyNote?: string;
   /** Exactly one pillar. A product with no pillar appears on no page, so this is required. */
   pillar: Pillar;
+  /** Which shelf this product sits on. Required: a product with no shelf is invisible. */
+  category: ProductCategory;
   /** Days before dispatch. 0 means it goes out with everything else. */
   leadTimeDays: number;
   /** ISO date "YYYY-MM-DD". Before this date the product is buyable by members only. */
@@ -115,6 +140,7 @@ const seedProducts: SeedProduct[] = [
     badges: ["Single Ingredient"],
     image: "/products/mystery-box.png",
     pillar: "good-food",
+    category: "boxes",
     leadTimeDays: 1,
     fulfilment: "own-stock",
     safetyNote:
@@ -130,6 +156,7 @@ const seedProducts: SeedProduct[] = [
     badges: ["Natural Joint Support", "Single Ingredient"],
     image: "/products/beef-trachea-rings.png",
     pillar: "good-food",
+    category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
     safetyNote:
@@ -145,6 +172,7 @@ const seedProducts: SeedProduct[] = [
     badges: ["Natural Joint Support", "Single Ingredient"],
     image: "/products/chicken-feet.png",
     pillar: "good-food",
+    category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
     safetyNote:
@@ -160,6 +188,7 @@ const seedProducts: SeedProduct[] = [
     badges: ["Novel Protein", "Gentle on Dodgy Tummies"],
     image: "/products/rabbit-ears.png",
     pillar: "good-food",
+    category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
     safetyNote:
@@ -175,6 +204,7 @@ const seedProducts: SeedProduct[] = [
     badges: ["Novel Protein", "Single Ingredient"],
     image: "/products/rabbit-feet.png",
     pillar: "good-food",
+    category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
     safetyNote:
@@ -190,6 +220,7 @@ const seedProducts: SeedProduct[] = [
     badges: ["Best for Big Dogs", "Natural Joint Support"],
     image: "/products/duck-wings.png",
     pillar: "good-food",
+    category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
     safetyNote:
@@ -205,6 +236,7 @@ const seedProducts: SeedProduct[] = [
     badges: ["Gentle on Dodgy Tummies", "Single Ingredient"],
     image: "/products/tripe-sticks.png",
     pillar: "good-food",
+    category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
     safetyNote:
@@ -220,6 +252,7 @@ const seedProducts: SeedProduct[] = [
     badges: ["Most Popular", "Best for Skin & Coat"],
     image: "/products/whole-sprats.png",
     pillar: "good-food",
+    category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
     safetyNote:
@@ -235,6 +268,7 @@ const seedProducts: SeedProduct[] = [
     badges: ["Best for Skin & Coat", "Great for Training"],
     image: "/products/salmon-bites.png",
     pillar: "good-food",
+    category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
     safetyNote:
@@ -250,6 +284,7 @@ const seedProducts: SeedProduct[] = [
     badges: ["Great for Training", "Single Ingredient"],
     image: "/products/pure-meat-tit-bits.png",
     pillar: "good-food",
+    category: "treats",
     leadTimeDays: 0,
     fulfilment: "own-stock",
     safetyNote:

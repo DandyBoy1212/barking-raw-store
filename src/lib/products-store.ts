@@ -3,9 +3,11 @@ import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import {
   products as seed,
   ALL_PILLARS,
+  ALL_PRODUCT_CATEGORIES,
   type Product,
   type Badge,
   type Pillar,
+  type ProductCategory,
   type FulfilmentPath,
 } from "@/data/products";
 import { isMembersOnly } from "@/lib/product-fields";
@@ -41,6 +43,15 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     ? (rawPillar as Pillar)
     : "good-food";
 
+  const rawCategory = String(data.category ?? "");
+  // A doc written before the category migration has no shelf. Everything on the
+  // shelf at that point was a treat, and defaulting beats an invisible product,
+  // so a deploy that lands before the script runs degrades to "all treats"
+  // rather than to an empty shop.
+  const category: ProductCategory = ALL_PRODUCT_CATEGORIES.includes(rawCategory as ProductCategory)
+    ? (rawCategory as ProductCategory)
+    : "treats";
+
   const rawLead = Number(data.leadTimeDays ?? 0);
   const leadTimeDays = Number.isFinite(rawLead) ? Math.max(0, Math.floor(rawLead)) : 0;
 
@@ -67,6 +78,7 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     image: primaryImageUrl(images),
     safetyNote: data.safetyNote ? String(data.safetyNote) : undefined,
     pillar,
+    category,
     leadTimeDays,
     membersOnlyUntil: data.membersOnlyUntil ? String(data.membersOnlyUntil) : undefined,
     fulfilment,
@@ -131,6 +143,7 @@ export function toCatalogue(sp: StoredProduct): Product {
     image: sp.image,
     safetyNote: sp.safetyNote,
     pillar: sp.pillar,
+    category: sp.category,
     leadTimeDays: sp.leadTimeDays,
     membersOnlyUntil: sp.membersOnlyUntil,
     fulfilment: sp.fulfilment,

@@ -28,6 +28,7 @@ describe("validateProductInput", () => {
     badges: [],
     image: "/products/chicken-feet.png",
     pillar: "good-food" as const,
+    category: "treats" as const,
   };
 
   it("accepts a complete input and returns a normalised value", () => {
@@ -75,6 +76,7 @@ const base = {
   description: "A description",
   image: "/products/rabbit-ears.png",
   badges: [],
+  category: "treats" as const,
 };
 
 describe("validateProductInput pillar", () => {
@@ -271,6 +273,7 @@ describe("validateProductInput badges", () => {
     description: "Beef trachea, dried.",
     images: [{ url: "https://storage.googleapis.com/x/a.png", primary: true }],
     pillar: "good-food" as const,
+    category: "treats" as const,
     badges,
   });
 
@@ -360,5 +363,38 @@ describe("validateProductInput sort order", () => {
     for (const sortOrder of [0, -1, 2.5]) {
       expect(validateProductInput({ ...withPillar, sortOrder }).ok).toBe(false);
     }
+  });
+});
+
+describe("validateProductInput category", () => {
+  const good = {
+    name: "Ears Box",
+    price: 12,
+    hook: "a box of ears",
+    description: "different ears in one box",
+    badges: [],
+    image: "/products/mystery-box.png",
+    pillar: "good-food" as const,
+  };
+
+  it("accepts a valid category", () => {
+    const res = validateProductInput({ ...good, category: "boxes" });
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.value.category).toBe("boxes");
+  });
+
+  it("rejects a missing category with a sentence she can act on", () => {
+    const res = validateProductInput({ ...good, category: undefined });
+    expect(res.ok).toBe(false);
+    if (!res.ok)
+      expect(res.errors).toContain("Choose which part of the shop this product belongs to.");
+  });
+
+  it("rejects an invented category", () => {
+    expect(validateProductInput({ ...good, category: "sundries" }).ok).toBe(false);
+  });
+
+  it("rejects pick-and-mix, which is a builder rather than a shelf", () => {
+    expect(validateProductInput({ ...good, category: "pick-and-mix" }).ok).toBe(false);
   });
 });

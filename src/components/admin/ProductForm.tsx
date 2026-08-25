@@ -3,8 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ALL_PILLARS } from "@/lib/product-admin";
-import { PILLAR_LABELS, ALL_FULFILMENT_PATHS } from "@/data/products";
-import type { Badge, Product, Pillar, FulfilmentPath } from "@/data/products";
+import {
+  PILLAR_LABELS,
+  ALL_FULFILMENT_PATHS,
+  ALL_PRODUCT_CATEGORIES,
+  CATEGORY_LABELS,
+} from "@/data/products";
+import type { Badge, Product, Pillar, ProductCategory, FulfilmentPath } from "@/data/products";
 import {
   normaliseImages,
   setPrimary,
@@ -47,6 +52,7 @@ export function ProductForm({
   const [uploading, setUploading] = useState(false);
   const [badges, setBadges] = useState<Badge[]>(initial?.badges ?? []);
   const [pillar, setPillar] = useState<Pillar | "">(initial?.pillar ?? "");
+  const [category, setCategory] = useState<ProductCategory | "">(initial?.category ?? "");
   const [leadTimeDays, setLeadTimeDays] = useState(String(initial?.leadTimeDays ?? 0));
   const [membersOnlyUntil, setMembersOnlyUntil] = useState(initial?.membersOnlyUntil ?? "");
   const [fulfilment, setFulfilment] = useState<FulfilmentPath>(initial?.fulfilment ?? "own-stock");
@@ -118,6 +124,7 @@ export function ProductForm({
       images,
       badges,
       pillar,
+      category,
       leadTimeDays: Number(leadTimeDays || 0),
       membersOnlyUntil,
       fulfilment,
@@ -215,6 +222,25 @@ export function ProductForm({
           </select>
           <span className="field__hint">
             Which of the four pages this shows on. A product without one appears on none of them.
+          </span>
+        </label>
+
+        <label className="field">
+          <span>Part of the shop</span>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as ProductCategory)}
+            required
+          >
+            <option value="">Choose a section...</option>
+            {ALL_PRODUCT_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {CATEGORY_LABELS[c]}
+              </option>
+            ))}
+          </select>
+          <span className="field__hint">
+            Which shelf in the shop this sits on. A product without one is invisible.
           </span>
         </label>
 

@@ -269,3 +269,29 @@ describe("sortStoredProducts", () => {
     expect(sorted.map((x) => x.slug)).toEqual(["alpha", "beta"]);
   });
 });
+
+describe("docToStoredProduct category", () => {
+  it("reads the category from the doc", () => {
+    const p = docToStoredProduct("ears-box", { name: "Ears Box", price: 12, category: "boxes" });
+    expect(p.category).toBe("boxes");
+  });
+
+  it("defaults a doc written before the migration to treats", () => {
+    const p = docToStoredProduct("chicken-feet", { name: "Chicken Feet", price: 6 });
+    expect(p.category).toBe("treats");
+  });
+
+  it("defaults an unrecognised category to treats rather than dropping the product", () => {
+    const p = docToStoredProduct("odd", { name: "Odd", price: 1, category: "sundries" });
+    expect(p.category).toBe("treats");
+  });
+
+  it("carries the category through to the client catalogue", () => {
+    const stored = docToStoredProduct("ears-box", {
+      name: "Ears Box",
+      price: 12,
+      category: "boxes",
+    });
+    expect(toCatalogue(stored).category).toBe("boxes");
+  });
+});
