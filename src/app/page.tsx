@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { RingHero } from "@/components/Ring";
+import { visibleShopCategories } from "@/lib/categories";
+import { getPublicProducts } from "@/lib/products-store";
 import { EmailCapture } from "@/components/EmailCapture";
 import DogsOfTheDayStrip from "@/components/DogsOfTheDayStrip";
 
@@ -14,11 +16,12 @@ export const dynamic = "force-dynamic";
  * exposé asks for more than a visitor has agreed to give. Home says what this is
  * and where the shelves are; About earns the belief.
  */
-export default function Home() {
+export default async function Home() {
+  const categories = visibleShopCategories(await getPublicProducts());
   return (
     <main>
       {/* Logo, one line, and the four circles. */}
-      <RingHero />
+      <RingHero categories={categories} />
 
       {/* The explainer: small on purpose. Three sentences and a way in. */}
       <section className="band band--paper">

@@ -4,6 +4,7 @@ import {
   isProductCategory,
   CATEGORY_META,
   CATEGORY_IMAGES,
+  visibleShopCategories,
 } from "@/lib/categories";
 import { ALL_SHOP_CATEGORIES } from "@/data/products";
 
@@ -54,5 +55,43 @@ describe("category presentation", () => {
       expect(CATEGORY_META[c].description).toBeTruthy();
       expect(CATEGORY_IMAGES[c]).toMatch(/^\//);
     }
+  });
+});
+
+describe("visibleShopCategories", () => {
+  const p = (category: "treats" | "boxes" | "toys") => ({ category });
+
+  it("shows every circle when all three shelves are stocked", () => {
+    expect(visibleShopCategories([p("treats"), p("boxes"), p("toys")])).toEqual([
+      "treats",
+      "boxes",
+      "pick-and-mix",
+      "toys",
+    ]);
+  });
+
+  it("hides a shelf with nothing on it, rather than advertising an empty page", () => {
+    expect(visibleShopCategories([p("treats"), p("boxes")])).toEqual([
+      "treats",
+      "boxes",
+      "pick-and-mix",
+    ]);
+  });
+
+  it("drops Pick and Mix with the treat range, since it draws from it", () => {
+    expect(visibleShopCategories([p("boxes"), p("toys")])).toEqual(["boxes", "toys"]);
+  });
+
+  it("shows nothing at all for an empty catalogue", () => {
+    expect(visibleShopCategories([])).toEqual([]);
+  });
+
+  it("keeps the agreed order rather than the order products happen to arrive in", () => {
+    expect(visibleShopCategories([p("toys"), p("boxes"), p("treats")])).toEqual([
+      "treats",
+      "boxes",
+      "pick-and-mix",
+      "toys",
+    ]);
   });
 });

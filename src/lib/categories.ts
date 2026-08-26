@@ -4,6 +4,7 @@
 
 import {
   ALL_PRODUCT_CATEGORIES,
+  ALL_SHOP_CATEGORIES,
   type ProductCategory,
   type ShopCategory,
 } from "@/data/products";
@@ -23,6 +24,26 @@ export function filterByCategory<T extends { category: ProductCategory }>(
  */
 export function isProductCategory(value: string): value is ProductCategory {
   return ALL_PRODUCT_CATEGORIES.includes(value as ProductCategory);
+}
+
+/**
+ * The categories worth showing a circle for: the shelves that actually have
+ * something on them, plus Pick and Mix whenever the treat range does.
+ *
+ * An empty shelf on a shop's front page reads as a broken site rather than as
+ * "coming soon", so a category with nothing in it is not advertised at all. The
+ * circle appears by itself the moment the first product lands on that shelf,
+ * with no deploy needed.
+ */
+export function visibleShopCategories<T extends { category: ProductCategory }>(
+  products: T[],
+): ShopCategory[] {
+  const stocked = new Set(products.map((p) => p.category));
+  return ALL_SHOP_CATEGORIES.filter((c) =>
+    // Pick and Mix owns no products; it draws from the treat range, so it lives
+    // and dies with it.
+    c === "pick-and-mix" ? stocked.has("treats") : stocked.has(c),
+  );
 }
 
 /**

@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ALL_SHOP_CATEGORIES, CATEGORY_LABELS } from "@/data/products";
-import { CATEGORY_IMAGES } from "@/lib/categories";
+import { CATEGORY_LABELS } from "@/data/products";
+import { CATEGORY_IMAGES, visibleShopCategories } from "@/lib/categories";
+import { getPublicProducts } from "@/lib/products-store";
 import { EmailCapture } from "@/components/EmailCapture";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Shop | Barking Raw",
@@ -15,7 +18,8 @@ export const metadata: Metadata = {
  * everything-grid, because a flat grid and four categories are two answers to
  * the same question and the categories are the one the customer asked for.
  */
-export default function ShopPage() {
+export default async function ShopPage() {
+  const categories = visibleShopCategories(await getPublicProducts());
   return (
     <main>
       <section className="band band--paper">
@@ -27,7 +31,7 @@ export default function ShopPage() {
             </h1>
           </div>
           <div className="ring">
-            {ALL_SHOP_CATEGORIES.map((category) => (
+            {categories.map((category) => (
               <Link
                 key={category}
                 href={`/shop/${category}`}

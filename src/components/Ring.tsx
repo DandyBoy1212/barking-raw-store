@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ALL_SHOP_CATEGORIES, CATEGORY_LABELS } from "@/data/products";
+import { CATEGORY_LABELS, type ShopCategory } from "@/data/products";
 import { CATEGORY_IMAGES } from "@/lib/categories";
 
 /**
@@ -7,9 +7,10 @@ import { CATEGORY_IMAGES } from "@/lib/categories";
  * photo wedges around a logo hub; mobile is a two by two grid of circular tiles.
  * Both are this one markup, switched in CSS, so they cannot drift.
  *
- * The wedges were the four pillars and are now the four shop categories.
+ * The wedges were the four pillars and are now the shop categories that
+ * actually have something on them, handed in by the page.
  */
-export function RingHero() {
+export function RingHero({ categories }: { categories: ShopCategory[] }) {
   return (
     <section className="band ring-hero" style={{ background: "#000", color: "#fff" }}>
       <div className="wrap">
@@ -20,7 +21,7 @@ export function RingHero() {
           </p>
         </div>
         <div className="ring">
-          {ALL_SHOP_CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <Link
               key={category}
               href={`/shop/${category}`}
