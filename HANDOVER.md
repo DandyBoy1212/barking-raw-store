@@ -168,6 +168,37 @@ review-only.
 the real signing secret from the Stripe dashboard's webhook endpoint, or every live event will
 fail signature verification.
 
+### The deployment evening, 2026-07-27: live on Vercel, and the domain surprise
+
+The site is deployed and working at **https://barking-raw-store.vercel.app**. Getting there took
+three fixes, each proven before the next: the Firebase client initialises lazily so a build
+without env vars cannot die prerendering /login/complete; Node is pinned to 22.x in engines; and
+firebase-admin is bundled via transpilePackages, because as a server-external it was loaded with
+native require() and its jwks-rsa dependency requires the ESM-only jose 6, which killed every
+function on Vercel's runtime with ERR_REQUIRE_ESM before any of our code ran.
+
+**The domain surprise: barkingraw.dog does NOT point at Vercel.** Both apex and www are served by
+GoDaddy, and the apex shows Michaela's old GoDaddy website-builder site ("Naturally Nourished,
+Happily Barking"). Vercel has www.barkingraw.dog assigned, but DNS never sends anyone there. Until
+the GoDaddy DNS is changed to Vercel's records (the Domains page shows the exact values), the
+vercel.app URL is the shop, and NEXT_PUBLIC_SITE_URL is deliberately set to it. When the DNS is
+moved, three things change together: NEXT_PUBLIC_SITE_URL, the Stripe webhook endpoint URL
+(we_1TxvZgH7DpLAvmumIHG4LTBA, update via API or dashboard), and a redeploy. Moving the DNS also
+switches off her old GoDaddy site, so it is Michaela's call, not a technical detail.
+
+Vercel env now holds: SITE_URL = the vercel.app URL, and STRIPE_WEBHOOK_SECRET = the real signing
+secret of webhook endpoint we_1TxvZg... (created via the Stripe API, test mode, events
+checkout.session.completed and invoice.paid, pointed at the vercel.app URL). The local .env.local
+still carries the locally minted whsec, which is correct for local hand-signed webhook tests and
+must never be confused with the endpoint's real secret.
+
+**The loop is closed (later that evening):** a purchase was made on the deployed site itself,
+Stripe's hosted page, 4242 card, and Stripe delivered the webhook to Vercel unassisted. The order
+landed (GBP 19.50, free local delivery for a DD4 address), 195 points credited. Sign-in works on
+production too: the vercel.app domain (and barkingraw.dog, for the future) are in Firebase Auth's
+authorised domains, which was the last invisible blocker, surfaced as a 503 whose server log said
+auth/unauthorized-continue-uri.
+
 ### Stripe configuration Michaela's dashboard still owes
 
 - Enable the Customer Portal (Settings > Billing > Customer portal), allowing cancellation and

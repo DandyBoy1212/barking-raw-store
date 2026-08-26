@@ -199,6 +199,16 @@ async function fulfil(stripe: Stripe, session: Stripe.Checkout.Session) {
     return;
   }
 
+  // The checkout form's allergy answer (custom_fields, optional). Captured on
+  // the durable order record AND the fulfilment sheet: we pack food for a
+  // specific dog, so this must be visible wherever a box is packed from.
+  const dogAllergies =
+    full.custom_fields?.find((f) => f.key === "dog_allergies")?.text?.value ?? "";
+  // Toys-or-treats, so a mystery box can actually be packed with toys when
+  // that's the dog. Dropdown field, so the value arrives under .dropdown.
+  const treatPreference =
+    full.custom_fields?.find((f) => f.key === "treat_preference")?.dropdown?.value ?? "";
+
   if (db) {
     // Each Pick & Mix bundle's full contents, one metadata key per bundle
     // (numeric order, so bundle_10 never sorts before bundle_2). This is the
@@ -247,6 +257,8 @@ async function fulfil(stripe: Stripe, session: Stripe.Checkout.Session) {
         shipping,
         total,
         local,
+        ...(dogAllergies ? { dogAllergies } : {}),
+        ...(treatPreference ? { treatPreference } : {}),
       },
       outcome,
       qtyBySlug,
@@ -277,6 +289,13 @@ async function fulfil(stripe: Stripe, session: Stripe.Checkout.Session) {
     shipping.toFixed(2),
     total.toFixed(2),
     local ? "LOCAL" : "Post",
+    // Two empty pads keep the allergies value clear of the manual
+    // "Packed"/"Posted" columns after "Local?" — writing into them would
+    // shift Michaela's ticks. New column's header is added by hand.
+    "",
+    "",
+    dogAllergies,
+    treatPreference,
   ]);
 }
 

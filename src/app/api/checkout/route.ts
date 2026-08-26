@@ -302,6 +302,31 @@ export async function POST(req: NextRequest) {
         .slice(0, 480),
       parcelCount: String(delivery.parcels.length),
     },
+    // Allergies at the point of payment, on every one-off order. We pack food
+    // for a specific dog (the mystery box makes this explicit), so the safest
+    // moment to ask is the one form every buyer must complete. Optional: a
+    // treats-for-the-office buyer has nothing to declare.
+    custom_fields: [
+      {
+        key: "dog_allergies",
+        label: { type: "custom", custom: "Your dog's allergies (so we pack safely)" },
+        type: "text",
+        optional: true,
+      },
+      {
+        key: "treat_preference",
+        label: { type: "custom", custom: "More of a toys dog or a treats dog?" },
+        type: "dropdown",
+        dropdown: {
+          options: [
+            { label: "Treats, every time", value: "treats" },
+            { label: "Toys all the way", value: "toys" },
+            { label: "A bit of both", value: "both" },
+          ],
+        },
+        optional: true,
+      },
+    ],
     success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/#products`,
   });
