@@ -25,7 +25,10 @@ const nextConfig: NextConfig = {
     return [
       { source: "/good-food", destination: "/shop/treats", permanent: true },
       { source: "/comfy-walks", destination: "/shop", permanent: true },
-      { source: "/fun-and-games", destination: "/shop/toys", permanent: true },
+      // Toys, not the toys shelf: that shelf is empty until the photographs
+      // exist, and an old link landing on "nothing here yet" is worse than one
+      // landing on the shop. Point it at /shop/toys once toys are stocked.
+      { source: "/fun-and-games", destination: "/shop", permanent: true },
       { source: "/cosy-sleep", destination: "/shop", permanent: true },
     ];
   },
