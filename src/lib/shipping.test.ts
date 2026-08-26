@@ -42,113 +42,39 @@ describe("amountToFreePostage", () => {
   });
 });
 
-const chew = {
-  slug: "chicken-feet",
-  name: "Chicken Feet",
-  price: 6,
-  fulfilment: "own-stock" as const,
-  leadTimeDays: 0,
-};
-
-const bed = {
-  slug: "orthopaedic-bed",
-  name: "Orthopaedic Bed",
-  price: 45,
-  fulfilment: "supplier-posted" as const,
-  leadTimeDays: 0,
-  supplierPostage: 5.99,
-  supplierArrivalMinDays: 3,
-  supplierArrivalMaxDays: 5,
-};
-
-const mat = {
-  slug: "snuffle-mat",
-  name: "Snuffle Mat",
-  price: 18,
-  fulfilment: "supplier-posted" as const,
-  leadTimeDays: 0,
-  supplierPostage: 3.5,
-  supplierArrivalMinDays: 2,
-  supplierArrivalMaxDays: 4,
-};
-
 describe("computeBasketDelivery", () => {
-  it("an own stock only basket behaves exactly as the old flat rule", () => {
-    const d = computeBasketDelivery([{ product: chew, qty: 2 }], "EH1 1AA");
-    expect(d.parcels).toHaveLength(1);
-    expect(d.total).toBe(3.95);
-    expect(d.parcels[0].label).toBe("From Barking Raw");
+  const item = (price: number, qty = 1) => ({
+    product: { slug: "chicken-feet", name: "Chicken Feet", price },
+    qty,
   });
 
-  it("keeps free local delivery for DD1 to DD6", () => {
-    const d = computeBasketDelivery([{ product: chew, qty: 1 }], "DD5 1AB");
-    expect(d.total).toBe(0);
+  it("is free to a local postcode whatever the subtotal", () => {
+    const d = computeBasketDelivery([item(6)], "DD3 8QW");
+    expect(d.cost).toBe(0);
+    expect(d.free).toBe(true);
+    expect(d.reason).toBe("local");
   });
 
-  it("gives each supplier posted line its own parcel and its own postage", () => {
-    const d = computeBasketDelivery(
-      [{ product: bed, qty: 1 }, { product: mat, qty: 1 }],
-      "EH1 1AA",
-    );
-    expect(d.parcels).toHaveLength(2);
-    expect(d.total).toBeCloseTo(9.49, 2);
+  it("charges the flat rate elsewhere under the threshold", () => {
+    const d = computeBasketDelivery([item(6)], "EH1 1AA");
+    expect(d.cost).toBe(3.95);
+    expect(d.free).toBe(false);
+    expect(d.reason).toBe("flat");
   });
 
-  it("charges supplier postage once per line, not per unit", () => {
-    const d = computeBasketDelivery([{ product: bed, qty: 3 }], "EH1 1AA");
-    expect(d.parcels).toHaveLength(1);
-    expect(d.total).toBeCloseTo(5.99, 2);
+  it("is free over the threshold, counting quantity", () => {
+    const d = computeBasketDelivery([item(20, 2)], "EH1 1AA");
+    expect(d.cost).toBe(0);
+    expect(d.reason).toBe("threshold");
   });
 
-  it("a mixed basket is two parcels with two arrival notes", () => {
-    const d = computeBasketDelivery(
-      [{ product: chew, qty: 1 }, { product: bed, qty: 1 }],
-      "EH1 1AA",
-    );
-    expect(d.parcels).toHaveLength(2);
-    expect(d.parcels[1].note).toBe("Posts separately, arrives in 3 to 5 days");
+  it("reports what is left to spend for free postage", () => {
+    expect(computeBasketDelivery([item(30)], "EH1 1AA").amountToFreePostage).toBe(5);
   });
 
-  it("applies the free over GBP 35 threshold to the own stock subtotal only", () => {
-    // GBP 45 of supplier posted goods must not buy free postage on a GBP 6 chew.
-    const d = computeBasketDelivery(
-      [{ product: chew, qty: 1 }, { product: bed, qty: 1 }],
-      "EH1 1AA",
-    );
-    expect(d.ownStockSubtotal).toBe(6);
-    expect(d.parcels[0].cost).toBe(3.95);
-  });
-
-  it("frees the own stock parcel once its own subtotal passes GBP 35", () => {
-    const d = computeBasketDelivery([{ product: chew, qty: 6 }], "EH1 1AA");
-    expect(d.parcels[0].cost).toBe(0);
-    expect(d.amountToFreePostage).toBe(0);
-  });
-
-  it("carries the longest own stock lead time as the parcel note", () => {
-    const kibble = { ...chew, slug: "kibble-15kg", name: "Kibble 15kg", leadTimeDays: 14 };
-    const d = computeBasketDelivery(
-      [{ product: chew, qty: 1 }, { product: kibble, qty: 1 }],
-      "EH1 1AA",
-    );
-    expect(d.parcels[0].note).toBe("Ordered in for you, dispatches in 14 days");
-  });
-
-  it("produces no own stock parcel when the basket is supplier posted only", () => {
-    const d = computeBasketDelivery([{ product: bed, qty: 1 }], "EH1 1AA");
-    expect(d.parcels).toHaveLength(1);
-    expect(d.parcels[0].label).toBe("Orthopaedic Bed");
-  });
-
-  it("an empty basket costs nothing and has no parcels", () => {
+  it("charges nothing for an empty basket", () => {
     const d = computeBasketDelivery([], "EH1 1AA");
-    expect(d.parcels).toEqual([]);
-    expect(d.total).toBe(0);
-  });
-
-  it("treats a supplier posted product with no postage set as free rather than NaN", () => {
-    const unknown = { ...bed, supplierPostage: undefined };
-    const d = computeBasketDelivery([{ product: unknown, qty: 1 }], "EH1 1AA");
-    expect(d.total).toBe(0);
+    expect(d.cost).toBe(0);
+    expect(d.amountToFreePostage).toBe(0);
   });
 });

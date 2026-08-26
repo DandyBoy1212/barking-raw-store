@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ALL_PILLARS } from "@/lib/product-admin";
-import { PILLAR_LABELS, ALL_FULFILMENT_PATHS } from "@/data/products";
-import type { Badge, Product, Pillar, FulfilmentPath } from "@/data/products";
+import {
+  ALL_PRODUCT_CATEGORIES,
+  CATEGORY_LABELS,
+} from "@/data/products";
+import type { Badge, Product, ProductCategory } from "@/data/products";
 import {
   normaliseImages,
   setPrimary,
@@ -38,6 +40,9 @@ export function ProductForm({
   const router = useRouter();
   const [name, setName] = useState(initial?.name ?? "");
   const [price, setPrice] = useState(String(initial?.price ?? ""));
+  const [wasPrice, setWasPrice] = useState(
+    initial?.wasPrice === undefined ? "" : String(initial.wasPrice),
+  );
   const [hook, setHook] = useState(initial?.hook ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [safetyNote, setSafetyNote] = useState(initial?.safetyNote ?? "");
@@ -46,19 +51,8 @@ export function ProductForm({
   );
   const [uploading, setUploading] = useState(false);
   const [badges, setBadges] = useState<Badge[]>(initial?.badges ?? []);
-  const [pillar, setPillar] = useState<Pillar | "">(initial?.pillar ?? "");
-  const [leadTimeDays, setLeadTimeDays] = useState(String(initial?.leadTimeDays ?? 0));
+  const [category, setCategory] = useState<ProductCategory | "">(initial?.category ?? "");
   const [membersOnlyUntil, setMembersOnlyUntil] = useState(initial?.membersOnlyUntil ?? "");
-  const [fulfilment, setFulfilment] = useState<FulfilmentPath>(initial?.fulfilment ?? "own-stock");
-  const [supplierPostage, setSupplierPostage] = useState(
-    initial?.supplierPostage === undefined ? "" : String(initial.supplierPostage),
-  );
-  const [supplierArrivalMinDays, setSupplierArrivalMinDays] = useState(
-    initial?.supplierArrivalMinDays === undefined ? "" : String(initial.supplierArrivalMinDays),
-  );
-  const [supplierArrivalMaxDays, setSupplierArrivalMaxDays] = useState(
-    initial?.supplierArrivalMaxDays === undefined ? "" : String(initial.supplierArrivalMaxDays),
-  );
   const [packWeightGrams, setPackWeightGrams] = useState(
     initial?.packWeightGrams === undefined ? "" : String(initial.packWeightGrams),
   );
@@ -112,20 +106,14 @@ export function ProductForm({
     const payload = {
       name,
       price: Number(price),
+      wasPrice: wasPrice === "" ? undefined : Number(wasPrice),
       hook,
       description,
       safetyNote,
       images,
       badges,
-      pillar,
-      leadTimeDays: Number(leadTimeDays || 0),
+      category,
       membersOnlyUntil,
-      fulfilment,
-      supplierPostage: supplierPostage === "" ? undefined : Number(supplierPostage),
-      supplierArrivalMinDays:
-        supplierArrivalMinDays === "" ? undefined : Number(supplierArrivalMinDays),
-      supplierArrivalMaxDays:
-        supplierArrivalMaxDays === "" ? undefined : Number(supplierArrivalMaxDays),
       packWeightGrams: packWeightGrams === "" ? undefined : Number(packWeightGrams),
       packPieceCount: packPieceCount === "" ? undefined : Number(packPieceCount),
       stock: stock === "" ? undefined : Number(stock),
@@ -181,6 +169,20 @@ export function ProductForm({
           />
         </label>
         <label className="field">
+          <span>Was price in pounds</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={wasPrice}
+            onChange={(e) => setWasPrice(e.target.value)}
+          />
+          <span className="field__hint">
+            Leave blank unless this is on sale. Shown struck through beside the real price,
+            so it has to be a price you genuinely charged.
+          </span>
+        </label>
+        <label className="field">
           <span>Hook</span>
           <input value={hook} onChange={(e) => setHook(e.target.value)} required />
           <span className="field__hint">The one line under the name on the card.</span>
@@ -204,17 +206,21 @@ export function ProductForm({
       <div className="panel">
         <p className="panel__title">Where it appears</p>
         <label className="field">
-          <span>Pillar</span>
-          <select value={pillar} onChange={(e) => setPillar(e.target.value as Pillar)} required>
-            <option value="">Choose a pillar...</option>
-            {ALL_PILLARS.map((p) => (
-              <option key={p} value={p}>
-                {PILLAR_LABELS[p]}
+          <span>Part of the shop</span>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as ProductCategory)}
+            required
+          >
+            <option value="">Choose a section...</option>
+            {ALL_PRODUCT_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {CATEGORY_LABELS[c]}
               </option>
             ))}
           </select>
           <span className="field__hint">
-            Which of the four pages this shows on. A product without one appears on none of them.
+            Which shelf in the shop this sits on. A product without one is invisible.
           </span>
         </label>
 
@@ -228,7 +234,7 @@ export function ProductForm({
             onChange={(e) => setSortOrder(e.target.value)}
           />
           <span className="field__hint">
-            1 shows first on the shop and pillar pages. Blank sits after everything you have
+            1 shows first on the shop. Blank sits after everything you have
             placed, in alphabetical order.
           </span>
         </label>
@@ -299,19 +305,8 @@ export function ProductForm({
       </div>
 
       <div className="panel">
-        <p className="panel__title">Stock and timing</p>
+        <p className="panel__title">Availability</p>
         <div className="form-grid form-grid--2">
-          <label className="field">
-            <span>Lead time in days</span>
-            <input
-              type="number"
-              step="1"
-              min="0"
-              value={leadTimeDays}
-              onChange={(e) => setLeadTimeDays(e.target.value)}
-            />
-            <span className="field__hint">0 if it is on the shelf and posts straight away.</span>
-          </label>
           <label className="field">
             <span>Members only until</span>
             <input
@@ -358,64 +353,6 @@ export function ProductForm({
             </span>
           </label>
         </div>
-      </div>
-
-      <div className="panel">
-        <p className="panel__title">Who posts it</p>
-        <div className="chips">
-          {ALL_FULFILMENT_PATHS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              className="chip"
-              aria-pressed={fulfilment === f}
-              onClick={() => setFulfilment(f)}
-            >
-              {f === "own-stock" ? "From my own stock" : "Posted by the supplier"}
-            </button>
-          ))}
-        </div>
-
-        {fulfilment === "supplier-posted" && (
-          <>
-            <p className="field__hint" style={{ margin: "1.1rem 0 0.6rem" }}>
-              The customer sees this as a separate delivery line, for example &quot;Posts
-              separately, arrives in 3 to 5 days&quot;.
-            </p>
-            <label className="field">
-              <span>Postage charged for this item</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={supplierPostage}
-                onChange={(e) => setSupplierPostage(e.target.value)}
-              />
-            </label>
-            <div className="form-grid form-grid--2">
-              <label className="field">
-                <span>Arrives in, from (days)</span>
-                <input
-                  type="number"
-                  step="1"
-                  min="1"
-                  value={supplierArrivalMinDays}
-                  onChange={(e) => setSupplierArrivalMinDays(e.target.value)}
-                />
-              </label>
-              <label className="field">
-                <span>Arrives in, to (days)</span>
-                <input
-                  type="number"
-                  step="1"
-                  min="1"
-                  value={supplierArrivalMaxDays}
-                  onChange={(e) => setSupplierArrivalMaxDays(e.target.value)}
-                />
-              </label>
-            </div>
-          </>
-        )}
       </div>
 
       <div className="panel">

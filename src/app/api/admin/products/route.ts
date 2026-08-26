@@ -56,23 +56,15 @@ export async function POST(req: NextRequest) {
     await db.collection(COLLECTIONS.products).doc(slug).create({
       name: draft.name,
       price: draft.price,
+      ...(draft.wasPrice !== undefined ? { wasPrice: draft.wasPrice } : {}),
       hook: draft.hook,
       description: draft.description,
       badges: draft.badges,
       images: draft.images,
       image: draft.image,
       ...(draft.safetyNote ? { safetyNote: draft.safetyNote } : {}),
-      pillar: draft.pillar,
-      leadTimeDays: draft.leadTimeDays,
+      category: draft.category,
       ...(draft.membersOnlyUntil ? { membersOnlyUntil: draft.membersOnlyUntil } : {}),
-      fulfilment: draft.fulfilment,
-      ...(draft.supplierPostage !== undefined ? { supplierPostage: draft.supplierPostage } : {}),
-      ...(draft.supplierArrivalMinDays !== undefined
-        ? { supplierArrivalMinDays: draft.supplierArrivalMinDays }
-        : {}),
-      ...(draft.supplierArrivalMaxDays !== undefined
-        ? { supplierArrivalMaxDays: draft.supplierArrivalMaxDays }
-        : {}),
       ...(draft.packWeightGrams !== undefined ? { packWeightGrams: draft.packWeightGrams } : {}),
       ...(draft.packPieceCount !== undefined ? { packPieceCount: draft.packPieceCount } : {}),
       ...(draft.stock !== undefined ? { stock: draft.stock } : {}),

@@ -50,9 +50,7 @@ export async function POST(req: NextRequest) {
         image: seedSp.image,
         // The A.1 fields. Leaving them out meant every fresh seed needed the
         // backfill script run after it before the pillar pages showed anything.
-        pillar: seedSp.pillar,
-        leadTimeDays: seedSp.leadTimeDays,
-        fulfilment: seedSp.fulfilment,
+        category: seedSp.category,
         // The nine originals keep their curated order (Beef Trachea Rings first,
         // Pure Meat Tit-bits last) instead of falling back to alphabetical.
         sortOrder: seedIndex + 1,

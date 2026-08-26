@@ -13,6 +13,22 @@ const nextConfig: NextConfig = {
    * its own interop, which works on every Node version, here and on Vercel.
    */
   transpilePackages: ["firebase-admin"],
+
+  /**
+   * The four pillar pages are gone (spec section 3.4). Permanent, which Next
+   * serves as a 308 and which preserves the request method. Good Food and Fun
+   * and Games have honest successor shelves; Comfy Walks and Cosy Sleep have
+   * none, so they go to the shop rather than to a category that would
+   * misrepresent what the visitor clicked.
+   */
+  async redirects() {
+    return [
+      { source: "/good-food", destination: "/shop/treats", permanent: true },
+      { source: "/comfy-walks", destination: "/shop", permanent: true },
+      { source: "/fun-and-games", destination: "/shop/toys", permanent: true },
+      { source: "/cosy-sleep", destination: "/shop", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

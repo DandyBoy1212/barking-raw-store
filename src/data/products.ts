@@ -1,4 +1,4 @@
-// Single source of truth for the 9 products. Prices in GBP (pounds).
+// Single source of truth for the seeded products. Prices in GBP (pounds).
 // Copy drafted from docs/research-dossier.md, honesty-flag compliant.
 
 import type { ProductImage } from "@/lib/product-images";
@@ -27,41 +27,35 @@ export const ALL_BADGES: Badge[] = [
   "Novel Protein",
 ];
 
-/** The four pillars from docs/specs/2026-07-25-v1-launch-pillars-members-design.md section 2. */
-export type Pillar = "good-food" | "comfy-walks" | "fun-and-games" | "cosy-sleep";
-
-export const ALL_PILLARS: Pillar[] = ["good-food", "comfy-walks", "fun-and-games", "cosy-sleep"];
-
-export const PILLAR_LABELS: Record<Pillar, string> = {
-  "good-food": "Good Food",
-  "comfy-walks": "Comfy Walks",
-  "fun-and-games": "Fun & Games",
-  "cosy-sleep": "Cosy Sleep",
-};
-
-/** The line that sits under each pillar on the ring and at the top of its page. */
-export const PILLAR_LINES: Record<Pillar, string> = {
-  "good-food": "What goes in shows up in everything else",
-  "comfy-walks":
-    "A dog that's choking on a collar isn't enjoying the walk. You're just dragging it",
-  "fun-and-games": "A bored dog will find his own fun. You won't like it",
-  "cosy-sleep": "An overtired dog can't think straight",
-};
-
 /**
- * Where a product posts from. "own-stock" is Michaela's own shelf and the site's
- * postage rule. "supplier-posted" leaves the supplier directly and carries its own
- * postage and timing. Named internally for what it is; the customer is only ever
- * told the part that affects them (see supplierArrivalNote).
+ * The shelf a product sits on. Every product has exactly one.
+ *
+ * Deliberately smaller than what the shop navigates by: Pick and Mix is a builder
+ * that draws from the treat range, not a shelf, so making it a product category
+ * would mean inventing products that do not exist. See ShopCategory.
  */
-export type FulfilmentPath = "own-stock" | "supplier-posted";
+export type ProductCategory = "treats" | "boxes" | "toys";
 
-export const ALL_FULFILMENT_PATHS: FulfilmentPath[] = ["own-stock", "supplier-posted"];
+export const ALL_PRODUCT_CATEGORIES: ProductCategory[] = ["treats", "boxes", "toys"];
+
+/** What the shop navigates by: the three shelves plus the builder. */
+export type ShopCategory = ProductCategory | "pick-and-mix";
+
+export const ALL_SHOP_CATEGORIES: ShopCategory[] = ["treats", "boxes", "pick-and-mix", "toys"];
+
+export const CATEGORY_LABELS: Record<ShopCategory, string> = {
+  treats: "Treat Range",
+  boxes: "Treat Boxes",
+  "pick-and-mix": "Pick & Mix",
+  toys: "Toys",
+};
 
 export interface Product {
   slug: string;
   name: string;
   price: number; // GBP
+  /** GBP. The price shown struck through beside the real price. Absent means no sale. */
+  wasPrice?: number;
   hook: string;
   description: string;
   badges: Badge[];
@@ -77,17 +71,10 @@ export interface Product {
    */
   image: string;
   safetyNote?: string;
-  /** Exactly one pillar. A product with no pillar appears on no page, so this is required. */
-  pillar: Pillar;
-  /** Days before dispatch. 0 means it goes out with everything else. */
-  leadTimeDays: number;
+  /** Which shelf this product sits on. Required: a product with no shelf is invisible. */
+  category: ProductCategory;
   /** ISO date "YYYY-MM-DD". Before this date the product is buyable by members only. */
   membersOnlyUntil?: string;
-  fulfilment: FulfilmentPath;
-  /** GBP, charged once per line. Supplier posted products only. */
-  supplierPostage?: number;
-  supplierArrivalMinDays?: number;
-  supplierArrivalMaxDays?: number;
   /**
    * Pack size. Optional, because the nine originals were sold without one, but
    * a price cannot be compared against a competitor without it. See packSizeLabel.
@@ -114,11 +101,87 @@ const seedProducts: SeedProduct[] = [
       "A hand-packed mystery box, chosen for your dog — not pulled off a shelf. Tell us at checkout whether yours is a treats dog or a toys dog and about any allergies, and we pack accordingly: natural single-ingredient treats, toys for the players, novel proteins for the itchy ones, gentler chews for the dodgy tummies. Launched for International Dog Day with our friends at Scoop Patrol.",
     badges: ["Single Ingredient"],
     image: "/products/mystery-box.png",
-    pillar: "good-food",
-    leadTimeDays: 1,
-    fulfilment: "own-stock",
+    category: "boxes",
     safetyNote:
       "Contents vary by box. Always tell us about allergies at checkout so we never pack what your dog can't have.",
+  },
+  {
+    slug: "mega-mystery-box",
+    name: "Mega Mystery Box",
+    price: 15,
+    hook: "A big box of natural treats, packed for YOUR dog.",
+    description:
+      "A hand-packed box, chosen for your dog rather than pulled off a shelf. Tell us at checkout whether yours is a treats dog or a toys dog and about any allergies, and we pack accordingly: natural single-ingredient treats, toys for the players, novel proteins for the itchy ones, gentler chews for the dodgy tummies.",
+    badges: ["Single Ingredient"],
+    image: "/products/mystery-box.png",
+    category: "boxes",
+    safetyNote:
+      "Contents vary by box. Always tell us about allergies at checkout so we never pack what your dog can't have.",
+  },
+  {
+    slug: "mystery-bargain-box",
+    name: "Mystery Bargain Box",
+    price: 7.5,
+    hook: "The little sister of the Mega, at half the size.",
+    description:
+      "The same idea as the Mega Mystery Box in a smaller parcel: hand-packed natural treats chosen for your dog, not scooped at random. Tell us at checkout whether yours is a treats dog or a toys dog and about any allergies, and we pack around it. A good way to try us, and a good way to keep the treat tin topped up.",
+    badges: ["Single Ingredient"],
+    image: "/products/mystery-box.png",
+    category: "boxes",
+    safetyNote:
+      "Contents vary by box. Always tell us about allergies at checkout so we never pack what your dog can't have.",
+  },
+  {
+    slug: "rope-toy-medium-large",
+    name: "Rope Toy, medium to large",
+    price: 4,
+    hook: "A proper knotted rope for a dog with a real grip.",
+    description:
+      "A chunky knotted cotton rope sized for medium and large dogs. Good for tug, good for a game of fetch that does not end in a soggy tennis ball, and the woven strands give the teeth something to work through. Simple, sturdy and washable.",
+    badges: ["Best for Big Dogs"],
+    image: "/products/rabbit-ears.png",
+    category: "toys",
+    safetyNote:
+      "A toy, not a chew. Supervise play and bin it once the strands start coming loose, since swallowed threads are no good to anyone.",
+  },
+  {
+    slug: "rope-toy-xs-small",
+    name: "Rope Toy, XS to small",
+    price: 2,
+    hook: "The same rope, scaled down for a smaller mouth.",
+    description:
+      "A knotted cotton rope sized for the little ones, from extra small up to small. Light enough for a puppy to carry about and just the right thickness for a small jaw to get a proper hold of. Ideal for tug that does not pull anybody off their feet.",
+    badges: [],
+    image: "/products/rabbit-feet.png",
+    category: "toys",
+    safetyNote:
+      "A toy, not a chew. Supervise play and bin it once the strands start coming loose, since swallowed threads are no good to anyone.",
+  },
+  {
+    slug: "glow-treat-dispenser-ball",
+    name: "Glow in the Dark Treat Dispenser Ball",
+    price: 2.5,
+    hook: "A ball that pays out, and that you can still find at dusk.",
+    description:
+      "Load it with small treats and let your dog work out how to get them back out. It slows a fast eater down, gives a bored dog a job, and it glows, so the winter walk in the dark does not end with the pair of you crawling about in the grass.",
+    badges: ["Great for Training"],
+    image: "/products/chicken-feet.png",
+    category: "toys",
+    safetyNote:
+      "Pick a size your dog cannot get to the back of the mouth, and supervise play.",
+  },
+  {
+    slug: "squeaky-tennis-ball",
+    name: "Squeaky Tennis Ball",
+    price: 2,
+    hook: "A tennis ball that answers back.",
+    description:
+      "A tennis ball with a squeak in it, which as far as most dogs are concerned is a tennis ball that has been meaningfully improved. Good for fetch, good for the garden, and the noise makes it easy to find when it goes into the long grass.",
+    badges: [],
+    image: "/products/whole-sprats.png",
+    category: "toys",
+    safetyNote:
+      "Supervise play, and replace it once the cover starts to split. Not a chew toy for determined shredders.",
   },
   {
     slug: "beef-trachea-rings",
@@ -129,9 +192,7 @@ const seedProducts: SeedProduct[] = [
       "A single-ingredient, air-dried chew that's high in protein, low in fat and satisfyingly chewy. Beef trachea is cartilage, which makes it a natural source of glucosamine and chondroitin, and it's genuinely digestible too. Ideal for dogs who love a longer chew and owners who want one honest ingredient with nothing else along for the ride.",
     badges: ["Natural Joint Support", "Single Ingredient"],
     image: "/products/beef-trachea-rings.png",
-    pillar: "good-food",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
+    category: "treats",
     safetyNote:
       "Supervise while chewing, and choose a ring size that suits enthusiastic gulpers.",
   },
@@ -144,9 +205,7 @@ const seedProducts: SeedProduct[] = [
       "Little and moreish, chicken feet are naturally rich in collagen and a natural source of glucosamine, with a satisfying crunch dogs adore. Air-dried as a single ingredient, they're a great introduction to natural chews for dogs new to the good stuff, and a handy everyday reward for regulars. One honest ingredient, named in full.",
     badges: ["Natural Joint Support", "Single Ingredient"],
     image: "/products/chicken-feet.png",
-    pillar: "good-food",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
+    category: "treats",
     safetyNote:
       "Only ever dehydrated or raw, never cooked, and supervise while your dog chews.",
   },
@@ -159,9 +218,7 @@ const seedProducts: SeedProduct[] = [
       "Rabbit is a lean, novel-ish protein that suits dogs looking for something different from the usual chicken and beef. These fibrous, air-dried ears give a bit of natural roughage and a light, easy chew. A sensible pick for fussy eaters, rotation feeders, or dogs you're keeping to leaner treats without skimping on interest.",
     badges: ["Novel Protein", "Gentle on Dodgy Tummies"],
     image: "/products/rabbit-ears.png",
-    pillar: "good-food",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
+    category: "treats",
     safetyNote:
       "A treat, not a wormer, and never a substitute for your dog's worming programme. Supervise while chewing.",
   },
@@ -174,9 +231,7 @@ const seedProducts: SeedProduct[] = [
       "Fur-on rabbit feet are lean, low in fat and a genuinely novel protein, which makes them a thoughtful choice for dogs with sensitivities or those on an exclusion-style rotation. Small and crunchy, they're an easy natural treat with a single honest ingredient and no cereal filler hiding underneath.",
     badges: ["Novel Protein", "Single Ingredient"],
     image: "/products/rabbit-feet.png",
-    pillar: "good-food",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
+    category: "treats",
     safetyNote:
       "Contains small bones, so always supervise and pick the right size for your dog.",
   },
@@ -189,9 +244,7 @@ const seedProducts: SeedProduct[] = [
       "Duck wings are a raw, air-dried meaty bone that's softer than chicken bone, offering natural calcium, phosphorus and joint cartilage in one meaty package. Higher in fat and properly satisfying, they suit bigger dogs and confident chewers already used to raw meaty bones. Real food that gives a determined dog something worthwhile to work on.",
     badges: ["Best for Big Dogs", "Natural Joint Support"],
     image: "/products/duck-wings.png",
-    pillar: "good-food",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
+    category: "treats",
     safetyNote:
       "Feed raw or air-dried only, never cooked, as cooked bones can splinter. Always supervise.",
   },
@@ -204,9 +257,7 @@ const seedProducts: SeedProduct[] = [
       "Dried tripe sticks are a high-protein, single-ingredient treat with a smell dogs find irresistible and owners find, well, memorable. That famous palatability makes them brilliant for tempting fussy eaters and rewarding gentler tummies with something simple and digestible. No fillers, no sugars, just honestly labelled tripe your dog will come running for.",
     badges: ["Gentle on Dodgy Tummies", "Single Ingredient"],
     image: "/products/tripe-sticks.png",
-    pillar: "good-food",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
+    category: "treats",
     safetyNote:
       "Store sealed in a cool, dry place, and supervise as with any chew.",
   },
@@ -219,9 +270,7 @@ const seedProducts: SeedProduct[] = [
       "Our champion for skin and coat. Whole dried sprats are naturally packed with EPA and DHA omega-3, the same fats backed by real vet trials for skin, coat, joints and brain, plus the vitamins that come with eating the whole fish. Feed a few as a shining-coat top-up or a high-value treat. Oily, nutritious, and genuinely good stuff.",
     badges: ["Most Popular", "Best for Skin & Coat"],
     image: "/products/whole-sprats.png",
-    pillar: "good-food",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
+    category: "treats",
     safetyNote:
       "Oily and calorie-dense, so feed in moderation as part of the daily treat allowance.",
   },
@@ -234,9 +283,7 @@ const seedProducts: SeedProduct[] = [
       "Lean, cooked salmon bites carry the same omega-3 benefits for skin, coat and joints, in a small, high-value morsel perfect for training. Soft enough to hand out quickly and tempting enough that your dog will actually work for them. Cooked and dried, never raw, so all the appeal with none of the risk.",
     badges: ["Best for Skin & Coat", "Great for Training"],
     image: "/products/salmon-bites.png",
-    pillar: "good-food",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
+    category: "treats",
     safetyNote:
       "Salmon must always be cooked or dried, never raw, as raw salmon can carry a serious illness in dogs.",
   },
@@ -249,9 +296,7 @@ const seedProducts: SeedProduct[] = [
       "The training treat you'll reach for constantly. Single-ingredient, nutrient-dense pure meat, low in calories and high in value, so you can reward often without piling on the extras. Small, honest and irresistible, they're ideal for recall, tricks and everyday good-dog moments. Just meat, named in full, nothing else.",
     badges: ["Great for Training", "Single Ingredient"],
     image: "/products/pure-meat-tit-bits.png",
-    pillar: "good-food",
-    leadTimeDays: 0,
-    fulfilment: "own-stock",
+    category: "treats",
     safetyNote:
       "Keep treats to roughly 10% of daily calories, and go easy if the meat is organ or liver.",
   },

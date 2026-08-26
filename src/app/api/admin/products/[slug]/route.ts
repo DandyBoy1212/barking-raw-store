@@ -64,21 +64,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ slug: str
         images: next.images,
         image: next.image,
         ...(next.safetyNote ? { safetyNote: next.safetyNote } : { safetyNote: FieldValue.delete() }),
-        pillar: next.pillar,
-        leadTimeDays: next.leadTimeDays,
+        category: next.category,
+        ...(next.wasPrice !== undefined
+          ? { wasPrice: next.wasPrice }
+          : { wasPrice: FieldValue.delete() }),
         ...(next.membersOnlyUntil
           ? { membersOnlyUntil: next.membersOnlyUntil }
           : { membersOnlyUntil: FieldValue.delete() }),
-        fulfilment: next.fulfilment,
-        ...(next.supplierPostage !== undefined
-          ? { supplierPostage: next.supplierPostage }
-          : { supplierPostage: FieldValue.delete() }),
-        ...(next.supplierArrivalMinDays !== undefined
-          ? { supplierArrivalMinDays: next.supplierArrivalMinDays }
-          : { supplierArrivalMinDays: FieldValue.delete() }),
-        ...(next.supplierArrivalMaxDays !== undefined
-          ? { supplierArrivalMaxDays: next.supplierArrivalMaxDays }
-          : { supplierArrivalMaxDays: FieldValue.delete() }),
         ...(next.packWeightGrams !== undefined
           ? { packWeightGrams: next.packWeightGrams }
           : { packWeightGrams: FieldValue.delete() }),

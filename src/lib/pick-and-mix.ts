@@ -1,5 +1,5 @@
 // Pick and mix bundles (spec step E.2): 5, 10 or 20 items, randomised from
-// own-stock, in-stock Good Food products, priced as the sum of the real prices
+// the in-stock treat range, priced as the sum of the real prices
 // with a small stated saving. The randomisation is the product: "let us
 // surprise your dog".
 //
@@ -13,7 +13,7 @@
 // honest whichever items the draw lands on and survives Michaela repricing
 // under section 6.1 without anyone touching this file.
 
-import type { FulfilmentPath, Pillar } from "@/data/products";
+import type { ProductCategory } from "@/data/products";
 import { isMembersOnly } from "@/lib/product-fields";
 import type { DeliveryProduct } from "@/lib/shipping";
 import { priceToPence } from "@/lib/stripe-sync";
@@ -33,21 +33,15 @@ export function isBundleSize(n: unknown): n is BundleSize {
 }
 
 /**
- * The products a bundle may draw from: Michaela's own shelf (spec 4.4, she
- * packs the parcel herself), the Good Food pillar, and nothing with a lead
- * time (spec 4.2: one ordered-in item would silently delay the whole parcel).
- * Callers pass the viewer's catalogue, which is already filtered to active,
- * unarchived and members-window-respecting products.
+ * The products a bundle may draw from: the treat range only.
+ *
+ * Boxes are excluded because a mystery box inside a pick and mix is a box inside
+ * a box, and toys because the bundle is priced and sold as treats. Callers pass
+ * the viewer's catalogue, which is already filtered to active, unarchived and
+ * members-window-respecting products, so none of that is repeated here.
  */
-export function bundlePool<
-  T extends { pillar: Pillar; fulfilment: FulfilmentPath; leadTimeDays?: number },
->(products: T[]): T[] {
-  return products.filter(
-    (p) =>
-      p.fulfilment === "own-stock" &&
-      p.pillar === "good-food" &&
-      !(Number(p.leadTimeDays ?? 0) > 0),
-  );
+export function bundlePool<T extends { category: ProductCategory }>(products: T[]): T[] {
+  return products.filter((p) => p.category === "treats");
 }
 
 /** Small seedable RNG so tests can pin a draw; production seeds from Math.random. */
@@ -133,9 +127,8 @@ export function summariseBundleContents(
 }
 
 /**
- * A bundle as the delivery rule sees it: own-stock goods in Michaela's one
- * parcel, priced at what the customer actually pays, so the free-over-35
- * threshold counts the real money.
+ * A bundle as the delivery rule sees it, priced at what the customer actually
+ * pays, so the free-over-35 threshold counts the real money.
  */
 export function bundleDeliveryProduct(
   lineSlug: string,
@@ -146,8 +139,6 @@ export function bundleDeliveryProduct(
     slug: lineSlug,
     name: bundleLabel(size),
     price,
-    fulfilment: "own-stock",
-    leadTimeDays: 0,
   };
 }
 
@@ -172,19 +163,16 @@ export type BundleVerdict = { ok: true } | { ok: false; status: 400 | 403; error
 
 /**
  * The server's answer to a tampered bundle: every item must be in the live
- * catalogue, own stock, Good Food, zero lead time, and outside its members
- * only window unless the buyer is a member (403, mirroring the single-line
- * rule in the checkout route). The whole checkout is refused rather than the
- * line dropped, because silently repricing a surprise bag is worse than
- * asking the customer to draw again.
+ * catalogue, on the treat range, and outside its members only window unless the
+ * buyer is a member (403, mirroring the single-line rule in the checkout route).
+ * The whole checkout is refused rather than the line dropped, because silently
+ * repricing a surprise bag is worse than asking the customer to draw again.
  */
 export function validateBundle(
   sel: BundleSelection,
   catalogue: Array<{
     slug: string;
-    pillar: Pillar;
-    fulfilment: FulfilmentPath;
-    leadTimeDays?: number;
+    category: ProductCategory;
     membersOnlyUntil?: string;
   }>,
   opts: { isMember: boolean; now: Date },

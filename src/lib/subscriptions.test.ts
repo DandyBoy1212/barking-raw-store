@@ -5,7 +5,6 @@ import {
   SUBSCRIBE_COUPON_ID,
   POSTAGE_LINE_NAME,
   parseFrequencyWeeks,
-  splitSubscribable,
   discounted,
   buildSubscriptionLineItem,
   buildPostageLineItem,
@@ -62,29 +61,6 @@ describe("SUBSCRIBE_FREQUENCIES", () => {
       "Every 4 weeks",
       "Every 8 weeks",
     ]);
-  });
-});
-
-describe("splitSubscribable", () => {
-  const own = { fulfilment: "own-stock" } as { fulfilment: import("@/data/products").FulfilmentPath };
-  const supplier = { fulfilment: "supplier-posted" } as { fulfilment: import("@/data/products").FulfilmentPath };
-
-  it("puts own-stock lines in eligible and supplier-posted in ineligible", () => {
-    const items = [
-      { product: own, qty: 2 },
-      { product: supplier, qty: 1 },
-      { product: own, qty: 3 },
-    ];
-    const { eligible, ineligible } = splitSubscribable(items);
-    expect(eligible).toEqual([
-      { product: own, qty: 2 },
-      { product: own, qty: 3 },
-    ]);
-    expect(ineligible).toEqual([{ product: supplier, qty: 1 }]);
-  });
-
-  it("returns empty arrays for an empty basket", () => {
-    expect(splitSubscribable([])).toEqual({ eligible: [], ineligible: [] });
   });
 });
 

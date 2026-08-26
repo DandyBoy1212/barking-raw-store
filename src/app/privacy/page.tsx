@@ -88,9 +88,8 @@ export default function PrivacyPage() {
             <b>Resend</b>, which sends our email.
           </li>
           <li>
-            <b>Our suppliers and couriers</b>, who get the name and address needed to deliver a
-            parcel and nothing else. Where an item posts direct from a supplier, that supplier
-            receives your delivery address in order to send it.
+            <b>Our couriers</b>, who get the name and address needed to deliver a parcel and
+            nothing else.
           </li>
         </ul>
         <p style={{ marginTop: "1rem" }}>

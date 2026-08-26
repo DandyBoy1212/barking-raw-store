@@ -2,11 +2,10 @@ import "server-only";
 import { getDb, COLLECTIONS } from "@/lib/firebase-admin";
 import {
   products as seed,
-  ALL_PILLARS,
+  ALL_PRODUCT_CATEGORIES,
   type Product,
   type Badge,
-  type Pillar,
-  type FulfilmentPath,
+  type ProductCategory,
 } from "@/data/products";
 import { isMembersOnly } from "@/lib/product-fields";
 import { normaliseImages, primaryImageUrl } from "@/lib/product-images";
@@ -33,20 +32,15 @@ export type StoredProduct = Product & {
 export function docToStoredProduct(id: string, data: Record<string, unknown>): StoredProduct {
   const rawPrice = Number(data.price ?? 0);
 
-  const rawPillar = String(data.pillar ?? "");
-  // A legacy doc predates the pillar field. All nine originals are food, and a
-  // product with no pillar would appear on no page at all, which looks like the
-  // site working while the product is invisible. Default rather than drop.
-  const pillar: Pillar = ALL_PILLARS.includes(rawPillar as Pillar)
-    ? (rawPillar as Pillar)
-    : "good-food";
+  const rawCategory = String(data.category ?? "");
+  // A doc written before the category migration has no shelf. Everything on the
+  // shelf at that point was a treat, and defaulting beats an invisible product,
+  // so a deploy that lands before the script runs degrades to "all treats"
+  // rather than to an empty shop.
+  const category: ProductCategory = ALL_PRODUCT_CATEGORIES.includes(rawCategory as ProductCategory)
+    ? (rawCategory as ProductCategory)
+    : "treats";
 
-  const rawLead = Number(data.leadTimeDays ?? 0);
-  const leadTimeDays = Number.isFinite(rawLead) ? Math.max(0, Math.floor(rawLead)) : 0;
-
-  const fulfilment: FulfilmentPath =
-    data.fulfilment === "supplier-posted" ? "supplier-posted" : "own-stock";
-  const supplier = fulfilment === "supplier-posted";
   const num = (v: unknown): number | undefined => {
     const n = Number(v);
     return Number.isFinite(n) && n >= 0 ? n : undefined;
@@ -60,19 +54,15 @@ export function docToStoredProduct(id: string, data: Record<string, unknown>): S
     slug: id,
     name: String(data.name ?? ""),
     price: Number.isFinite(rawPrice) ? rawPrice : 0,
+    wasPrice: num(data.wasPrice),
     hook: String(data.hook ?? ""),
     description: String(data.description ?? ""),
     badges: Array.isArray(data.badges) ? (data.badges as Badge[]) : [],
     images,
     image: primaryImageUrl(images),
     safetyNote: data.safetyNote ? String(data.safetyNote) : undefined,
-    pillar,
-    leadTimeDays,
+    category,
     membersOnlyUntil: data.membersOnlyUntil ? String(data.membersOnlyUntil) : undefined,
-    fulfilment,
-    supplierPostage: supplier ? num(data.supplierPostage) : undefined,
-    supplierArrivalMinDays: supplier ? num(data.supplierArrivalMinDays) : undefined,
-    supplierArrivalMaxDays: supplier ? num(data.supplierArrivalMaxDays) : undefined,
     packWeightGrams: num(data.packWeightGrams),
     packPieceCount: num(data.packPieceCount),
     stock: num(data.stock),
@@ -124,19 +114,15 @@ export function toCatalogue(sp: StoredProduct): Product {
     slug: sp.slug,
     name: sp.name,
     price: sp.price,
+    wasPrice: sp.wasPrice,
     hook: sp.hook,
     description: sp.description,
     badges: sp.badges,
     images: sp.images,
     image: sp.image,
     safetyNote: sp.safetyNote,
-    pillar: sp.pillar,
-    leadTimeDays: sp.leadTimeDays,
+    category: sp.category,
     membersOnlyUntil: sp.membersOnlyUntil,
-    fulfilment: sp.fulfilment,
-    supplierPostage: sp.supplierPostage,
-    supplierArrivalMinDays: sp.supplierArrivalMinDays,
-    supplierArrivalMaxDays: sp.supplierArrivalMaxDays,
     packWeightGrams: sp.packWeightGrams,
     packPieceCount: sp.packPieceCount,
   };

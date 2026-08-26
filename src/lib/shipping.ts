@@ -1,8 +1,6 @@
 // Shipping rules for Barking Raw.
 // Free to DD1 to DD6. Otherwise a flat GBP 3.95, and free on any order over GBP 35.
 
-import type { FulfilmentPath } from "@/data/products";
-import { leadTimeNote, supplierArrivalNote } from "@/lib/product-fields";
 
 export const FREE_OVER = 35;
 export const FLAT_RATE = 3.95;
@@ -52,77 +50,31 @@ export interface DeliveryProduct {
   slug: string;
   name: string;
   price: number;
-  fulfilment: FulfilmentPath;
-  leadTimeDays: number;
-  supplierPostage?: number;
-  supplierArrivalMinDays?: number;
-  supplierArrivalMaxDays?: number;
-}
-
-export interface DeliveryParcel {
-  key: string;
-  label: string;
-  cost: number;
-  note: string | null;
 }
 
 export interface BasketDelivery {
-  parcels: DeliveryParcel[];
-  total: number;
-  ownStockSubtotal: number;
+  cost: number;
+  free: boolean;
+  reason: ShippingReason;
   amountToFreePostage: number;
 }
 
 /**
- * Turn a basket into the parcels it will actually arrive in.
- *
- * Everything from Michaela's own stock is one parcel under the existing site rule
- * (free to DD1 to DD6, otherwise GBP 3.95, free over GBP 35). Each supplier posted
- * line is its own parcel with its own postage and its own timing, because it does
- * not leave from her house. The customer sees this itemised in the basket and again
- * at checkout, so a mixed basket never becomes a surprise after payment.
- *
- * Two rules worth stating out loud:
- *  - the free postage threshold is measured against the own stock subtotal only,
- *    since the site's rule does not govern what the supplier charges;
- *  - supplier postage is charged once per line, not per unit, because a line is a parcel.
+ * Postage for a whole basket. One parcel, always, since everything posts from
+ * Michaela's own shelf. This used to split a basket into several parcels with
+ * their own postage and their own timings, which was the supplier posted path
+ * and is gone.
  */
 export function computeBasketDelivery(
   items: { product: DeliveryProduct; qty: number }[],
   postcode: string,
 ): BasketDelivery {
-  const own = items.filter((i) => i.product.fulfilment === "own-stock");
-  const supplier = items.filter((i) => i.product.fulfilment === "supplier-posted");
-
-  const ownStockSubtotal = own.reduce((s, i) => s + i.product.price * i.qty, 0);
-  const parcels: DeliveryParcel[] = [];
-
-  if (own.length > 0) {
-    const shipping = computeShipping(postcode, ownStockSubtotal);
-    const longestLead = own.reduce((n, i) => Math.max(n, i.product.leadTimeDays || 0), 0);
-    parcels.push({
-      key: "own-stock",
-      label: "From Barking Raw",
-      cost: shipping.cost,
-      note: leadTimeNote({ leadTimeDays: longestLead }),
-    });
+  const subtotal = items.reduce((s, i) => s + i.product.price * i.qty, 0);
+  if (items.length === 0) {
+    return { cost: 0, free: true, reason: "threshold", amountToFreePostage: 0 };
   }
-
-  for (const i of supplier) {
-    const postage = Number(i.product.supplierPostage ?? 0);
-    parcels.push({
-      key: i.product.slug,
-      label: i.product.name,
-      cost: Number.isFinite(postage) && postage > 0 ? postage : 0,
-      note: supplierArrivalNote(i.product),
-    });
-  }
-
-  const total = Math.round(parcels.reduce((s, p) => s + p.cost, 0) * 100) / 100;
   return {
-    parcels,
-    total,
-    ownStockSubtotal,
-    amountToFreePostage: own.length > 0 ? amountToFreePostage(postcode, ownStockSubtotal) : 0,
+    ...computeShipping(postcode, subtotal),
+    amountToFreePostage: amountToFreePostage(postcode, subtotal),
   };
 }

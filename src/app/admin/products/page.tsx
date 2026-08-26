@@ -2,8 +2,8 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { getAllStoredProducts } from "@/lib/products-store";
 import { gbp } from "@/lib/format";
-import { isMembersOnly, leadTimeNote, packSizeLabel } from "@/lib/product-fields";
-import { PILLAR_LABELS } from "@/data/products";
+import { CATEGORY_LABELS } from "@/data/products";
+import { isMembersOnly, packSizeLabel } from "@/lib/product-fields";
 import { ArchiveToggle } from "@/components/admin/ArchiveToggle";
 
 export const dynamic = "force-dynamic";
@@ -50,10 +50,9 @@ export default async function AdminProductsPage() {
             <thead>
               <tr style={{ textAlign: "left" }}>
                 <th style={cell}>Name</th>
-                <th style={cell}>Pillar</th>
                 <th style={cell}>Price</th>
                 <th style={cell}>Pack</th>
-                <th style={cell}>Posting</th>
+                <th style={cell}>Section</th>
                 <th style={cell}>Shows as</th>
                 <th style={cell}></th>
               </tr>
@@ -61,19 +60,14 @@ export default async function AdminProductsPage() {
             <tbody>
               {products.map((p) => {
                 const pack = packSizeLabel(p);
-                const lead = leadTimeNote(p);
                 return (
                   <tr key={p.slug} style={{ borderTop: "1px solid #ddd" }}>
                     <td style={cell}>{p.name}</td>
-                    <td style={cell}>{PILLAR_LABELS[p.pillar]}</td>
                     <td style={cell}>{gbp(p.price)}</td>
                     <td style={cell}>
                       {pack ?? <span style={{ color: "#a00" }}>Not set</span>}
                     </td>
-                    <td style={cell}>
-                      {p.fulfilment === "supplier-posted" ? "Supplier posts it" : "From your stock"}
-                      {lead && <div style={{ fontSize: "0.8rem", opacity: 0.7 }}>{lead}</div>}
-                    </td>
+                    <td style={cell}>{CATEGORY_LABELS[p.category]}</td>
                     <td style={cell}>{visibility(p, now)}</td>
                     <td style={cell}>
                       <Link href={`/admin/products/${p.slug}`}>Edit</Link>

@@ -18,9 +18,7 @@ const mk = (slug: string, over: Record<string, unknown> = {}) => ({
   slug,
   name: slug.replace(/-/g, " "),
   price: 5,
-  pillar: "good-food" as const,
-  fulfilment: "own-stock" as const,
-  leadTimeDays: 0,
+  category: "treats" as const,
   ...over,
 });
 
@@ -37,19 +35,24 @@ describe("sizes", () => {
 });
 
 describe("bundlePool", () => {
-  it("keeps only own-stock, good-food, zero lead time products", () => {
+  it("draws from the treat range", () => {
     const pool = bundlePool([
       mk("sprats"),
-      mk("supplier-chew", { fulfilment: "supplier-posted" }),
-      mk("shampoo", { pillar: "healthy-body" }),
-      mk("big-kibble", { leadTimeDays: 14 }),
+      mk("chicken-feet"),
+      mk("ears-box", { category: "boxes" }),
+      mk("squeaky-tennis-ball", { category: "toys" }),
     ]);
-    expect(pool.map((p) => p.slug)).toEqual(["sprats"]);
+    expect(pool.map((p) => p.slug)).toEqual(["sprats", "chicken-feet"]);
   });
 
-  it("treats a missing leadTimeDays as zero", () => {
-    const pool = bundlePool([mk("sprats", { leadTimeDays: undefined })]);
-    expect(pool).toHaveLength(1);
+  it("never draws a box, because a box inside a bundle is a box inside a box", () => {
+    const pool = bundlePool([mk("ears-box", { category: "boxes" })]);
+    expect(pool).toHaveLength(0);
+  });
+
+  it("never draws a toy, because the bundle is priced and sold as treats", () => {
+    const pool = bundlePool([mk("rope", { category: "toys" })]);
+    expect(pool).toHaveLength(0);
   });
 });
 
@@ -188,9 +191,8 @@ describe("validateBundle", () => {
   const catalogue = [
     mk("sprats"),
     mk("chicken-feet"),
-    mk("supplier-chew", { fulfilment: "supplier-posted" }),
-    mk("shampoo", { pillar: "healthy-body" }),
-    mk("big-kibble", { leadTimeDays: 14 }),
+    mk("ears-box", { category: "boxes" }),
+    mk("squeaky-tennis-ball", { category: "toys" }),
     mk("members-treat", { membersOnlyUntil: "2999-01-01" }),
   ];
   const now = new Date("2026-07-26T12:00:00Z");
@@ -212,9 +214,8 @@ describe("validateBundle", () => {
 
   it.each([
     ["a slug the catalogue does not carry", "ghost"],
-    ["a supplier-posted product", "supplier-chew"],
-    ["a product from another pillar", "shampoo"],
-    ["a product with a lead time", "big-kibble"],
+    ["a box, which would be a box inside a box", "ears-box"],
+    ["a toy, because the bundle is sold as treats", "squeaky-tennis-ball"],
   ])("rejects %s with a 400", (_desc, slug) => {
     const verdict = validateBundle(five(slug), catalogue, opts);
     expect(verdict.ok).toBe(false);
@@ -242,13 +243,11 @@ describe("validateBundle", () => {
 });
 
 describe("bundleDeliveryProduct", () => {
-  it("is own-stock, zero lead, priced at what the customer pays", () => {
-    expect(bundleDeliveryProduct("pick-and-mix-x", 10, 16.15)).toEqual({
-      slug: "pick-and-mix-x",
+  it("is priced at what the customer actually pays", () => {
+    expect(bundleDeliveryProduct("pm-1", 10, 30.4)).toEqual({
+      slug: "pm-1",
       name: "Pick & Mix (10 items)",
-      price: 16.15,
-      fulfilment: "own-stock",
-      leadTimeDays: 0,
+      price: 30.4,
     });
   });
 });

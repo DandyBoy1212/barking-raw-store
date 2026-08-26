@@ -1,9 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   isMembersOnly,
-  leadTimeNote,
   packSizeLabel,
-  supplierArrivalNote,
 } from "@/lib/product-fields";
 
 describe("isMembersOnly", () => {
@@ -27,59 +25,6 @@ describe("isMembersOnly", () => {
     expect(isMembersOnly({ membersOnlyUntil: "next tuesday" }, new Date("2026-08-01T12:00:00Z"))).toBe(
       false,
     );
-  });
-});
-
-describe("leadTimeNote", () => {
-  it("is null for stock on the shelf", () => {
-    expect(leadTimeNote({ leadTimeDays: 0 })).toBeNull();
-  });
-
-  it("names the wait in days", () => {
-    expect(leadTimeNote({ leadTimeDays: 14 })).toBe("Ordered in for you, dispatches in 14 days");
-  });
-
-  it("uses the singular for one day", () => {
-    expect(leadTimeNote({ leadTimeDays: 1 })).toBe("Ordered in for you, dispatches in 1 day");
-  });
-});
-
-describe("supplierArrivalNote", () => {
-  it("is null for her own stock", () => {
-    expect(supplierArrivalNote({ fulfilment: "own-stock" })).toBeNull();
-  });
-
-  it("gives a range when one is set", () => {
-    expect(
-      supplierArrivalNote({
-        fulfilment: "supplier-posted",
-        supplierArrivalMinDays: 3,
-        supplierArrivalMaxDays: 5,
-      }),
-    ).toBe("Posts separately, arrives in 3 to 5 days");
-  });
-
-  it("collapses an equal range to a single number", () => {
-    expect(
-      supplierArrivalNote({
-        fulfilment: "supplier-posted",
-        supplierArrivalMinDays: 4,
-        supplierArrivalMaxDays: 4,
-      }),
-    ).toBe("Posts separately, arrives in 4 days");
-  });
-
-  it("still discloses the separate parcel when no timing is known", () => {
-    expect(supplierArrivalNote({ fulfilment: "supplier-posted" })).toBe("Posts separately");
-  });
-
-  it("never says dropship", () => {
-    const note = supplierArrivalNote({
-      fulfilment: "supplier-posted",
-      supplierArrivalMinDays: 3,
-      supplierArrivalMaxDays: 5,
-    });
-    expect(note?.toLowerCase()).not.toContain("dropship");
   });
 });
 
